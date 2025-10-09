@@ -20,7 +20,36 @@
 </head>
 <body>
   <iframe id="appFrame"
-          src="https://script.google.com/macros/s/AKfycbxWU74SPvTElf82zjIkc9qIBeGyaNLzXr87V37VOjXBfXxw2Po-eAG0epJPU-Tu5yBi/exec"
+          src="https://script.google.com/macros/s/AKfycbwUtyvwyUjYnBOm_QKyGQTgfu_8cYId2myUtFeo-gBKITIIKD_JLxScK5eaMPSFqcsp/exec"
           allowfullscreen></iframe>
+  
+  <script>
+    const BASE_URL = 'https://script.google.com/macros/s/AKfycbwUtyvwyUjYnBOm_QKyGQTgfu_8cYId2myUtFeo-gBKITIIKD_JLxScK5eaMPSFqcsp/exec';
+    const iframe = document.getElementById('appFrame');
+    
+    // Function to update iframe based on URL hash
+    function updateIframe() {
+      const hash = window.location.hash.substring(1); // Remove #
+      if (!hash) {
+        iframe.src = BASE_URL;
+        return;
+      }
+      
+      // Handle recovery page with token
+      if (hash.startsWith('recovery&token=')) {
+        const token = hash.split('token=')[1];
+        iframe.src = `${BASE_URL}?page=recovery&token=${token}`;
+      } else {
+        // Regular page navigation
+        iframe.src = `${BASE_URL}?page=${hash}`;
+      }
+    }
+    
+    // Initial load
+    updateIframe();
+    
+    // Listen for hash changes
+    window.addEventListener('hashchange', updateIframe);
+  </script>
 </body>
 </html>
