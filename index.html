@@ -5,40 +5,22 @@
   <title>FMS Prehospital Portal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    html, body { margin: 0; height: 100%; overflow: hidden; }
-    iframe { border: none; width: 100%; height: 100%; }
+    html, body { 
+      margin: 0; 
+      height: 100%; 
+      overflow: hidden; 
+    }
+    iframe { 
+      border: none; 
+      width: 100%; 
+      height: 100%; 
+      display: block;
+    }
   </style>
 </head>
 <body>
   <iframe id="appFrame"
-          src="https://script.google.com/macros/s/AKfycbw_qdUjWderLUhS-3SM6unwzyWuCETVmTyRilDXmxuANV1oMKzujd0DwUaUSX87f0pS/exec"
+          src="https://script.google.com/macros/s/AKfycbxAzexetwYTXX0b04P7LPsa2MJetczIJixgMWhpCiyWZYFQoPlDY7RpSINUZ5B7sZG5/exec"
           allowfullscreen></iframe>
-
-  <script>
-    // Only allow messages from Google Apps Script origins you use:
-    const ALLOW_ORIGINS = [
-      'https://script.google.com',
-      'https://n-*.googleusercontent.com', // sandbox host varies; wildcard shown conceptually
-      'https://*.googleusercontent.com'
-    ];
-
-    window.addEventListener('message', (event) => {
-      // Safety: check shape of message
-      const data = event.data;
-      if (!data || data.type !== 'FMS_NAV' || typeof data.href !== 'string') return;
-
-      // (Optional) tighten origin checks – in practice you can just allow all with '*'
-      // if you can't enumerate hosts. If so, remove this guard.
-      // if (!ALLOW_ORIGINS.some(p => event.origin === p)) return;
-
-      const f = document.getElementById('appFrame');
-      if (f && f.src !== data.href) {
-        f.src = data.href;
-        // (Optional) reflect page state in your custom-domain URL:
-        // history.replaceState({}, '', new URL(data.href).search); // e.g., "?page=admin"
-      }
-    });
-  </script>
 </body>
 </html>
-
