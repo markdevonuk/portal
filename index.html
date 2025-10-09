@@ -20,12 +20,25 @@
 </head>
 <body>
   <iframe id="appFrame"
-          src="https://script.google.com/macros/s/AKfycbwUtyvwyUjYnBOm_QKyGQTgfu_8cYId2myUtFeo-gBKITIIKD_JLxScK5eaMPSFqcsp/exec"
+          src="https://script.google.com/macros/s/AKfycbwTgwRAr_N3PFwPN_r0x1OMNh2ZLUOUWGe_1wcwOeD1V7WQfu6IzpTwXQFR4_b7zNAK/exec"
           allowfullscreen></iframe>
   
   <script>
-    const BASE_URL = 'https://script.google.com/macros/s/AKfycbwUtyvwyUjYnBOm_QKyGQTgfu_8cYId2myUtFeo-gBKITIIKD_JLxScK5eaMPSFqcsp/exec';
+    const BASE_URL = 'https://script.google.com/macros/s/AKfycbwTgwRAr_N3PFwPN_r0x1OMNh2ZLUOUWGe_1wcwOeD1V7WQfu6IzpTwXQFR4_b7zNAK/exec';
     const iframe = document.getElementById('appFrame');
+    
+    // Listen for messages from the iframe
+    window.addEventListener('message', function(event) {
+      // Security: verify the message is from our Google Apps Script
+      if (event.data && event.data.action === 'navigate') {
+        const page = event.data.page;
+        if (page) {
+          window.location.hash = page;
+        } else {
+          window.location.hash = '';
+        }
+      }
+    });
     
     // Function to update iframe based on URL hash
     function updateIframe() {
