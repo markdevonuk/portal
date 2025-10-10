@@ -309,7 +309,8 @@
       updatePersonalDetails, 
       updateDriving, 
       updateMedicalQualifications, 
-      submitProfile 
+      submitProfile,
+      updateAndResubmitProfile
     } from './profile-service.js';
 
     // Initialize Firebase
@@ -450,6 +451,59 @@
       }
     });
 
+    // Disable form if profile is approved or rejected
+    function disableForm(profileStatus) {
+      const inputs = document.querySelectorAll('#profileForm input, #profileForm select, #profileForm textarea');
+      inputs.forEach(input => {
+        input.setAttribute('disabled', 'disabled');
+      });
+      
+      saveAsDraftBtn.classList.add('hidden');
+      submitProfileBtn.classList.add('hidden');
+      
+      // Add an Edit button when the profile is approved or rejected
+      if (profileStatus === 'approved' || profileStatus === 'rejected') {
+        const formActions = document.querySelector('.d-flex.justify-content-between.mb-5');
+        if (!document.getElementById('editProfileBtn')) {
+          const editButton = document.createElement('button');
+          editButton.type = 'button';
+          editButton.id = 'editProfileBtn';
+          editButton.className = 'btn btn-warning';
+          editButton.innerHTML = '<i class="bi bi-pencil-square"></i> Edit Profile';
+          editButton.addEventListener('click', enableForm);
+          formActions.appendChild(editButton);
+        }
+        
+        showAlert(`Your profile status is "${profileStatus}". To make changes, click the "Edit Profile" button.`, 'info');
+      }
+    }
+
+    // Enable form for editing
+    function enableForm() {
+      const inputs = document.querySelectorAll('#profileForm input:not([type="submit"]), #profileForm select, #profileForm textarea');
+      inputs.forEach(input => {
+        input.removeAttribute('disabled');
+      });
+      
+      saveAsDraftBtn.classList.remove('hidden');
+      
+      // Change the submit button to "Resubmit Profile"
+      submitProfileBtn.classList.remove('hidden');
+      submitProfileBtn.innerHTML = '<i class="bi bi-send"></i> Resubmit Profile';
+      
+      // Remove the edit button
+      const editButton = document.getElementById('editProfileBtn');
+      if (editButton) {
+        editButton.remove();
+      }
+      
+      // Show an alert about resubmission
+      showAlert('You are now editing your profile. Any changes will require admin approval again.', 'warning');
+      
+      // Trigger the qualification change event to show/hide appropriate fields
+      document.getElementById('qualification').dispatchEvent(new Event('change'));
+    }
+
     // Load user profile data
     async function loadUserProfile() {
       try {
@@ -497,10 +551,10 @@
             document.getElementById('agreedToTerms').checked = profile.submission.agreedToTerms || false;
           }
           
-          // If profile is submitted and pending/approved, disable form
+          // If profile is submitted and approved/rejected, disable form but add edit button
           if (profile.submission && profile.submission.submittedAt && 
-              profile.adminUse && profile.adminUse.status === 'approved') {
-            disableForm();
+              profile.adminUse && (profile.adminUse.status === 'approved' || profile.adminUse.status === 'rejected')) {
+            disableForm(profile.adminUse.status);
           }
         } else {
           // No profile exists, create an empty one
@@ -511,19 +565,6 @@
         console.error('Error loading profile:', error);
         showAlert('Error loading your profile data. Please try again later.', 'danger');
       }
-    }
-
-    // Disable form if profile is approved
-    function disableForm() {
-      const inputs = document.querySelectorAll('#profileForm input, #profileForm select, #profileForm textarea');
-      inputs.forEach(input => {
-        input.setAttribute('disabled', 'disabled');
-      });
-      
-      saveAsDraftBtn.classList.add('hidden');
-      submitProfileBtn.classList.add('hidden');
-      
-      showAlert('Your profile has been approved. Please contact an admin if you need to make changes.', 'info');
     }
 
     // Save as Draft
@@ -601,17 +642,55 @@
       setButtonLoading('submitProfileBtn', true);
       
       try {
-        // First save all data as draft
-        await saveAsDraftBtn.click();
+        // Check if this is a resubmission (edit) or a new submission
+        const profile = await getCurrentUserProfile();
+        const isResubmission = profile && profile.submission && profile.submission.submittedAt;
         
-        // Then submit the profile
-        await submitProfile(true);
+        // Get values from form
+        const updatedProfile = {
+          personalDetails: {
+            DOB: parseDateString(document.getElementById('dob').value),
+            emergencyContact: document.getElementById('emergencyContact').value
+          },
+          driving: {
+            c1Classification: document.getElementById('c1Classification').checked,
+            dlNumber: document.getElementById('dlNumber').value,
+            niNumber: document.getElementById('niNumber').value,
+            points: document.getElementById('points').value
+          },
+          medicalQualifications: {
+            qualification: document.getElementById('qualification').value,
+            hcpc: document.getElementById('hcpc').value,
+            gmc: document.getElementById('gmc').value,
+            nmc: document.getElementById('nmc').value,
+            details: document.getElementById('details').value,
+            certExpiry: parseDateString(document.getElementById('certExpiry').value)
+          }
+        };
         
-        showAlert('Profile submitted successfully! It will be reviewed by an administrator.', 'success');
+        if (isResubmission) {
+          // Use the new function for updating and resubmitting
+          await updateAndResubmitProfile(updatedProfile);
+          showAlert('Profile updated and resubmitted for review!', 'success');
+        } else {
+          // First save all data as draft
+          await updatePersonalDetails(updatedProfile.personalDetails);
+          await updateDriving(updatedProfile.driving);
+          await updateMedicalQualifications(updatedProfile.medicalQualifications);
+          
+          // Then submit the profile
+          await submitProfile(true);
+          showAlert('Profile submitted successfully! It will be reviewed by an administrator.', 'success');
+        }
         
         // Update the status display
-        const profile = await getCurrentUserProfile();
-        updateProfileStatus(profile);
+        const updatedProfile = await getCurrentUserProfile();
+        updateProfileStatus(updatedProfile);
+        
+        // Disable form again after submission
+        if (isResubmission) {
+          disableForm('pending');
+        }
       } catch (error) {
         console.error('Error submitting profile:', error);
         showAlert('Error submitting profile: ' + error.message, 'danger');
