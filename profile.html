@@ -293,6 +293,22 @@
         </button>
       </div>
     </form>
+
+    <!-- Debug Panel -->
+    <div class="profile-card mb-5" id="debugPanel" style="display: none;">
+      <h3 class="section-title"><i class="bi bi-bug"></i> Debug Information</h3>
+      <div class="mb-3">
+        <pre id="debugOutput" style="background: #f8f9fa; padding: 15px; border-radius: 5px; max-height: 300px; overflow-y: auto;"></pre>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="showDebugBtn">
+          Toggle Debug Panel
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-danger" id="clearProfileBtn">
+          Clear Profile (Debug)
+        </button>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -301,7 +317,7 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
     import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-    import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { getFirestore, doc, getDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
     import { firebaseConfig } from './firebase-config.js';
     import { 
       getCurrentUserProfile, 
@@ -317,6 +333,48 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    
+    // Debug functionality
+    const debugOutput = document.getElementById('debugOutput');
+    const debugPanel = document.getElementById('debugPanel');
+    const showDebugBtn = document.getElementById('showDebugBtn');
+    const clearProfileBtn = document.getElementById('clearProfileBtn');
+    
+    function logDebug(message, data = null) {
+      const timestamp = new Date().toISOString().substr(11, 8);
+      let logMessage = `[${timestamp}] ${message}`;
+      if (data) {
+        logMessage += `\n${JSON.stringify(data, null, 2)}`;
+      }
+      console.log(logMessage);
+      
+      if (debugOutput) {
+        debugOutput.innerHTML += logMessage + '\n\n';
+        // Auto-scroll to bottom
+        debugOutput.scrollTop = debugOutput.scrollHeight;
+      }
+    }
+    
+    showDebugBtn.addEventListener('click', () => {
+      debugPanel.style.display = debugPanel.style.display === 'none' ? 'block' : 'none';
+    });
+    
+    clearProfileBtn.addEventListener('click', async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) return;
+        
+        if (confirm('WARNING: This will permanently delete your profile data. Continue?')) {
+          await deleteDoc(doc(db, 'profiles', user.uid));
+          logDebug('Profile deleted successfully');
+          showAlert('Profile deleted. Reloading...', 'success');
+          setTimeout(() => location.reload(), 2000);
+        }
+      } catch (error) {
+        logDebug('Error deleting profile', error);
+        showAlert('Error deleting profile: ' + error.message, 'danger');
+      }
+    });
 
     // Initialize Flatpickr date pickers
     flatpickr("#dob", {
@@ -382,6 +440,8 @@
       profileStatus.classList.remove('hidden');
       profileStatus.classList.remove('status-pending', 'status-approved', 'status-rejected');
       
+      logDebug('Updating profile status', status);
+      
       if (!status || !status.adminUse || !status.adminUse.status) {
         profileStatus.classList.add('hidden');
         return;
@@ -413,6 +473,7 @@
     // Show/hide registration fields based on qualification
     qualification.addEventListener('change', function() {
       const value = this.value;
+      logDebug('Qualification changed to:', value);
       
       // Reset all sections to hidden
       hcpcSection.classList.add('hidden');
@@ -453,6 +514,8 @@
 
     // Disable form if profile is approved or rejected
     function disableForm(profileStatus) {
+      logDebug('Disabling form with status:', profileStatus);
+      
       const inputs = document.querySelectorAll('#profileForm input, #profileForm select, #profileForm textarea');
       inputs.forEach(input => {
         input.setAttribute('disabled', 'disabled');
@@ -480,6 +543,8 @@
 
     // Enable form for editing
     function enableForm() {
+      logDebug('Enabling form for editing');
+      
       const inputs = document.querySelectorAll('#profileForm input:not([type="submit"]), #profileForm select, #profileForm textarea');
       inputs.forEach(input => {
         input.removeAttribute('disabled');
@@ -507,23 +572,42 @@
     // Load user profile data
     async function loadUserProfile() {
       try {
+        logDebug('Starting to load user profile');
+        const user = auth.currentUser;
+        logDebug('Current user:', user ? user.uid : 'no user');
+        
         const profile = await getCurrentUserProfile();
+        logDebug('Profile retrieved:', profile);
         
         if (profile) {
+          logDebug('Profile exists, updating UI');
+          
           // Update profile status display
           updateProfileStatus(profile);
           
           // Fill form with existing data if available
           if (profile.personalDetails) {
+            logDebug('Loading personal details:', profile.personalDetails);
+            
             if (profile.personalDetails.DOB) {
               // Convert timestamp to date string
-              const date = new Date(profile.personalDetails.DOB.seconds * 1000);
+              let date;
+              if (profile.personalDetails.DOB.seconds) {
+                date = new Date(profile.personalDetails.DOB.seconds * 1000);
+              } else {
+                date = new Date(profile.personalDetails.DOB);
+              }
+              
               document.getElementById('dob').value = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+              logDebug('Loaded DOB:', document.getElementById('dob').value);
             }
+            
             document.getElementById('emergencyContact').value = profile.personalDetails.emergencyContact || '';
           }
           
           if (profile.driving) {
+            logDebug('Loading driving details:', profile.driving);
+            
             document.getElementById('c1Classification').checked = profile.driving.c1Classification || false;
             document.getElementById('dlNumber').value = profile.driving.dlNumber || '';
             document.getElementById('niNumber').value = profile.driving.niNumber || '';
@@ -531,6 +615,8 @@
           }
           
           if (profile.medicalQualifications) {
+            logDebug('Loading medical qualifications:', profile.medicalQualifications);
+            
             document.getElementById('qualification').value = profile.medicalQualifications.qualification || '';
             document.getElementById('hcpc').value = profile.medicalQualifications.hcpc || '';
             document.getElementById('gmc').value = profile.medicalQualifications.gmc || '';
@@ -539,7 +625,13 @@
             
             if (profile.medicalQualifications.certExpiry) {
               // Convert timestamp to date string
-              const date = new Date(profile.medicalQualifications.certExpiry.seconds * 1000);
+              let date;
+              if (profile.medicalQualifications.certExpiry.seconds) {
+                date = new Date(profile.medicalQualifications.certExpiry.seconds * 1000);
+              } else {
+                date = new Date(profile.medicalQualifications.certExpiry);
+              }
+              
               document.getElementById('certExpiry').value = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
             }
             
@@ -548,6 +640,7 @@
           }
           
           if (profile.submission) {
+            logDebug('Loading submission details:', profile.submission);
             document.getElementById('agreedToTerms').checked = profile.submission.agreedToTerms || false;
           }
           
@@ -557,11 +650,13 @@
             disableForm(profile.adminUse.status);
           }
         } else {
+          logDebug('No profile exists, creating new one');
           // No profile exists, create an empty one
           await createProfile({});
           showAlert('Profile created. Please complete your information below.', 'info');
         }
       } catch (error) {
+        logDebug('Error loading profile:', error);
         console.error('Error loading profile:', error);
         showAlert('Error loading your profile data. Please try again later.', 'danger');
       }
@@ -572,6 +667,8 @@
       setButtonLoading('saveAsDraftBtn', true);
       
       try {
+        logDebug('Saving profile as draft');
+        
         // Get values from form
         const personalDetails = {
           DOB: parseDateString(document.getElementById('dob').value),
@@ -594,6 +691,10 @@
           certExpiry: parseDateString(document.getElementById('certExpiry').value)
         };
         
+        logDebug('Saving personal details:', personalDetails);
+        logDebug('Saving driving details:', driving);
+        logDebug('Saving medical qualifications:', medicalQualifications);
+        
         // Update each section separately
         await updatePersonalDetails(personalDetails);
         await updateDriving(driving);
@@ -601,6 +702,7 @@
         
         showAlert('Profile saved as draft successfully!', 'success');
       } catch (error) {
+        logDebug('Error saving draft:', error);
         console.error('Error saving draft:', error);
         showAlert('Error saving profile: ' + error.message, 'danger');
       } finally {
@@ -642,9 +744,12 @@
       setButtonLoading('submitProfileBtn', true);
       
       try {
+        logDebug('Submitting profile form');
+        
         // Check if this is a resubmission (edit) or a new submission
         const profile = await getCurrentUserProfile();
         const isResubmission = profile && profile.submission && profile.submission.submittedAt;
+        logDebug('Is resubmission:', isResubmission);
         
         // Get values from form
         const updatedProfile = {
@@ -668,11 +773,15 @@
           }
         };
         
+        logDebug('Updated profile data:', updatedProfile);
+        
         if (isResubmission) {
-          // Use the new function for updating and resubmitting
+          logDebug('Resubmitting profile');
+          // Use the function for updating and resubmitting
           await updateAndResubmitProfile(updatedProfile);
           showAlert('Profile updated and resubmitted for review!', 'success');
         } else {
+          logDebug('Submitting new profile');
           // First save all data as draft
           await updatePersonalDetails(updatedProfile.personalDetails);
           await updateDriving(updatedProfile.driving);
@@ -683,15 +792,18 @@
           showAlert('Profile submitted successfully! It will be reviewed by an administrator.', 'success');
         }
         
-        // Update the status display
-        const updatedProfile = await getCurrentUserProfile();
-        updateProfileStatus(updatedProfile);
+        // Update the status display with refreshed profile data
+        logDebug('Getting refreshed profile data');
+        const refreshedProfile = await getCurrentUserProfile();
+        logDebug('Refreshed profile data:', refreshedProfile);
+        updateProfileStatus(refreshedProfile);
         
         // Disable form again after submission
         if (isResubmission) {
           disableForm('pending');
         }
       } catch (error) {
+        logDebug('Error submitting profile:', error);
         console.error('Error submitting profile:', error);
         showAlert('Error submitting profile: ' + error.message, 'danger');
       } finally {
@@ -718,18 +830,28 @@
       }
 
       try {
+        logDebug('User authenticated:', user.uid);
+        
         // Check if user is admin
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         if (userDoc.exists() && userDoc.data().isAdmin === true) {
           adminNavItem.classList.remove('hidden');
+          logDebug('User is admin, showing admin nav');
         }
         
         // Load profile data
         await loadUserProfile();
       } catch (error) {
+        logDebug('Error checking user status:', error);
         console.error('Error checking user status:', error);
       }
     });
+
+    // Enable debug panel for administrators (add ?debug=true to URL)
+    if (window.location.search.includes('debug=true')) {
+      debugPanel.style.display = 'block';
+      logDebug('Debug mode activated');
+    }
   </script>
 </body>
 </html>
