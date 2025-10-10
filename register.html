@@ -1,1 +1,253 @@
-aaa
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FMS Portal - Register</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      min-height: 100vh; 
+      display:flex; 
+      align-items:center; 
+      padding:20px; 
+    }
+    .auth-card { 
+      background:#fff; 
+      border-radius:20px; 
+      box-shadow:0 20px 60px rgba(0,0,0,.3); 
+      overflow:hidden; 
+      max-width:500px; 
+      margin:0 auto; 
+    }
+    .auth-header { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      color:#fff; 
+      padding:30px; 
+      text-align:center; 
+    }
+    .auth-body { padding:30px; }
+    .form-control:focus { 
+      border-color:#00a896; 
+      box-shadow:0 0 0 .2rem rgba(0,168,150,.25); 
+    }
+    .btn-primary { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      border:none; 
+      padding:12px; 
+      font-weight:600; 
+    }
+    .btn-primary:hover { 
+      transform:translateY(-2px); 
+      box-shadow:0 5px 15px rgba(0,168,150,.4); 
+    }
+    .alert { border-radius:10px; }
+    .input-group-text { background:#f8f9fa; border-right:none; }
+    .form-control { border-left:none; }
+    .btn-loading { 
+      position:relative; 
+      pointer-events:none; 
+      opacity:.7; 
+    }
+    .btn-loading::after { 
+      content:""; 
+      position:absolute; 
+      width:16px; 
+      height:16px; 
+      top:50%; 
+      left:50%; 
+      margin-left:-8px; 
+      margin-top:-8px; 
+      border:2px solid #fff; 
+      border-radius:50%; 
+      border-top-color:transparent; 
+      animation:spinner .6s linear infinite; 
+    }
+    @keyframes spinner { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h2 class="mb-0"><i class="bi bi-person-plus"></i> Create Account</h2>
+        <p class="mb-0 mt-2">FMS Portal Registration</p>
+      </div>
+
+      <div class="auth-body">
+        <div id="alertContainer"></div>
+
+        <form id="registerFormElement">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">First Name</label>
+              <input type="text" class="form-control" id="firstName" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Surname</label>
+              <input type="text" class="form-control" id="surname" required>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Email Address</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+              <input type="email" class="form-control" id="registerEmail" required>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Mobile Number</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-phone"></i></span>
+              <input type="tel" class="form-control" id="mobile" required>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Password</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-lock"></i></span>
+              <input type="password" class="form-control" id="registerPassword" minlength="8" required>
+            </div>
+            <small class="form-text text-muted">Minimum 8 characters</small>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Confirm Password</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+              <input type="password" class="form-control" id="confirmPassword" required>
+            </div>
+          </div>
+          
+          <button type="submit" id="registerBtn" class="btn btn-primary w-100 mb-3">
+            <i class="bi bi-person-plus"></i> Create Account
+          </button>
+          
+          <div class="text-center">
+            <a href="index.html" class="text-decoration-none">Already have an account? Sign In</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+    // TODO: Replace with your Firebase config
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    function setButtonLoading(id, loading) {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      if (loading) {
+        btn.classList.add('btn-loading');
+        btn.disabled = true;
+      } else {
+        btn.classList.remove('btn-loading');
+        btn.disabled = false;
+      }
+    }
+
+    function showAlert(message, type) {
+      const html = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>`;
+      document.getElementById('alertContainer').innerHTML = html;
+    }
+
+    // Registration Handler
+    document.getElementById('registerFormElement').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const firstName = document.getElementById('firstName').value.trim();
+      const surname = document.getElementById('surname').value.trim();
+      const email = document.getElementById('registerEmail').value.trim().toLowerCase();
+      const mobile = document.getElementById('mobile').value.trim();
+      const password = document.getElementById('registerPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      // Validate passwords match
+      if (password !== confirmPassword) {
+        showAlert('Passwords do not match', 'danger');
+        return;
+      }
+
+      setButtonLoading('registerBtn', true);
+
+      try {
+        // Check if email is in allowed list
+        const allowedEmailDoc = await getDoc(doc(db, 'allowedEmails', email));
+        
+        if (!allowedEmailDoc.exists()) {
+          showAlert('This email address is not authorized to register. Please contact an administrator.', 'danger');
+          setButtonLoading('registerBtn', false);
+          return;
+        }
+
+        // Create user account
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        // Update display name
+        await updateProfile(user, {
+          displayName: `${firstName} ${surname}`
+        });
+
+        // Save additional user data to Firestore
+        await setDoc(doc(db, 'users', user.uid), {
+          firstName: firstName,
+          surname: surname,
+          email: email,
+          mobile: mobile,
+          isAdmin: false,
+          createdAt: new Date().toISOString(),
+          has2FA: false
+        });
+
+        showAlert('Account created successfully! Redirecting to 2FA setup...', 'success');
+        
+        // Redirect to 2FA setup
+        setTimeout(() => {
+          window.location.href = 'setup-2fa.html';
+        }, 2000);
+
+      } catch (error) {
+        setButtonLoading('registerBtn', false);
+        
+        if (error.code === 'auth/email-already-in-use') {
+          showAlert('This email is already registered. Please sign in instead.', 'danger');
+        } else if (error.code === 'auth/weak-password') {
+          showAlert('Password is too weak. Use at least 8 characters with mixed case and numbers.', 'danger');
+        } else if (error.code === 'auth/invalid-email') {
+          showAlert('Invalid email address format.', 'danger');
+        } else {
+          showAlert('Registration failed: ' + error.message, 'danger');
+        }
+      }
+    });
+  </script>
+</body>
+</html>
