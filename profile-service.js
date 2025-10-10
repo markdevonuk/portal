@@ -233,6 +233,38 @@ async function reviewProfile(userId, status, notes) {
   }
 }
 
+/**
+ * Update a profile and reset it to pending status
+ * @param {Object} updatedProfile - The updated profile data
+ * @returns {Promise<void>}
+ */
+async function updateAndResubmitProfile(updatedProfile) {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("No user is signed in");
+  }
+  
+  try {
+    const profileRef = doc(db, 'profiles', user.uid);
+    
+    // Update profile with new data
+    await updateDoc(profileRef, {
+      personalDetails: updatedProfile.personalDetails || {},
+      driving: updatedProfile.driving || {},
+      medicalQualifications: updatedProfile.medicalQualifications || {},
+      "submission.submittedAt": serverTimestamp(),
+      // Reset to pending status
+      "adminUse.status": "pending",
+      "adminUse.notes": "Profile updated by user, requires review."
+    });
+    
+    console.log("Profile updated and resubmitted for review");
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    throw error;
+  }
+}
+
 // Export functions
 export {
   getCurrentUserProfile,
@@ -242,5 +274,6 @@ export {
   updateDriving,
   updateMedicalQualifications,
   submitProfile,
-  reviewProfile
+  reviewProfile,
+  updateAndResubmitProfile
 };
