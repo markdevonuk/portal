@@ -152,47 +152,16 @@
       document.getElementById('alertContainer').innerHTML = html;
     }
 
-    // TOTP verification functions (same as your original system)
-    function verifyTOTP(secret, token) {
-      const key = base32Decode(secret);
-      const epoch = Math.floor(new Date().getTime() / 1000);
-      const time = Math.floor(epoch / 30);
-      
-      // Check current time and ±1 time step (90 seconds window)
-      for (let i = -1; i <= 1; i++) {
-        const calculatedToken = generateTOTP(key, time + i);
-        if (calculatedToken === token) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    function generateTOTP(key, time) {
-      const timeHex = dec2hex(time);
-      const timeBytes = hexToBytes(timeHex);
-      
-      // Simple HMAC-SHA1 implementation
-      const hmac = computeHmacSha1(key, timeBytes);
-      
-      const offset = hmac[hmac.length - 1] & 0xf;
-      const binary = ((hmac[offset] & 0x7f) << 24) |
-                     ((hmac[offset + 1] & 0xff) << 16) |
-                     ((hmac[offset + 2] & 0xff) << 8) |
-                     (hmac[offset + 3] & 0xff);
-      
-      const otp = binary % 1000000;
-      return ('000000' + otp).slice(-6);
-    }
-
+    // Base32 decode (RFC 4648)
     function base32Decode(base32) {
       const base32Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-      let bits = '';
+      base32 = base32.toUpperCase().replace(/=+$/, '');
       
+      let bits = '';
       for (let i = 0; i < base32.length; i++) {
-        const val = base32Chars.indexOf(base32.charAt(i).toUpperCase());
-        if (val === -1) continue;
-        bits += ('00000' + val.toString(2)).slice(-5);
+        const val = base32Chars.indexOf(base32.charAt(i));
+        if (val === -1) throw new Error('Invalid base32 character');
+        bits += val.toString(2).padStart(5, '0');
       }
       
       const bytes = [];
@@ -200,38 +169,67 @@
         bytes.push(parseInt(bits.substr(i, 8), 2));
       }
       
-      return bytes;
+      return new Uint8Array(bytes);
     }
 
-    function dec2hex(dec) {
-      return ('0000000000000000' + dec.toString(16)).slice(-16);
-    }
-
-    function hexToBytes(hex) {
-      const bytes = [];
-      for (let i = 0; i < hex.length; i += 2) {
-        bytes.push(parseInt(hex.substr(i, 2), 16));
+    // Convert number to 8-byte array (big-endian)
+    function intToBytes(num) {
+      const bytes = new Uint8Array(8);
+      for (let i = 7; i >= 0; i--) {
+        bytes[i] = num & 0xff;
+        num = num >> 8;
       }
       return bytes;
     }
 
-    // Simple HMAC-SHA1 (using Web Crypto API)
-    async function computeHmacSha1(key, message) {
-      const cryptoKey = await crypto.subtle.importKey(
-        'raw',
-        new Uint8Array(key),
-        { name: 'HMAC', hash: 'SHA-1' },
-        false,
-        ['sign']
-      );
-      
-      const signature = await crypto.subtle.sign(
-        'HMAC',
-        cryptoKey,
-        new Uint8Array(message)
-      );
-      
-      return Array.from(new Uint8Array(signature));
+    // Verify TOTP with time window using Web Crypto API
+    async function verifyTOTP(secret, token) {
+      try {
+        console.log('Verifying TOTP:', { secret, token });
+        
+        // Check current time and ±1 time step (90 seconds window)
+        const epoch = Math.floor(Date.now() / 1000);
+        const currentTimeStep = Math.floor(epoch / 30);
+        
+        for (let i = -1; i <= 1; i++) {
+          const testCounter = currentTimeStep + i;
+          const timeBytes = intToBytes(testCounter);
+          
+          const key = base32Decode(secret);
+          const cryptoKey = await crypto.subtle.importKey(
+            'raw',
+            key,
+            { name: 'HMAC', hash: 'SHA-1' },
+            false,
+            ['sign']
+          );
+          
+          const signature = await crypto.subtle.sign('HMAC', cryptoKey, timeBytes);
+          const hmac = new Uint8Array(signature);
+          
+          const offset = hmac[hmac.length - 1] & 0x0f;
+          const binary = 
+            ((hmac[offset] & 0x7f) << 24) |
+            ((hmac[offset + 1] & 0xff) << 16) |
+            ((hmac[offset + 2] & 0xff) << 8) |
+            (hmac[offset + 3] & 0xff);
+          
+          const otp = (binary % 1000000).toString().padStart(6, '0');
+          
+          console.log(`Time step ${testCounter} (offset ${i}): generated=${otp}, expected=${token}`);
+          
+          if (otp === token) {
+            console.log('✓ Match found!');
+            return true;
+          }
+        }
+        
+        console.log('✗ No match found');
+        return false;
+      } catch (error) {
+        console.error('Verification error:', error);
+        return false;
+      }
     }
 
     // Verify 2FA Handler
@@ -273,7 +271,7 @@
         }
 
         // Verify TOTP code
-        const isValid = verifyTOTP(secret2FA, code);
+        const isValid = await verifyTOTP(secret2FA, code);
 
         if (isValid) {
           // Code is valid, clear session flags
