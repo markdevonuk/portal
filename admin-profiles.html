@@ -506,6 +506,17 @@
           showAlert('Profile not found', 'danger');
           return;
         }
+
+        // If this is a resubmission, add a note about it
+if (profile.adminUse && profile.adminUse.notes && 
+    profile.adminUse.notes.includes("updated by user")) {
+  html += `
+    <div class="alert alert-warning mt-3">
+      <i class="bi bi-exclamation-triangle-fill"></i> 
+      <strong>Profile Updated:</strong> This profile has been updated since the last review.
+    </div>
+  `;
+}
         
         // Format modal content
         let html = `
