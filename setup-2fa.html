@@ -141,6 +141,11 @@
             <small class="text-muted d-block mt-2">Click to select and copy</small>
           </div>
 
+          <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle-fill"></i> 
+            <strong>Important:</strong> Save the manual entry key above in a secure location! If you lose access to your authenticator app, you'll need this key to regain access to your account.
+          </div>
+
           <div class="step-info">
             <strong><i class="bi bi-2-circle-fill"></i> Step 2:</strong> Tap the '+' button and scan the QR code above
           </div>
@@ -371,18 +376,19 @@
       document.getElementById('loadingSetup').classList.add('hidden');
       document.getElementById('setupContent').classList.remove('hidden');
 
-      // Generate current TOTP for debugging
+      // Debug: Generate current TOTP (comment out in production)
+      /*
       try {
         const currentCode = await generateTOTP(currentSecret);
         console.log('Current valid code:', currentCode);
         
-        // Show debug info (comment out in production)
         const debugDiv = document.getElementById('debugInfo');
         debugDiv.style.display = 'block';
         debugDiv.innerHTML = `Debug: Current valid code is <strong>${currentCode}</strong><br>Secret: ${currentSecret}`;
       } catch (error) {
         console.error('Debug code generation failed:', error);
       }
+      */
     });
 
     // Allow clicking on manual key to select all text
