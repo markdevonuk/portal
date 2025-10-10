@@ -171,19 +171,18 @@
         return;
       }
 
-      // User is logged in, display their info
-      const displayName = user.displayName || 'User';
-      const firstName = displayName.split(' ')[0];
-      
-      document.getElementById('userName').textContent = firstName;
-      document.getElementById('welcomeName').textContent = firstName;
-      document.getElementById('userEmail').textContent = user.email;
-
-      // Get user data from Firestore to check 2FA and admin status
+      // Get user data from Firestore
       try {
         const userDoc = await getDoc(doc(db, 'users', user.uid));
+        
         if (userDoc.exists()) {
           const userData = userDoc.data();
+          
+          // Display user name from Firestore
+          const firstName = userData.firstName || 'User';
+          document.getElementById('userName').textContent = firstName;
+          document.getElementById('welcomeName').textContent = firstName;
+          document.getElementById('userEmail').textContent = userData.email || user.email;
           
           // Check 2FA status
           if (userData.has2FA === true) {
@@ -192,17 +191,38 @@
           }
           
           // Check admin status
+          console.log('User admin status:', userData.isAdmin, 'Type:', typeof userData.isAdmin);
           if (userData.isAdmin === true) {
+            console.log('Showing admin nav item');
             document.getElementById('adminNavItem').classList.remove('hidden');
+          } else {
+            console.log('Not showing admin nav - isAdmin:', userData.isAdmin);
           }
+        } else {
+          // Fallback if Firestore document doesn't exist
+          const displayName = user.displayName || 'User';
+          const firstName = displayName.split(' ')[0];
+          
+          document.getElementById('userName').textContent = firstName;
+          document.getElementById('welcomeName').textContent = firstName;
+          document.getElementById('userEmail').textContent = user.email;
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
+        
+        // Fallback to Firebase Auth data
+        const displayName = user.displayName || 'User';
+        const firstName = displayName.split(' ')[0];
+        
+        document.getElementById('userName').textContent = firstName;
+        document.getElementById('welcomeName').textContent = firstName;
+        document.getElementById('userEmail').textContent = user.email;
       }
     });
 
     // Logout handler
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
+    document.getElementById('logoutLink').addEventListener('click', async (e) => {
+      e.preventDefault();
       try {
         await signOut(auth);
         window.location.href = 'index.html';
