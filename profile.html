@@ -1,1 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Profile - FMS Prehospital Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <style>
+    body { background:#f8f9fa; min-height:100vh; }
+    .navbar { 
+      background:linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      box-shadow:0 2px 10px rgba(0,0,0,.1); 
+    }
+    .nav-link { color: rgba(255,255,255,.85) !important; font-weight: 500; }
+    .nav-link:hover { color: #fff !important; }
+    .profile-card { 
+      background:#fff; 
+      border-radius:15px; 
+      box-shadow:0 5px 20px rgba(0,0,0,.08); 
+      padding:30px; 
+      margin:20px 0; 
+    }
+    .page-header { 
+      background:linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      color:#fff; 
+      border-radius:15px; 
+      padding:30px; 
+      margin:30px 0 20px 0; 
+    }
+    .form-control:focus { 
+      border-color: #00a896; 
+      box-shadow: 0 0 0 0.2rem rgba(0,168,150,.25); 
+    }
+    .btn-primary { 
+      background: linear-gradient(135deg, #00a896 0%, #028090 100%); 
+      border: none; 
+      font-weight: 600; 
+    }
+    .btn-primary:hover { 
+      transform: translateY(-2px); 
+      box-shadow: 0 5px 15px rgba(0,168,150,.4); 
+    }
+    .section-title {
+      border-bottom: 2px solid #00a896;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+      color: #028090;
+    }
+    .form-section {
+      margin-bottom: 30px;
+    }
+    .btn-loading { position: relative; pointer-events: none; opacity: .7; }
+    .btn-loading::after { 
+      content:""; position:absolute; width:16px; height:16px; top:50%; left:50%; 
+      margin:-8px 0 0 -8px; border:2px solid #fff; border-radius:50%; 
+      border-top-color:transparent; animation:spinner .6s linear infinite; 
+    }
+    @keyframes spinner { to { transform: rotate(360deg); } }
+    .hidden { display: none; }
+    .text-success { color: #00a896 !important; }
+    .profile-status {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-approved { background: #d1e7dd; color: #155724; }
+    .status-rejected { background: #f8d7da; color: #721c24; }
+    .form-check-input:checked {
+      background-color: #00a896;
+      border-color: #00a896;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="dashboard.html"><i class="bi bi-shield-lock"></i> FMS Prehospital Portal</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item hidden" id="adminNavItem">
+            <a class="nav-link" href="admin.html">
+              <i class="bi bi-gear-fill"></i> Admin
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="dashboard.html">
+              <i class="bi bi-house-fill"></i> Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="logoutLink">
+              <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
 
+  <div class="container">
+    <div class="page-header">
+      <h1 class="mb-2"><i class="bi bi-person-vcard-fill"></i> My Profile</h1>
+      <p class="mb-0">Complete your professional details</p>
+    </div>
+
+    <div id="alertContainer"></div>
+
+    <!-- Profile Status -->
+    <div id="profileStatus" class="profile-status hidden">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h5 class="mb-1" id="statusTitle">Profile Status</h5>
+          <p class="mb-0" id="statusMessage">Your profile status will appear here</p>
+        </div>
+        <div id="statusIcon">
+          <i class="bi bi-question-circle fs-1"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Form -->
+    <form id="profileForm">
+      <!-- Personal Details Section -->
+      <div class="profile-card form-section">
+        <h3 class="section-title"><i class="bi bi-person-fill"></i> Personal Details</h3>
+        
+        <div class="mb-3">
+          <label class="form-label">Your date of birth <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+            <input type="text" class="form-control" id="dob" name="dob" placeholder="DD/MM/YYYY" required>
+          </div>
+          <small class="form-text text-muted">Select your date of birth</small>
+        </div>
+        
+        <div class="mb-3">
+          <label class="form-label">Who should we contact in an emergency <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+            <input type="text" class="form-control" id="emergencyContact" name="emergencyContact" placeholder="Name & phone number" required>
+          </div>
+          <small class="form-text text-muted">Provide a name and contact number</small>
+        </div>
+      </div>
+      
+      <!-- Driving Details Section -->
+      <div class="profile-card form-section">
+        <h3 class="section-title"><i class="bi bi-car-front-fill"></i> Driving Details</h3>
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle"></i> Optional, but you cannot drive FMS vehicles without supplying this data. By completing you agree that FMS can carry out driving licence checks online from time to time.
+        </div>
+        
+        <div class="mb-3">
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="c1Classification" name="c1Classification">
+            <label class="form-check-label" for="c1Classification">I have a C1 classification on my driving licence</label>
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label class="form-label">Your driving licence number</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-credit-card-2-front"></i></span>
+            <input type="text" class="form-control" id="dlNumber" name="dlNumber" placeholder="e.g. SMITH601014ABCDE">
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label class="form-label">Your National Insurance number</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-shield"></i></span>
+            <input type="text" class="form-control" id="niNumber" name="niNumber" placeholder="e.g. AB123456C">
+          </div>
+          <small class="form-text text-muted">Used for driving licence checks online</small>
+        </div>
+        
+        <div class="mb-3">
+          <label class="form-label">How many points do you have on your licence</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-exclamation-triangle"></i></span>
+            <input type="text" class="form-control" id="points" name="points" placeholder="e.g. 0, 3, etc.">
+          </div>
+        </div>
+      </div>
+      
+      <!-- Medical Qualifications Section -->
+      <div class="profile-card form-section">
+        <h3 class="section-title"><i class="bi bi-award"></i> Your Qualifications</h3>
+        
+        <div class="mb-4">
+          <label class="form-label">What is your main qualification <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-mortarboard"></i></span>
+            <select class="form-select" id="qualification" name="qualification" required>
+              <option value="">Select your main qualification</option>
+              <option value="AAP">AAP</option>
+              <option value="Doctor">Doctor</option>
+              <option value="Doctor (Critical Care/BASICS/Merit)">Doctor (Critical Care/BASICS/Merit)</option>
+              <option value="Doctor (with FREC/PHTLS or similar)">Doctor (with FREC/PHTLS or similar)</option>
+              <option value="EAA">EAA</option>
+              <option value="ECA">ECA</option>
+              <option value="FREC 3 (or similar level 3 certification)">FREC 3 (or similar level 3 certification)</option>
+              <option value="FREC 4">FREC 4</option>
+              <option value="Nurse">Nurse</option>
+              <option value="Nurse (Ambulance Nurse)">Nurse (Ambulance Nurse)</option>
+              <option value="Nurse (with FREC/PHTLS or similar)">Nurse (with FREC/PHTLS or similar)</option>
+              <option value="Paramedic">Paramedic</option>
+              <option value="Paramedic (Critical care)">Paramedic (Critical care)</option>
+              <option value="Paramedic (CTM/OO)">Paramedic (CTM/OO)</option>
+              <option value="Paramedic (HART)">Paramedic (HART)</option>
+              <option value="Paramedic (in Primary Care)">Paramedic (in Primary Care)</option>
+              <option value="Paramedic (Specialist)">Paramedic (Specialist)</option>
+              <option value="PHTLS">PHTLS</option>
+              <option value="Student Paramedic (Year 2)">Student Paramedic (Year 2)</option>
+              <option value="Student Paramedic (Year 3)">Student Paramedic (Year 3)</option>
+              <option value="Technician">Technician</option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- HCPC Registration (conditional) -->
+        <div class="mb-3 hidden" id="hcpcSection">
+          <label class="form-label">HCPC Registration <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-card-text"></i></span>
+            <input type="text" class="form-control" id="hcpc" name="hcpc" placeholder="Your HCPC registration number">
+          </div>
+        </div>
+        
+        <!-- GMC Registration (conditional) -->
+        <div class="mb-3 hidden" id="gmcSection">
+          <label class="form-label">GMC Registration <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-card-text"></i></span>
+            <input type="text" class="form-control" id="gmc" name="gmc" placeholder="Your GMC registration number">
+          </div>
+        </div>
+        
+        <!-- NMC Registration (conditional) -->
+        <div class="mb-3 hidden" id="nmcSection">
+          <label class="form-label">NMC Registration <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-card-text"></i></span>
+            <input type="text" class="form-control" id="nmc" name="nmc" placeholder="Your NMC registration number">
+          </div>
+        </div>
+        
+        <!-- Certificate Expiry (conditional) -->
+        <div class="mb-3 hidden" id="certExpirySection">
+          <label class="form-label">When does your certificate expire <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+            <input type="text" class="form-control" id="certExpiry" name="certExpiry" placeholder="DD/MM/YYYY">
+          </div>
+        </div>
+        
+        <!-- Details -->
+        <div class="mb-3">
+          <label class="form-label">Details <span class="text-danger">*</span></label>
+          <textarea class="form-control" id="details" name="details" rows="4" placeholder="Please give us a short idea of your day job and any relevance to FMS" required></textarea>
+          <small class="form-text text-muted">Briefly describe your current role and its relevance to FMS</small>
+        </div>
+      </div>
+      
+      <!-- Terms and Conditions -->
+      <div class="profile-card form-section">
+        <h3 class="section-title"><i class="bi bi-check-square"></i> Terms and Conditions</h3>
+        
+        <div class="mb-3">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="agreedToTerms" name="agreedToTerms" required>
+            <label class="form-check-label" for="agreedToTerms">
+              I agree to the following terms: FMS may use my personal information for operational and recruitment purposes. I confirm that all information provided is accurate and complete. I understand that my profile will be reviewed by FMS administrators before approval.
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Form Actions -->
+      <div class="d-flex justify-content-between mb-5">
+        <button type="button" class="btn btn-outline-secondary" id="saveAsDraftBtn">
+          <i class="bi bi-save"></i> Save as Draft
+        </button>
+        <button type="submit" class="btn btn-primary" id="submitProfileBtn">
+          <i class="bi bi-send"></i> Submit Profile
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { firebaseConfig } from './firebase-config.js';
+    import { 
+      getCurrentUserProfile, 
+      createProfile, 
+      updatePersonalDetails, 
+      updateDriving, 
+      updateMedicalQualifications, 
+      submitProfile 
+    } from './profile-service.js';
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Initialize Flatpickr date pickers
+    flatpickr("#dob", {
+      dateFormat: "d/m/Y",
+      maxDate: new Date() // Can't select future dates
+    });
+    
+    flatpickr("#certExpiry", {
+      dateFormat: "d/m/Y",
+      minDate: new Date() // Can't select past dates
+    });
+
+    // DOM elements
+    const profileForm = document.getElementById('profileForm');
+    const saveAsDraftBtn = document.getElementById('saveAsDraftBtn');
+    const submitProfileBtn = document.getElementById('submitProfileBtn');
+    const qualification = document.getElementById('qualification');
+    const hcpcSection = document.getElementById('hcpcSection');
+    const gmcSection = document.getElementById('gmcSection');
+    const nmcSection = document.getElementById('nmcSection');
+    const certExpirySection = document.getElementById('certExpirySection');
+    const profileStatus = document.getElementById('profileStatus');
+    const statusTitle = document.getElementById('statusTitle');
+    const statusMessage = document.getElementById('statusMessage');
+    const statusIcon = document.getElementById('statusIcon');
+    const alertContainer = document.getElementById('alertContainer');
+    const adminNavItem = document.getElementById('adminNavItem');
+    const logoutLink = document.getElementById('logoutLink');
+
+    // Helper Functions
+    function setButtonLoading(id, loading) {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      if (loading) {
+        btn.classList.add('btn-loading');
+        btn.disabled = true;
+      } else {
+        btn.classList.remove('btn-loading');
+        btn.disabled = false;
+      }
+    }
+
+    function showAlert(message, type) {
+      const html = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>`;
+      alertContainer.innerHTML = html;
+      
+      if (type === 'success') {
+        setTimeout(() => {
+          const alert = document.querySelector('.alert');
+          if (alert) {
+            alert.classList.remove('show');
+            setTimeout(() => alert.remove(), 150);
+          }
+        }, 5000);
+      }
+    }
+
+    function updateProfileStatus(status) {
+      profileStatus.classList.remove('hidden');
+      profileStatus.classList.remove('status-pending', 'status-approved', 'status-rejected');
+      
+      if (!status || !status.adminUse || !status.adminUse.status) {
+        profileStatus.classList.add('hidden');
+        return;
+      }
+      
+      const adminStatus = status.adminUse.status;
+      
+      if (adminStatus === 'pending') {
+        statusTitle.textContent = 'Profile Under Review';
+        statusMessage.textContent = 'Your profile has been submitted and is waiting for admin approval.';
+        statusIcon.innerHTML = '<i class="bi bi-hourglass-split fs-1 text-warning"></i>';
+        profileStatus.classList.add('status-pending');
+      } else if (adminStatus === 'approved') {
+        statusTitle.textContent = 'Profile Approved';
+        statusMessage.textContent = 'Your profile has been reviewed and approved.';
+        statusIcon.innerHTML = '<i class="bi bi-check-circle fs-1 text-success"></i>';
+        profileStatus.classList.add('status-approved');
+      } else if (adminStatus === 'rejected') {
+        statusTitle.textContent = 'Profile Needs Updates';
+        const notes = status.adminUse.notes ? `: ${status.adminUse.notes}` : '';
+        statusMessage.textContent = `Your profile has been reviewed and needs changes${notes}`;
+        statusIcon.innerHTML = '<i class="bi bi-x-circle fs-1 text-danger"></i>';
+        profileStatus.classList.add('status-rejected');
+      } else {
+        profileStatus.classList.add('hidden');
+      }
+    }
+
+    // Show/hide registration fields based on qualification
+    qualification.addEventListener('change', function() {
+      const value = this.value;
+      
+      // Reset all sections to hidden
+      hcpcSection.classList.add('hidden');
+      gmcSection.classList.add('hidden');
+      nmcSection.classList.add('hidden');
+      certExpirySection.classList.add('hidden');
+      
+      // Remove required attribute from all registration inputs
+      document.getElementById('hcpc').removeAttribute('required');
+      document.getElementById('gmc').removeAttribute('required');
+      document.getElementById('nmc').removeAttribute('required');
+      document.getElementById('certExpiry').removeAttribute('required');
+      
+      // Show appropriate sections based on qualification
+      if (['Paramedic', 'Paramedic (Specialist)', 'Paramedic (HART)', 
+           'Paramedic (Critical care)', 'Paramedic (in Primary Care)', 
+           'Paramedic (CTM/OO)'].includes(value)) {
+        hcpcSection.classList.remove('hidden');
+        document.getElementById('hcpc').setAttribute('required', 'required');
+      } else if (['Doctor', 'Doctor (Critical Care/BASICS/Merit)', 
+                  'Doctor (with FREC/PHTLS or similar)'].includes(value)) {
+        gmcSection.classList.remove('hidden');
+        document.getElementById('gmc').setAttribute('required', 'required');
+      } else if (['Nurse', 'Nurse (Ambulance Nurse)', 
+                  'Nurse (with FREC/PHTLS or similar)'].includes(value)) {
+        nmcSection.classList.remove('hidden');
+        document.getElementById('nmc').setAttribute('required', 'required');
+        
+        if (value === 'Nurse (with FREC/PHTLS or similar)') {
+          certExpirySection.classList.remove('hidden');
+          document.getElementById('certExpiry').setAttribute('required', 'required');
+        }
+      } else if (['FREC 3 (or similar level 3 certification)', 'FREC 4', 'PHTLS'].includes(value)) {
+        certExpirySection.classList.remove('hidden');
+        document.getElementById('certExpiry').setAttribute('required', 'required');
+      }
+    });
+
+    // Load user profile data
+    async function loadUserProfile() {
+      try {
+        const profile = await getCurrentUserProfile();
+        
+        if (profile) {
+          // Update profile status display
+          updateProfileStatus(profile);
+          
+          // Fill form with existing data if available
+          if (profile.personalDetails) {
+            if (profile.personalDetails.DOB) {
+              // Convert timestamp to date string
+              const date = new Date(profile.personalDetails.DOB.seconds * 1000);
+              document.getElementById('dob').value = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+            }
+            document.getElementById('emergencyContact').value = profile.personalDetails.emergencyContact || '';
+          }
+          
+          if (profile.driving) {
+            document.getElementById('c1Classification').checked = profile.driving.c1Classification || false;
+            document.getElementById('dlNumber').value = profile.driving.dlNumber || '';
+            document.getElementById('niNumber').value = profile.driving.niNumber || '';
+            document.getElementById('points').value = profile.driving.points || '';
+          }
+          
+          if (profile.medicalQualifications) {
+            document.getElementById('qualification').value = profile.medicalQualifications.qualification || '';
+            document.getElementById('hcpc').value = profile.medicalQualifications.hcpc || '';
+            document.getElementById('gmc').value = profile.medicalQualifications.gmc || '';
+            document.getElementById('nmc').value = profile.medicalQualifications.nmc || '';
+            document.getElementById('details').value = profile.medicalQualifications.details || '';
+            
+            if (profile.medicalQualifications.certExpiry) {
+              // Convert timestamp to date string
+              const date = new Date(profile.medicalQualifications.certExpiry.seconds * 1000);
+              document.getElementById('certExpiry').value = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+            }
+            
+            // Trigger change event to show/hide appropriate fields
+            qualification.dispatchEvent(new Event('change'));
+          }
+          
+          if (profile.submission) {
+            document.getElementById('agreedToTerms').checked = profile.submission.agreedToTerms || false;
+          }
+          
+          // If profile is submitted and pending/approved, disable form
+          if (profile.submission && profile.submission.submittedAt && 
+              profile.adminUse && profile.adminUse.status === 'approved') {
+            disableForm();
+          }
+        } else {
+          // No profile exists, create an empty one
+          await createProfile({});
+          showAlert('Profile created. Please complete your information below.', 'info');
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error);
+        showAlert('Error loading your profile data. Please try again later.', 'danger');
+      }
+    }
+
+    // Disable form if profile is approved
+    function disableForm() {
+      const inputs = document.querySelectorAll('#profileForm input, #profileForm select, #profileForm textarea');
+      inputs.forEach(input => {
+        input.setAttribute('disabled', 'disabled');
+      });
+      
+      saveAsDraftBtn.classList.add('hidden');
+      submitProfileBtn.classList.add('hidden');
+      
+      showAlert('Your profile has been approved. Please contact an admin if you need to make changes.', 'info');
+    }
+
+    // Save as Draft
+    saveAsDraftBtn.addEventListener('click', async () => {
+      setButtonLoading('saveAsDraftBtn', true);
+      
+      try {
+        // Get values from form
+        const personalDetails = {
+          DOB: parseDateString(document.getElementById('dob').value),
+          emergencyContact: document.getElementById('emergencyContact').value
+        };
+        
+        const driving = {
+          c1Classification: document.getElementById('c1Classification').checked,
+          dlNumber: document.getElementById('dlNumber').value,
+          niNumber: document.getElementById('niNumber').value,
+          points: document.getElementById('points').value
+        };
+        
+        const medicalQualifications = {
+          qualification: document.getElementById('qualification').value,
+          hcpc: document.getElementById('hcpc').value,
+          gmc: document.getElementById('gmc').value,
+          nmc: document.getElementById('nmc').value,
+          details: document.getElementById('details').value,
+          certExpiry: parseDateString(document.getElementById('certExpiry').value)
+        };
+        
+        // Update each section separately
+        await updatePersonalDetails(personalDetails);
+        await updateDriving(driving);
+        await updateMedicalQualifications(medicalQualifications);
+        
+        showAlert('Profile saved as draft successfully!', 'success');
+      } catch (error) {
+        console.error('Error saving draft:', error);
+        showAlert('Error saving profile: ' + error.message, 'danger');
+      } finally {
+        setButtonLoading('saveAsDraftBtn', false);
+      }
+    });
+
+    // Helper function to parse date string to Firebase timestamp
+    function parseDateString(dateStr) {
+      if (!dateStr) return null;
+      
+      // Parse UK format date (DD/MM/YYYY)
+      const parts = dateStr.split('/');
+      if (parts.length !== 3) return null;
+      
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // Months are 0-based
+      const year = parseInt(parts[2], 10);
+      
+      return new Date(year, month, day);
+    }
+
+    // Submit Profile
+    profileForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // Validate form
+      if (!profileForm.checkValidity()) {
+        profileForm.reportValidity();
+        return;
+      }
+      
+      const agreedToTerms = document.getElementById('agreedToTerms').checked;
+      if (!agreedToTerms) {
+        showAlert('You must agree to the terms before submitting.', 'warning');
+        return;
+      }
+      
+      setButtonLoading('submitProfileBtn', true);
+      
+      try {
+        // First save all data as draft
+        await saveAsDraftBtn.click();
+        
+        // Then submit the profile
+        await submitProfile(true);
+        
+        showAlert('Profile submitted successfully! It will be reviewed by an administrator.', 'success');
+        
+        // Update the status display
+        const profile = await getCurrentUserProfile();
+        updateProfileStatus(profile);
+      } catch (error) {
+        console.error('Error submitting profile:', error);
+        showAlert('Error submitting profile: ' + error.message, 'danger');
+      } finally {
+        setButtonLoading('submitProfileBtn', false);
+      }
+    });
+
+    // Logout handler
+    logoutLink.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        await signOut(auth);
+        window.location.href = 'index.html';
+      } catch (error) {
+        showAlert('Logout failed: ' + error.message, 'danger');
+      }
+    });
+
+    // Check authentication and load profile data
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      try {
+        // Check if user is admin
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists() && userDoc.data().isAdmin === true) {
+          adminNavItem.classList.remove('hidden');
+        }
+        
+        // Load profile data
+        await loadUserProfile();
+      } catch (error) {
+        console.error('Error checking user status:', error);
+      }
+    });
+  </script>
+</body>
+</html>
