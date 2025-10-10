@@ -83,11 +83,11 @@
           <div class="row">
             <div class="col-md-6 mb-3">
               <label class="form-label">First Name</label>
-              <input type="text" class="form-control" id="firstName" required>
+              <input type="text" class="form-control" id="firstName" required autocomplete="given-name">
             </div>
             <div class="col-md-6 mb-3">
               <label class="form-label">Surname</label>
-              <input type="text" class="form-control" id="surname" required>
+              <input type="text" class="form-control" id="surname" required autocomplete="family-name">
             </div>
           </div>
           
@@ -95,7 +95,7 @@
             <label class="form-label">Email Address</label>
             <div class="input-group">
               <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-              <input type="email" class="form-control" id="registerEmail" required>
+              <input type="email" class="form-control" id="registerEmail" required autocomplete="email">
             </div>
           </div>
           
@@ -103,7 +103,7 @@
             <label class="form-label">Mobile Number</label>
             <div class="input-group">
               <span class="input-group-text"><i class="bi bi-phone"></i></span>
-              <input type="tel" class="form-control" id="mobile" required>
+              <input type="tel" class="form-control" id="mobile" required autocomplete="tel">
             </div>
           </div>
           
@@ -111,7 +111,7 @@
             <label class="form-label">Password</label>
             <div class="input-group">
               <span class="input-group-text"><i class="bi bi-lock"></i></span>
-              <input type="password" class="form-control" id="registerPassword" minlength="8" required>
+              <input type="password" class="form-control" id="registerPassword" minlength="8" required autocomplete="new-password">
             </div>
             <small class="form-text text-muted">Minimum 8 characters</small>
           </div>
@@ -120,7 +120,7 @@
             <label class="form-label">Confirm Password</label>
             <div class="input-group">
               <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
-              <input type="password" class="form-control" id="confirmPassword" required>
+              <input type="password" class="form-control" id="confirmPassword" required autocomplete="new-password">
             </div>
           </div>
           
@@ -142,17 +142,7 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
     import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
     import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-
-    // TODO: Replace with your Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyDTkfw7tjrPkGLGHCnYgUhX8lsY9w7zn5c",
-  authDomain: "fmsportal-dbfb3.firebaseapp.com",
-  projectId: "fmsportal-dbfb3",
-  storageBucket: "fmsportal-dbfb3.firebasestorage.app",
-  messagingSenderId: "411503752161",
-  appId: "1:411503752161:web:4df9f2d2568a2d6e88d8a0",
-  measurementId: "G-K6WKLHP087"
-};
+    import { firebaseConfig } from './firebase-config.js';
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -196,6 +186,12 @@ const firebaseConfig = {
         return;
       }
 
+      // Validate password strength
+      if (password.length < 8) {
+        showAlert('Password must be at least 8 characters long', 'danger');
+        return;
+      }
+
       setButtonLoading('registerBtn', true);
 
       try {
@@ -208,7 +204,7 @@ const firebaseConfig = {
           return;
         }
 
-        // Create user account
+        // Create user account with Firebase Authentication
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
@@ -225,7 +221,8 @@ const firebaseConfig = {
           mobile: mobile,
           isAdmin: false,
           createdAt: new Date().toISOString(),
-          has2FA: false
+          has2FA: false,
+          secret2FA: null
         });
 
         showAlert('Account created successfully! Redirecting to 2FA setup...', 'success');
@@ -239,13 +236,16 @@ const firebaseConfig = {
         setButtonLoading('registerBtn', false);
         
         if (error.code === 'auth/email-already-in-use') {
-          showAlert('This email is already registered. Please sign in instead.', 'danger');
+          showAlert('This email is already registered. Please <a href="index.html" class="alert-link">sign in instead</a>.', 'danger');
         } else if (error.code === 'auth/weak-password') {
-          showAlert('Password is too weak. Use at least 8 characters with mixed case and numbers.', 'danger');
+          showAlert('Password is too weak. Use at least 8 characters with a mix of letters and numbers.', 'danger');
         } else if (error.code === 'auth/invalid-email') {
           showAlert('Invalid email address format.', 'danger');
+        } else if (error.code === 'permission-denied') {
+          showAlert('Database access denied. Please contact support.', 'danger');
         } else {
           showAlert('Registration failed: ' + error.message, 'danger');
+          console.error('Registration error:', error);
         }
       }
     });
