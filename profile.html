@@ -608,25 +608,68 @@
             logDebug('Loading personal details:', profile.personalDetails);
             
             if (profile.personalDetails.DOB) {
-              // Convert timestamp to date string
-              let date;
-              if (profile.personalDetails.DOB.seconds) {
+              logDebug('DOB data from profile:', profile.personalDetails.DOB);
+              
+              // Handle various date formats more robustly for mobile compatibility
+              let date = null;
+              
+              // Case 1: Firebase Timestamp object
+              if (profile.personalDetails.DOB.seconds && profile.personalDetails.DOB.nanoseconds) {
                 date = new Date(profile.personalDetails.DOB.seconds * 1000);
-              } else if (profile.personalDetails.DOB instanceof Date) {
+                logDebug('Parsed Firebase timestamp to:', date);
+              } 
+              // Case 2: JavaScript Date object
+              else if (profile.personalDetails.DOB instanceof Date) {
                 date = profile.personalDetails.DOB;
-              } else {
+                logDebug('Using JavaScript Date object:', date);
+              }
+              // Case 3: String with timestamp (from Firestore)
+              else if (typeof profile.personalDetails.DOB === 'object' && profile.personalDetails.DOB._seconds) {
+                date = new Date(profile.personalDetails.DOB._seconds * 1000);
+                logDebug('Parsed _seconds timestamp to:', date);
+              }
+              // Case 4: ISO string or other date string
+              else if (typeof profile.personalDetails.DOB === 'string') {
                 try {
-                  // If it's a string or another format, try to parse it
                   date = new Date(profile.personalDetails.DOB);
+                  logDebug('Parsed date string to:', date);
                 } catch (e) {
-                  logDebug('Failed to parse DOB:', e);
-                  date = null;
+                  logDebug('Failed to parse date string:', e);
+                }
+              }
+              // Case 5: Unix timestamp as a number
+              else if (typeof profile.personalDetails.DOB === 'number') {
+                date = new Date(profile.personalDetails.DOB);
+                logDebug('Parsed number timestamp to:', date);
+              }
+              // Case 6: Last attempt with any other format
+              else {
+                try {
+                  date = new Date(profile.personalDetails.DOB);
+                  logDebug('Attempted general parse to:', date);
+                } catch (e) {
+                  logDebug('All parsing attempts failed:', e);
                 }
               }
               
               if (date && !isNaN(date.getTime())) {
-                document.getElementById('dob').value = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
-                logDebug('Loaded DOB:', document.getElementById('dob').value);
+                // Format the date consistently for display
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                
+                const formattedDate = `${day}/${month}/${year}`;
+                document.getElementById('dob').value = formattedDate;
+                logDebug('Loaded DOB:', formattedDate);
+                
+                // Initialize flatpickr with the date to ensure it's displayed correctly
+                flatpickr("#dob", {
+                  dateFormat: "d/m/Y",
+                  maxDate: new Date(),
+                  defaultDate: date
+                });
+              } else {
+                logDebug('Could not parse DOB to valid date');
               }
             }
             
