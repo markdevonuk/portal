@@ -63,15 +63,24 @@
 
 /* Make badges more compact */
 .nav-tabs .badge {
-  font-size: 0.7rem;
-  padding: 0.2em 0.5em;
+  font-size: 0.9rem;
+  padding: 0.3em 0.7em;
+  margin-top: 4px;
+  font-weight: 700;
+  display: inline-block;
+  min-width: 26px;
+  text-align: center;
 }
 
 /* Media query for larger screens */
 @media (min-width: 576px) {
-  .nav-tabs .nav-item {
-    margin: 0 10px;
+  .nav-tabs .badge {
+    font-size: 1rem;
+    padding: 0.35em 0.8em;
+    margin-top: 5px;
+    min-width: 30px;
   }
+}
   
   .nav-tabs .nav-link {
     font-size: 16px;
