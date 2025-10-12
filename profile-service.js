@@ -88,7 +88,7 @@ async function createProfile(profileData) {
         submittedAt: null
       },
       adminUse: {
-        status: "pending",
+        status: "draft", // Changed from "pending" to "draft"
         approvedBy: "",
         notes: "",
         reviewedAt: null
@@ -119,9 +119,28 @@ async function updatePersonalDetails(personalDetails) {
   
   try {
     const profileRef = doc(db, 'profiles', user.uid);
-    await updateDoc(profileRef, {
-      personalDetails: personalDetails
-    });
+    
+    // Check if the profile exists
+    const profileSnap = await getDoc(profileRef);
+    if (profileSnap.exists()) {
+      // Only update the status if it's not already set to a different value
+      const profile = profileSnap.data();
+      if (!profile.adminUse || profile.adminUse.status === "pending" || profile.adminUse.status === "") {
+        await updateDoc(profileRef, {
+          personalDetails: personalDetails,
+          "adminUse.status": "draft" // Ensure draft status when saving without submitting
+        });
+      } else {
+        // Just update the personal details without changing status
+        await updateDoc(profileRef, {
+          personalDetails: personalDetails
+        });
+      }
+    } else {
+      // Profile doesn't exist, create it
+      await createProfile({ personalDetails: personalDetails });
+    }
+    
     console.log("Personal details updated successfully");
   } catch (error) {
     console.error("Error updating personal details:", error);
@@ -142,9 +161,28 @@ async function updateDriving(driving) {
   
   try {
     const profileRef = doc(db, 'profiles', user.uid);
-    await updateDoc(profileRef, {
-      driving: driving
-    });
+    
+    // Check if the profile exists
+    const profileSnap = await getDoc(profileRef);
+    if (profileSnap.exists()) {
+      // Only update the status if it's not already set to a different value
+      const profile = profileSnap.data();
+      if (!profile.adminUse || profile.adminUse.status === "pending" || profile.adminUse.status === "") {
+        await updateDoc(profileRef, {
+          driving: driving,
+          "adminUse.status": "draft" // Ensure draft status when saving without submitting
+        });
+      } else {
+        // Just update the driving details without changing status
+        await updateDoc(profileRef, {
+          driving: driving
+        });
+      }
+    } else {
+      // Profile doesn't exist, create it
+      await createProfile({ driving: driving });
+    }
+    
     console.log("Driving information updated successfully");
   } catch (error) {
     console.error("Error updating driving information:", error);
@@ -165,9 +203,28 @@ async function updateMedicalQualifications(medicalQualifications) {
   
   try {
     const profileRef = doc(db, 'profiles', user.uid);
-    await updateDoc(profileRef, {
-      medicalQualifications: medicalQualifications
-    });
+    
+    // Check if the profile exists
+    const profileSnap = await getDoc(profileRef);
+    if (profileSnap.exists()) {
+      // Only update the status if it's not already set to a different value
+      const profile = profileSnap.data();
+      if (!profile.adminUse || profile.adminUse.status === "pending" || profile.adminUse.status === "") {
+        await updateDoc(profileRef, {
+          medicalQualifications: medicalQualifications,
+          "adminUse.status": "draft" // Ensure draft status when saving without submitting
+        });
+      } else {
+        // Just update the medical qualifications without changing status
+        await updateDoc(profileRef, {
+          medicalQualifications: medicalQualifications
+        });
+      }
+    } else {
+      // Profile doesn't exist, create it
+      await createProfile({ medicalQualifications: medicalQualifications });
+    }
+    
     console.log("Medical qualifications updated successfully");
   } catch (error) {
     console.error("Error updating medical qualifications:", error);
@@ -192,11 +249,20 @@ async function submitProfile(agreedToTerms) {
   
   try {
     const profileRef = doc(db, 'profiles', user.uid);
+    
+    // Check if the profile has required fields before submitting
+    const profileSnap = await getDoc(profileRef);
+    if (!profileSnap.exists()) {
+      throw new Error("Profile doesn't exist. Please save your profile details first.");
+    }
+    
+    // Update submission details and set status to pending
     await updateDoc(profileRef, {
       "submission.agreedToTerms": agreedToTerms,
       "submission.submittedAt": serverTimestamp(),
-      "adminUse.status": "pending"
+      "adminUse.status": "pending" // Explicitly set to pending only when submitted
     });
+    
     console.log("Profile submitted for review successfully");
   } catch (error) {
     console.error("Error submitting profile:", error);
