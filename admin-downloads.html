@@ -428,7 +428,53 @@
         // Get all profiles
         const profilesSnapshot = await getDocs(collection(db, 'profiles'));
         
-        // Initialize qualification counters
+        // Define qualification groupings
+        const qualificationGroups = {
+          "Paramedics": [
+            "Paramedic", 
+            "Paramedic (Critical care)", 
+            "Paramedic (CTM/OO)", 
+            "Paramedic (HART)", 
+            "Paramedic (in Primary Care)", 
+            "Paramedic (Specialist)"
+          ],
+          "ECA/EAA/Technicians": [
+            "ECA", 
+            "EAA", 
+            "AAP", 
+            "Technician"
+          ],
+          "Nurses": [
+            "Nurse", 
+            "Nurse (Ambulance Nurse)", 
+            "Nurse (with FREC/PHTLS or similar)"
+          ],
+          "Doctors": [
+            "Doctor", 
+            "Doctor (Critical Care/BASICS/Merit)", 
+            "Doctor (with FREC/PHTLS or similar)"
+          ],
+          "Non Medical": [
+            "FREC 3 (or similar level 3 certification)", 
+            "FREC 4", 
+            "PHTLS"
+          ],
+          "Students": [
+            "Student Paramedic (Year 2)",
+            "Student Paramedic (Year 3)"
+          ]
+        };
+
+        // Create a reverse lookup to find which group a qualification belongs to
+        const qualToGroup = {};
+        Object.entries(qualificationGroups).forEach(([group, quals]) => {
+          quals.forEach(qual => {
+            qualToGroup[qual] = group;
+          });
+        });
+        
+        // Initialize counters for groups and individual qualifications
+        const groupCounts = {};
         const qualCounts = {};
         const qualMembers = {};
         
@@ -444,13 +490,20 @@
           const medicalQuals = profile.medicalQualifications || {};
           const qualification = medicalQuals.qualification || 'Unknown';
           
-          // Count by qualification
+          // Count by individual qualification
           if (!qualCounts[qualification]) {
             qualCounts[qualification] = 0;
             qualMembers[qualification] = [];
           }
           
           qualCounts[qualification]++;
+          
+          // Count by group
+          const group = qualToGroup[qualification] || 'Others';
+          if (!groupCounts[group]) {
+            groupCounts[group] = 0;
+          }
+          groupCounts[group]++;
           
           // Store expiry date info if applicable
           if (medicalQuals.certExpiry) {
@@ -468,22 +521,8 @@
           users[doc.id] = doc.data();
         });
         
-        // Prepare export data
-        const exportData = [];
-        
-        // Calculate upcoming expiring qualifications
-        const now = new Date();
-        const threeMonthsFromNow = new Date();
-        threeMonthsFromNow.setMonth(threeMonthsFromNow.getMonth() + 3);
-        
-        // Generate summary data
-        Object.keys(qualCounts).sort().forEach(qual => {
-          exportData.push({
-            qualification: qual,
-            count: qualCounts[qual],
-            percentage: Math.round((qualCounts[qual] / profilesSnapshot.size) * 100) + '%'
-          });
-        });
+        // Get all approved profiles for counting
+        const approvedProfilesCount = Object.values(qualCounts).reduce((sum, count) => sum + count, 0);
         
         // Generate member qualification details
         const memberData = [];
@@ -509,6 +548,7 @@
             name: `${user.firstName || ''} ${user.surname || ''}`.trim(),
             email: user.email || '',
             qualification: qualification,
+            group: qualToGroup[qualification] || 'Others',
             certExpiry: formatDate(medicalQuals.certExpiry),
             hcpc: medicalQuals.hcpc || '',
             gmc: medicalQuals.gmc || '',
@@ -516,45 +556,120 @@
           });
         });
         
-        // Generate CSV for summary
-        const summaryHeaders = ['Qualification', 'Count', 'Percentage of Total'];
-        
-        let summaryCSV = summaryHeaders.map(csvSafe).join(',') + '\n';
-        
-        exportData.forEach(row => {
-          summaryCSV += [
-            csvSafe(row.qualification),
-            csvSafe(row.count),
-            csvSafe(row.percentage)
-          ].join(',') + '\n';
+        // Sort member data by group and then by name
+        memberData.sort((a, b) => {
+          // First sort by group
+          if (a.group !== b.group) {
+            return a.group.localeCompare(b.group);
+          }
+          // Then sort by name within group
+          return a.name.localeCompare(b.name);
         });
         
-        summaryCSV += '\n\nTotal Approved Profiles,' + exportData.reduce((total, row) => total + row.count, 0) + '\n\n';
+        // Generate CSV
+        let summaryCSV = '';
         
-        // Add member details section
+        // Add title
+        summaryCSV += 'FMS PREHOSPITAL - QUALIFICATION SUMMARY REPORT\n';
+        summaryCSV += `Generated on: ${new Date().toLocaleDateString()}\n\n`;
+        
+        // Add group summary
+        summaryCSV += 'QUALIFICATION GROUPS,COUNT,PERCENTAGE\n';
+        
+        // Define the order of groups to display
+        const groupOrder = [
+          'Paramedics',
+          'ECA/EAA/Technicians',
+          'Nurses', 
+          'Doctors',
+          'Non Medical',
+          'Students',
+          'Others'
+        ];
+        
+        // Add the group counts in specific order
+        groupOrder.forEach(group => {
+          const count = groupCounts[group] || 0;
+          const percentage = count > 0 ? Math.round((count / approvedProfilesCount) * 100) + '%' : '0%';
+          
+          summaryCSV += `${csvSafe(group)},${csvSafe(count)},${csvSafe(percentage)}\n`;
+        });
+        
+        // Add total
+        summaryCSV += `\nTOTAL,${csvSafe(approvedProfilesCount)},100%\n\n`;
+        
+        // Add detailed breakdown by qualification
+        summaryCSV += 'DETAILED QUALIFICATION BREAKDOWN\n';
+        summaryCSV += 'QUALIFICATION,COUNT,PERCENTAGE\n';
+        
+        // Sort qualifications by group first, then by name
+        const sortedQualifications = Object.keys(qualCounts).sort((a, b) => {
+          const groupA = qualToGroup[a] || 'Others';
+          const groupB = qualToGroup[b] || 'Others';
+          
+          // First sort by group
+          if (groupA !== groupB) {
+            // Use the index in groupOrder to determine sort order
+            return groupOrder.indexOf(groupA) - groupOrder.indexOf(groupB);
+          }
+          // Then sort by qualification name within group
+          return a.localeCompare(b);
+        });
+        
+        sortedQualifications.forEach(qualification => {
+          const count = qualCounts[qualification];
+          const percentage = Math.round((count / approvedProfilesCount) * 100) + '%';
+          
+          summaryCSV += `${csvSafe(qualification)},${csvSafe(count)},${csvSafe(percentage)}\n`;
+        });
+        
+        // Add member details section - grouped by qualification category
+        summaryCSV += '\n\nMEMBER DETAILS BY GROUP\n\n';
+        
+        // Display members by group
+        let currentGroup = '';
+        
+        // Add member headers once
         const memberHeaders = ['Name', 'Email', 'Qualification', 'Registration Number', 'Certificate Expiry'];
         
-        summaryCSV += '\n' + memberHeaders.map(csvSafe).join(',') + '\n';
-        
-        memberData.forEach(member => {
-          // Determine which registration number to use based on qualification
-          let regNumber = '';
+        // Process each group in order
+        groupOrder.forEach(group => {
+          // Filter members for this group
+          const groupMembers = memberData.filter(member => member.group === group);
           
-          if (member.qualification.includes('Paramedic')) {
-            regNumber = member.hcpc;
-          } else if (member.qualification.includes('Doctor')) {
-            regNumber = member.gmc;
-          } else if (member.qualification.includes('Nurse')) {
-            regNumber = member.nmc;
+          // Skip if no members in this group
+          if (groupMembers.length === 0) {
+            return;
           }
           
-          summaryCSV += [
-            csvSafe(member.name),
-            csvSafe(member.email),
-            csvSafe(member.qualification),
-            csvSafe(regNumber),
-            csvSafe(member.certExpiry)
-          ].join(',') + '\n';
+          // Add group header
+          summaryCSV += `GROUP: ${group}\n`;
+          summaryCSV += memberHeaders.map(csvSafe).join(',') + '\n';
+          
+          // Add members in this group
+          groupMembers.forEach(member => {
+            // Determine which registration number to use based on qualification
+            let regNumber = '';
+            
+            if (member.qualification.includes('Paramedic')) {
+              regNumber = member.hcpc;
+            } else if (member.qualification.includes('Doctor')) {
+              regNumber = member.gmc;
+            } else if (member.qualification.includes('Nurse')) {
+              regNumber = member.nmc;
+            }
+            
+            summaryCSV += [
+              csvSafe(member.name),
+              csvSafe(member.email),
+              csvSafe(member.qualification),
+              csvSafe(regNumber),
+              csvSafe(member.certExpiry)
+            ].join(',') + '\n';
+          });
+          
+          // Add blank line between groups
+          summaryCSV += '\n';
         });
         
         // Create download blob
