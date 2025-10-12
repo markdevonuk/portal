@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Allowlist Checker - FMS Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      min-height: 100vh; 
+      display: flex; 
+      align-items: center; 
+      padding: 20px; 
+    }
+    .check-card { 
+      background: #fff; 
+      border-radius: 20px; 
+      box-shadow: 0 20px 60px rgba(0,0,0,.3); 
+      overflow: hidden; 
+      max-width: 500px; 
+      margin: 0 auto; 
+      padding: 30px;
+    }
+    .btn-primary { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      border: none; 
+    }
+    h1 {
+      color: #028090;
+      margin-bottom: 20px;
+    }
+    #results {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 10px;
+      background-color: #f8f9fa;
+    }
+    .btn-primary:hover { 
+      box-shadow: 0 5px 15px rgba(0,168,150,.4); 
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="check-card">
+      <h1>Email Allowlist Checker</h1>
+      <p class="text-muted">Check if an email is in the allowed emails collection</p>
+      
+      <div id="alertContainer"></div>
+      
+      <form id="checkForm">
+        <div class="mb-3">
+          <label for="emailInput" class="form-label">Email Address</label>
+          <input type="email" class="form-control" id="emailInput" placeholder="Enter email to check" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary" id="checkBtn">
+          Check Email Status
+        </button>
+      </form>
+      
+      <div id="results" class="mt-4" style="display:none;">
+        <h5>Results:</h5>
+        <div id="resultContent"></div>
+      </div>
+      
+      <hr class="my-4">
+      
+      <h5>Add Email to Allowlist</h5>
+      <form id="addEmailForm">
+        <div class="mb-3">
+          <label for="newEmailInput" class="form-label">New Email</label>
+          <input type="email" class="form-control" id="newEmailInput" placeholder="Enter new email to add" required>
+        </div>
+        
+        <button type="submit" class="btn btn-success" id="addBtn">
+          Add to Allowlist
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { firebaseConfig } from './firebase-config.js';
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    
+    // Helper functions
+    function showAlert(message, type) {
+      const html = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>`;
+      document.getElementById('alertContainer').innerHTML = html;
+    }
+    
+    function setButtonLoading(id, loading) {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      if (loading) {
+        btn.classList.add('disabled');
+        btn.disabled = true;
+        btn.innerHTML = loading ? 
+          '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...' : 
+          btn.originalText;
+      } else {
+        btn.classList.remove('disabled');
+        btn.disabled = false;
+        if (btn.originalText) {
+          btn.innerHTML = btn.originalText;
+        }
+      }
+    }
+    
+    // Store original button text
+    document.querySelectorAll('button').forEach(btn => {
+      btn.originalText = btn.innerHTML;
+    });
+
+    // Check if user is authenticated
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        showAlert('You must be logged in as an admin to use this tool. <a href="index.html" class="alert-link">Login here</a>', 'warning');
+      }
+    });
+    
+    // Email check form
+    document.getElementById('checkForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('emailInput').value.trim().toLowerCase();
+      setButtonLoading('checkBtn', true);
+      
+      try {
+        // Check if email exists in allowedEmails collection
+        const emailDocRef = doc(db, 'allowedEmails', email);
+        const emailDocSnap = await getDoc(emailDocRef);
+        
+        const results = document.getElementById('results');
+        const resultContent = document.getElementById('resultContent');
+        results.style.display = 'block';
+        
+        if (emailDocSnap.exists()) {
+          resultContent.innerHTML = `
+            <div class="alert alert-success mb-0">
+              <strong>✅ Email is allowed!</strong><br>
+              The email address <strong>${email}</strong> is in the allowedEmails collection.
+            </div>
+          `;
+        } else {
+          resultContent.innerHTML = `
+            <div class="alert alert-danger mb-0">
+              <strong>❌ Email not found!</strong><br>
+              The email address <strong>${email}</strong> is NOT in the allowedEmails collection.
+            </div>
+          `;
+        }
+      } catch (error) {
+        showAlert(`Error checking email: ${error.message}`, 'danger');
+        console.error('Error checking email:', error);
+      } finally {
+        setButtonLoading('checkBtn', false);
+      }
+    });
+    
+    // Add email form
+    document.getElementById('addEmailForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('newEmailInput').value.trim().toLowerCase();
+      setButtonLoading('addBtn', true);
+      
+      try {
+        // Check if user is admin (this is a simple check - real implementation would be more secure)
+        const user = auth.currentUser;
+        if (!user) {
+          throw new Error('You must be logged in to add emails');
+        }
+        
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (!userDoc.exists() || userDoc.data().isAdmin !== true) {
+          throw new Error('Only admin users can add emails to the allowlist');
+        }
+        
+        // Check if email already exists
+        const emailDocRef = doc(db, 'allowedEmails', email);
+        const emailDocSnap = await getDoc(emailDocRef);
+        
+        if (emailDocSnap.exists()) {
+          showAlert(`Email ${email} is already in the allowlist`, 'warning');
+        } else {
+          // Add email to allowedEmails collection
+          await setDoc(emailDocRef, {
+            allowed: true,
+            addedDate: new Date().toISOString()
+          });
+          
+          showAlert(`Email ${email} added to allowlist successfully!`, 'success');
+          document.getElementById('newEmailInput').value = '';
+        }
+      } catch (error) {
+        showAlert(`Error adding email: ${error.message}`, 'danger');
+        console.error('Error adding email:', error);
+      } finally {
+        setButtonLoading('addBtn', false);
+      }
+    });
+  </script>
+</body>
+</html>
