@@ -23,75 +23,99 @@
       margin:20px 0; 
     }
 /* Updated tab styles to ensure they fit on one line on mobile */
+
+/* Completely redesigned tab navigation */
 .nav-tabs {
   display: flex;
   width: 100%;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
   border: none;
-  flex-wrap: nowrap; /* Prevent wrapping */
-  overflow-x: auto; /* Allow horizontal scrolling if needed */
+  gap: 15px;
 }
 
 .nav-tabs .nav-item {
   flex: 1;
-  text-align: center;
-  min-width: 100px; /* Set a minimum width */
-  margin: 0 3px; /* Reduce margin for mobile */
 }
 
 .nav-tabs .nav-link {
-  color: #6c757d;
-  font-weight: 500;
-  padding: 10px 5px;
-  border-radius: 8px;
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-  font-size: 14px; /* Smaller font size for mobile */
+  padding: 0;
+  border: none;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   height: 100%;
+  position: relative;
+  overflow: visible;
+}
+
+.nav-tabs .nav-link .tab-label {
+  margin-top: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.nav-tabs .nav-link.active .tab-label {
+  color: #00a896;
+}
+
+/* Big, prominent badge styling */
+.nav-tabs .badge-container {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background-color: #f8f9fa;
+  border: 2px solid #dee2e6;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  transition: all 0.3s ease;
 }
 
-.nav-tabs .nav-link i {
-  margin-bottom: 3px;
-  font-size: 16px;
+.nav-tabs .nav-link.active .badge-container {
+  background: linear-gradient(135deg, #00a896 0%, #028090 100%);
+  box-shadow: 0 5px 15px rgba(0,168,150,.3);
+  border-color: transparent;
 }
 
-/* Make badges more compact */
-.nav-tabs .badge {
-  font-size: 20.0rem;
-  padding: 0.3em 0.7em;
-  margin-top: 4px;
+.nav-tabs .badge-icon {
+  font-size: 18px;
+  margin-bottom: 2px;
+  color: #6c757d;
+}
+
+.nav-tabs .nav-link.active .badge-icon {
+  color: white;
+}
+
+.nav-tabs .badge-count {
+  font-size: 20px;
   font-weight: 700;
-  display: inline-block;
-  min-width: 26px;
-  text-align: center;
+  color: #6c757d;
 }
 
-/* Media query for larger screens */
-@media (min-width: 576px) {
-  .nav-tabs .badge {
-    font-size: 20rem;
-    padding: 0.35em 0.8em;
-    margin-top: 5px;
-    min-width: 30px;
-  }
+.nav-tabs .nav-link.active .badge-count {
+  color: white;
 }
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .nav-tabs .badge-container {
+    width: 60px;
+    height: 60px;
+  }
   
-  .nav-tabs .nav-link {
+  .nav-tabs .badge-icon {
     font-size: 16px;
-    padding: 12px 5px;
   }
   
-  .nav-tabs .badge {
-    font-size: 0.75rem;
-    padding: 0.25em 0.6em;
+  .nav-tabs .badge-count {
+    font-size: 18px;
   }
 }
+
 
 .tab-header {
   margin-bottom: 20px;
