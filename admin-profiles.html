@@ -1442,114 +1442,126 @@
     }
 
     // Save profile changes
-    saveProfileChangesBtn.addEventListener('click', async () => {
-      try {
-        setButtonLoading('saveProfileChangesBtn', true);
-        
-        // Get user ID from form
-        const userId = document.getElementById('editUserId').value;
-        
-        // Get current user for admin notes
-        const currentUser = auth.currentUser;
-        if (!currentUser) {
-          throw new Error('You must be logged in to perform this action');
-        }
-        
-        // Get form values - User Info
-        const userData = {
-          firstName: document.getElementById('editFirstName').value.trim(),
-          surname: document.getElementById('editSurname').value.trim(),
-          email: document.getElementById('editEmail').value.trim(),
-          mobile: document.getElementById('editMobile').value.trim(),
-          isAdmin: document.getElementById('editIsAdmin').checked,
-          has2FA: document.getElementById('editHas2FA').checked
-        };
-        
-        // Get form values - Profile sections
-        const profileData = {
-          personalDetails: {
-            DOB: parseDateString(document.getElementById('editDOB').value),
-            emergencyContact: document.getElementById('editEmergencyContact').value.trim()
-          },
-          driving: {
-            c1Classification: document.getElementById('editC1Classification').checked,
-            dlNumber: document.getElementById('editDLNumber').value.trim(),
-            niNumber: document.getElementById('editNINumber').value.trim(),
-            points: document.getElementById('editPoints').value.trim()
-          },
-          medicalQualifications: {
-            qualification: document.getElementById('editQualification').value,
-            hcpc: document.getElementById('editHCPC').value.trim(),
-            gmc: document.getElementById('editGMC').value.trim(),
-            nmc: document.getElementById('editNMC').value.trim(),
-            details: document.getElementById('editDetails').value.trim(),
-            certExpiry: parseDateString(document.getElementById('editCertExpiry').value)
-          },
-          submission: {
-            agreedToTerms: document.getElementById('editAgreedToTerms').checked
-            // We don't update submittedAt here to preserve the original submission timestamp
-          }
-        };
-        
-        // Get admin notes and status
-        const newStatus = document.getElementById('editProfileStatus').value.toLowerCase(); // Use lowercase for consistency
-        console.log(`Setting profile ${userId} status to: "${newStatus}"`);
-        
-        const adminNotes = document.getElementById('editAdminNotes').value.trim();
-        
-        // Format admin note to append if there's a new note
-        let updatedNotes = '';
-        if (adminNotes) {
-          // Get the current profile to check existing notes
-          const profileRef = doc(db, 'profiles', userId);
-          const profileSnap = await getDoc(profileRef);
-          
-          if (profileSnap.exists()) {
-            const existingProfile = profileSnap.data();
-            const currentDate = new Date().toLocaleDateString('en-GB');
-            const adminName = currentUser.displayName || currentUser.email || 'Admin';
-            
-            if (existingProfile.adminUse && existingProfile.adminUse.notes) {
-              // Append to existing notes
-              updatedNotes = existingProfile.adminUse.notes + `\n\n[${currentDate}] ${adminName} (Edit): ${adminNotes}`;
-            } else {
-              // Create new notes
-              updatedNotes = `[${currentDate}] ${adminName} (Edit): ${adminNotes}`;
-            }
-          }
-        }
-        
-        // Update user document
-        const userRef = doc(db, 'users', userId);
-        await updateDoc(userRef, userData);
-        
-        // Update profile document with admin section
-        const profileRef = doc(db, 'profiles', userId);
-        await updateDoc(profileRef, {
-          ...profileData,
-          adminUse: {
-            status: newStatus, // Using lowercase status
-            approvedBy: currentUser.uid,
-            notes: updatedNotes,
-            reviewedAt: serverTimestamp()
-          }
-        });
-        
-        // Hide modal
-        editProfileModal.hide();
-        
-        // Show success message
-        showAlert('Profile updated successfully!', 'success');
-        
-        // Reload profiles
-        await loadAllProfiles();
-      } catch (error) {
-        console.error('Error saving profile changes:', error);
-        showAlert(`Error updating profile: ${error.message}`, 'danger');
-      } finally {
-        setButtonLoading('saveProfileChangesBtn', false);
+saveProfileChangesBtn.addEventListener('click', async () => {
+  try {
+    setButtonLoading('saveProfileChangesBtn', true);
+    
+    // Get user ID from form
+    const userId = document.getElementById('editUserId').value;
+    
+    // First get the existing profile to preserve crucial fields
+    const profileRef = doc(db, 'profiles', userId);
+    const profileSnap = await getDoc(profileRef);
+    
+    if (!profileSnap.exists()) {
+      throw new Error('Profile not found');
+    }
+    
+    const existingProfile = profileSnap.data();
+    
+    // Get current user for admin notes
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('You must be logged in to perform this action');
+    }
+    
+    // Get form values - User Info
+    const userData = {
+      firstName: document.getElementById('editFirstName').value.trim(),
+      surname: document.getElementById('editSurname').value.trim(),
+      email: document.getElementById('editEmail').value.trim(),
+      mobile: document.getElementById('editMobile').value.trim(),
+      isAdmin: document.getElementById('editIsAdmin').checked,
+      has2FA: document.getElementById('editHas2FA').checked
+    };
+    
+    // Get form values - Profile sections
+    const profileData = {
+      personalDetails: {
+        DOB: parseDateString(document.getElementById('editDOB').value),
+        emergencyContact: document.getElementById('editEmergencyContact').value.trim()
+      },
+      driving: {
+        c1Classification: document.getElementById('editC1Classification').checked,
+        dlNumber: document.getElementById('editDLNumber').value.trim(),
+        niNumber: document.getElementById('editNINumber').value.trim(),
+        points: document.getElementById('editPoints').value.trim()
+      },
+      medicalQualifications: {
+        qualification: document.getElementById('editQualification').value,
+        hcpc: document.getElementById('editHCPC').value.trim(),
+        gmc: document.getElementById('editGMC').value.trim(),
+        nmc: document.getElementById('editNMC').value.trim(),
+        details: document.getElementById('editDetails').value.trim(),
+        certExpiry: parseDateString(document.getElementById('editCertExpiry').value)
+      },
+      submission: {
+        agreedToTerms: document.getElementById('editAgreedToTerms').checked,
+        // IMPORTANT: Preserve the original submittedAt timestamp
+        submittedAt: existingProfile.submission?.submittedAt || serverTimestamp()
+      }
+    };
+    
+    // Get admin notes and status
+    const newStatus = document.getElementById('editProfileStatus').value.toLowerCase();
+    console.log(`Setting profile ${userId} status to: "${newStatus}"`);
+    
+    const adminNotes = document.getElementById('editAdminNotes').value.trim();
+    
+    // Format admin note to append if there's a new note
+    let updatedNotes = '';
+    if (adminNotes) {
+      const currentDate = new Date().toLocaleDateString('en-GB');
+      const adminName = currentUser.displayName || currentUser.email || 'Admin';
+      
+      if (existingProfile.adminUse && existingProfile.adminUse.notes) {
+        // Append to existing notes
+        updatedNotes = existingProfile.adminUse.notes + `\n\n[${currentDate}] ${adminName} (Edit): ${adminNotes}`;
+      } else {
+        // Create new notes
+        updatedNotes = `[${currentDate}] ${adminName} (Edit): ${adminNotes}`;
+      }
+    } else {
+      // Keep existing notes if no new notes provided
+      updatedNotes = existingProfile.adminUse?.notes || '';
+    }
+    
+    // Update user document
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, userData);
+    
+    // Update profile document with admin section
+    await updateDoc(profileRef, {
+      ...profileData,
+      adminUse: {
+        status: newStatus, 
+        approvedBy: currentUser.uid,
+        notes: updatedNotes,
+        reviewedAt: serverTimestamp()
       }
     });
+    
+    // Hide modal
+    editProfileModal.hide();
+    
+    // Show success message
+    showAlert('Profile updated successfully!', 'success');
+    
+    // Reload profiles
+    await loadAllProfiles();
+  } catch (error) {
+    console.error('Error saving profile changes:', error);
+    showAlert(`Error updating profile: ${error.message}`, 'danger');
+  } finally {
+    setButtonLoading('saveProfileChangesBtn', false);
+  }
+});
+    
+    
+    
+        
+       
+      
     
     // Setup search filters
     pendingSearchInput.addEventListener('input', () => {
