@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Downloads - FMS Prehospital Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background:#f8f9fa; min-height:100vh; }
+    .navbar { 
+      background: linear-gradient(135deg, #00a896 0%, #028090 100%); 
+      box-shadow:0 2px 10px rgba(0,0,0,0.1); 
+    }
+    .nav-link { color: rgba(255,255,255,.85) !important; font-weight: 500; }
+    .nav-link:hover { color: #fff !important; }
+    .admin-card { 
+      background:#fff; 
+      border-radius:15px; 
+      box-shadow:0 5px 20px rgba(0,0,0,.08); 
+      padding:30px; 
+      margin:20px 0; 
+    }
+    .page-header { 
+      background:linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      color:#fff; 
+      border-radius:15px; 
+      padding:30px; 
+      margin:30px 0 20px 0; 
+    }
+    .btn-primary { 
+      background: linear-gradient(135deg, #00a896 0%, #028090 100%); 
+      border: none; 
+      font-weight: 600; 
+    }
+    .btn-primary:hover { 
+      transform: translateY(-2px); 
+      box-shadow: 0 5px 15px rgba(0,168,150,.4); 
+    }
+    .form-control:focus { 
+      border-color: #00a896; 
+      box-shadow: 0 0 0 0.2rem rgba(0,168,150,.25); 
+    }
+    .btn-loading { position: relative; pointer-events: none; opacity: .7; }
+    .btn-loading::after { 
+      content:""; position:absolute; width:16px; height:16px; top:50%; left:50%; 
+      margin:-8px 0 0 -8px; border:2px solid #fff; border-radius:50%; 
+      border-top-color:transparent; animation:spinner .6s linear infinite; 
+    }
+    @keyframes spinner { to { transform: rotate(360deg); } }
+    .download-card {
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,.08);
+      padding: 25px;
+      margin-bottom: 25px;
+      transition: transform .3s;
+    }
+    .download-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0,0,0,.12);
+    }
+    .download-icon {
+      font-size: 2.5rem;
+      color: #00a896;
+      margin-bottom: 15px;
+    }
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 15px;
+      color: #6c757d;
+    }
+    .file-icon {
+      font-size: 1.2rem;
+    }
+    .hidden { display: none; }
+    .badge-download-count {
+      background: #e9ecef;
+      color: #495057;
+      font-size: 0.8rem;
+      padding: 5px 8px;
+      border-radius: 20px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="dashboard.html"><i class="bi bi-shield-lock"></i> FMS Prehospital Portal</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="admin.html">
+              <i class="bi bi-arrow-left"></i> Admin Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="dashboard.html">
+              <i class="bi bi-house-fill"></i> Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="logoutLink">
+              <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="page-header">
+      <h1 class="mb-2"><i class="bi bi-cloud-download"></i> Downloads</h1>
+      <p class="mb-0">Export and download portal data</p>
+    </div>
+
+    <div id="alertContainer"></div>
+
+    <div class="admin-card">
+      <h3 class="mb-4"><i class="bi bi-database"></i> Available Exports</h3>
+      <p class="text-muted mb-4">Select an export type to generate and download data</p>
+      
+      <div class="row">
+        <div class="col-md-6 mb-4">
+          <div class="download-card">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <i class="bi bi-people-fill download-icon"></i>
+                <h4>Member Data Export</h4>
+                <p class="text-muted">Complete export of user profiles with personal details</p>
+              </div>
+            </div>
+            <p><small>Includes user accounts, profile details, qualifications, and approval status</small></p>
+            <div class="file-info">
+              <i class="bi bi-file-earmark-spreadsheet file-icon"></i>
+              <span>CSV Format</span>
+              <div class="ms-auto" id="memberExportStatus"></div>
+            </div>
+            <button class="btn btn-primary mt-3 w-100" id="exportMemberDataBtn">
+              <i class="bi bi-download"></i> Generate &amp; Download
+            </button>
+          </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+          <div class="download-card">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <i class="bi bi-card-checklist download-icon"></i>
+                <h4>Qualification Report</h4>
+                <p class="text-muted">Breakdown of members by qualification type</p>
+              </div>
+            </div>
+            <p><small>Summarizes qualification types, counts, and expiry dates where applicable</small></p>
+            <div class="file-info">
+              <i class="bi bi-file-earmark-spreadsheet file-icon"></i>
+              <span>CSV Format</span>
+              <div class="ms-auto" id="qualificationExportStatus"></div>
+            </div>
+            <button class="btn btn-primary mt-3 w-100" id="exportQualificationsBtn">
+              <i class="bi bi-download"></i> Generate &amp; Download
+            </button>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> 
+            <strong>Data Security Note:</strong> All downloads contain sensitive personal information. Please ensure you handle this data securely and in accordance with data protection regulations.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { 
+      getFirestore, 
+      collection, 
+      doc, 
+      getDoc,
+      getDocs,
+      query,
+      where 
+    } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { firebaseConfig } from './firebase-config.js';
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // DOM Elements
+    const exportMemberDataBtn = document.getElementById('exportMemberDataBtn');
+    const exportQualificationsBtn = document.getElementById('exportQualificationsBtn');
+    const memberExportStatus = document.getElementById('memberExportStatus');
+    const qualificationExportStatus = document.getElementById('qualificationExportStatus');
+    const logoutLink = document.getElementById('logoutLink');
+
+    // Helper Functions
+    function setButtonLoading(id, loading) {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      if (loading) {
+        btn.classList.add('btn-loading');
+        btn.disabled = true;
+      } else {
+        btn.classList.remove('btn-loading');
+        btn.disabled = false;
+      }
+    }
+
+    function showAlert(message, type) {
+      const html = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>`;
+      document.getElementById('alertContainer').innerHTML = html;
+      
+      if (type === 'success') {
+        setTimeout(() => {
+          const alert = document.querySelector('.alert');
+          if (alert) {
+            alert.classList.remove('show');
+            setTimeout(() => alert.remove(), 150);
+          }
+        }, 5000);
+      }
+    }
+
+    // Format date from Firestore timestamp
+    function formatDate(timestamp) {
+      if (!timestamp) return '';
+      
+      let date;
+      if (timestamp.seconds) {
+        // Firestore timestamp
+        date = new Date(timestamp.seconds * 1000);
+      } else if (timestamp.toDate) {
+        // Firestore timestamp object with toDate method
+        date = timestamp.toDate();
+      } else if (timestamp instanceof Date) {
+        // JavaScript Date object
+        date = timestamp;
+      } else {
+        // Try to parse as string or number
+        date = new Date(timestamp);
+      }
+      
+      if (isNaN(date.getTime())) {
+        return '';
+      }
+      
+      return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    }
+
+    // Convert a value to CSV-safe string
+    function csvSafe(value) {
+      if (value === null || value === undefined) return '';
+      
+      value = String(value);
+      
+      // If the value contains quotes, commas, or newlines, wrap it in quotes and escape internal quotes
+      if (value.includes('"') || value.includes(',') || value.includes('\n')) {
+        return `"${value.replace(/"/g, '""')}"`;
+      }
+      return value;
+    }
+
+    // Export Member Data
+    async function exportMemberData() {
+      setButtonLoading('exportMemberDataBtn', true);
+      memberExportStatus.innerHTML = '<span class="text-primary"><i class="bi bi-hourglass"></i> Generating...</span>';
+      
+      try {
+        // Get all users
+        const usersSnapshot = await getDocs(collection(db, 'users'));
+        
+        // Create a map of user data by user ID
+        const users = {};
+        usersSnapshot.forEach(doc => {
+          users[doc.id] = doc.data();
+        });
+        
+        // Get all profiles
+        const profilesSnapshot = await getDocs(collection(db, 'profiles'));
+        
+        // Create merged data array
+        const exportData = [];
+        
+        profilesSnapshot.forEach(doc => {
+          const userId = doc.id;
+          const profile = doc.data();
+          const user = users[userId] || {};
+          
+          // Skip profiles without submission data
+          if (!profile.submission) {
+            return;
+          }
+          
+          // Extract values safely
+          const personalDetails = profile.personalDetails || {};
+          const driving = profile.driving || {};
+          const medicalQuals = profile.medicalQualifications || {};
+          const submission = profile.submission || {};
+          const adminUse = profile.adminUse || {};
+          
+          // Push merged data
+          exportData.push({
+            // User details
+            userId: userId,
+            firstName: user.firstName || '',
+            surname: user.surname || '',
+            email: user.email || '',
+            mobile: user.mobile || '',
+            has2FA: user.has2FA ? 'Yes' : 'No',
+            isAdmin: user.isAdmin ? 'Yes' : 'No',
+            createdAt: formatDate(user.createdAt),
+            
+            // Personal details
+            dateOfBirth: formatDate(personalDetails.DOB),
+            emergencyContact: personalDetails.emergencyContact || '',
+            
+            // Driving details
+            c1Classification: driving.c1Classification ? 'Yes' : 'No',
+            drivingLicence: driving.dlNumber || '',
+            niNumber: driving.niNumber || '',
+            licencePoints: driving.points || '',
+            
+            // Medical qualifications
+            qualification: medicalQuals.qualification || '',
+            hcpc: medicalQuals.hcpc || '',
+            gmc: medicalQuals.gmc || '',
+            nmc: medicalQuals.nmc || '',
+            certExpiry: formatDate(medicalQuals.certExpiry),
+            details: medicalQuals.details || '',
+            
+            // Submission details
+            agreedToTerms: submission.agreedToTerms ? 'Yes' : 'No',
+            submittedAt: formatDate(submission.submittedAt),
+            
+            // Admin details
+            status: adminUse.status || 'pending',
+            reviewedAt: formatDate(adminUse.reviewedAt),
+            reviewedBy: adminUse.approvedBy || '',
+            notes: adminUse.notes || ''
+          });
+        });
+        
+        // Generate CSV headers
+        const headers = [
+          'User ID', 'First Name', 'Surname', 'Email', 'Mobile', '2FA Enabled', 'Admin User', 'Created Date',
+          'Date of Birth', 'Emergency Contact',
+          'C1 Classification', 'Driving Licence', 'NI Number', 'Licence Points',
+          'Qualification', 'HCPC Number', 'GMC Number', 'NMC Number', 'Certificate Expiry', 'Details',
+          'Agreed to Terms', 'Submission Date',
+          'Status', 'Review Date', 'Reviewed By', 'Admin Notes'
+        ];
+        
+        // Map object keys to the order we want
+        const keys = [
+          'userId', 'firstName', 'surname', 'email', 'mobile', 'has2FA', 'isAdmin', 'createdAt',
+          'dateOfBirth', 'emergencyContact',
+          'c1Classification', 'drivingLicence', 'niNumber', 'licencePoints',
+          'qualification', 'hcpc', 'gmc', 'nmc', 'certExpiry', 'details',
+          'agreedToTerms', 'submittedAt',
+          'status', 'reviewedAt', 'reviewedBy', 'notes'
+        ];
+        
+        // Generate CSV content
+        let csv = headers.map(csvSafe).join(',') + '\n';
+        
+        // Add data rows
+        exportData.forEach(row => {
+          const values = keys.map(key => csvSafe(row[key]));
+          csv += values.join(',') + '\n';
+        });
+        
+        // Create download blob
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        
+        // Create temporary download link
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `fms-member-data-${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        
+        // Trigger download
+        link.click();
+        
+        // Clean up
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        memberExportStatus.innerHTML = '<span class="text-success"><i class="bi bi-check-circle"></i> Generated successfully</span>';
+        showAlert(`Member data export completed successfully. Found ${exportData.length} profiles.`, 'success');
+      } catch (error) {
+        console.error('Error exporting member data:', error);
+        memberExportStatus.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-triangle"></i> Failed</span>';
+        showAlert('Error exporting data: ' + error.message, 'danger');
+      } finally {
+        setButtonLoading('exportMemberDataBtn', false);
+      }
+    }
+
+    // Export Qualifications Summary
+    async function exportQualifications() {
+      setButtonLoading('exportQualificationsBtn', true);
+      qualificationExportStatus.innerHTML = '<span class="text-primary"><i class="bi bi-hourglass"></i> Generating...</span>';
+      
+      try {
+        // Get all profiles
+        const profilesSnapshot = await getDocs(collection(db, 'profiles'));
+        
+        // Initialize qualification counters
+        const qualCounts = {};
+        const qualMembers = {};
+        
+        // Process profiles
+        profilesSnapshot.forEach(doc => {
+          const profile = doc.data();
+          
+          // Skip profiles without submission or not approved
+          if (!profile.submission || !profile.adminUse || profile.adminUse.status !== 'approved') {
+            return;
+          }
+          
+          const medicalQuals = profile.medicalQualifications || {};
+          const qualification = medicalQuals.qualification || 'Unknown';
+          
+          // Count by qualification
+          if (!qualCounts[qualification]) {
+            qualCounts[qualification] = 0;
+            qualMembers[qualification] = [];
+          }
+          
+          qualCounts[qualification]++;
+          
+          // Store expiry date info if applicable
+          if (medicalQuals.certExpiry) {
+            qualMembers[qualification].push({
+              profileId: doc.id,
+              certExpiry: medicalQuals.certExpiry
+            });
+          }
+        });
+        
+        // Get all users for reference
+        const usersSnapshot = await getDocs(collection(db, 'users'));
+        const users = {};
+        usersSnapshot.forEach(doc => {
+          users[doc.id] = doc.data();
+        });
+        
+        // Prepare export data
+        const exportData = [];
+        
+        // Calculate upcoming expiring qualifications
+        const now = new Date();
+        const threeMonthsFromNow = new Date();
+        threeMonthsFromNow.setMonth(threeMonthsFromNow.getMonth() + 3);
+        
+        // Generate summary data
+        Object.keys(qualCounts).sort().forEach(qual => {
+          exportData.push({
+            qualification: qual,
+            count: qualCounts[qual],
+            percentage: Math.round((qualCounts[qual] / profilesSnapshot.size) * 100) + '%'
+          });
+        });
+        
+        // Generate member qualification details
+        const memberData = [];
+        
+        // Get profiles again to get full details
+        const profilesQuerySnapshot = await getDocs(collection(db, 'profiles'));
+        
+        profilesQuerySnapshot.forEach(doc => {
+          const profile = doc.data();
+          const userId = doc.id;
+          
+          // Skip profiles without submission or not approved
+          if (!profile.submission || !profile.adminUse || profile.adminUse.status !== 'approved') {
+            return;
+          }
+          
+          const medicalQuals = profile.medicalQualifications || {};
+          const qualification = medicalQuals.qualification || 'Unknown';
+          const user = users[userId] || {};
+          
+          memberData.push({
+            userId: userId,
+            name: `${user.firstName || ''} ${user.surname || ''}`.trim(),
+            email: user.email || '',
+            qualification: qualification,
+            certExpiry: formatDate(medicalQuals.certExpiry),
+            hcpc: medicalQuals.hcpc || '',
+            gmc: medicalQuals.gmc || '',
+            nmc: medicalQuals.nmc || ''
+          });
+        });
+        
+        // Generate CSV for summary
+        const summaryHeaders = ['Qualification', 'Count', 'Percentage of Total'];
+        
+        let summaryCSV = summaryHeaders.map(csvSafe).join(',') + '\n';
+        
+        exportData.forEach(row => {
+          summaryCSV += [
+            csvSafe(row.qualification),
+            csvSafe(row.count),
+            csvSafe(row.percentage)
+          ].join(',') + '\n';
+        });
+        
+        summaryCSV += '\n\nTotal Approved Profiles,' + exportData.reduce((total, row) => total + row.count, 0) + '\n\n';
+        
+        // Add member details section
+        const memberHeaders = ['Name', 'Email', 'Qualification', 'Registration Number', 'Certificate Expiry'];
+        
+        summaryCSV += '\n' + memberHeaders.map(csvSafe).join(',') + '\n';
+        
+        memberData.forEach(member => {
+          // Determine which registration number to use based on qualification
+          let regNumber = '';
+          
+          if (member.qualification.includes('Paramedic')) {
+            regNumber = member.hcpc;
+          } else if (member.qualification.includes('Doctor')) {
+            regNumber = member.gmc;
+          } else if (member.qualification.includes('Nurse')) {
+            regNumber = member.nmc;
+          }
+          
+          summaryCSV += [
+            csvSafe(member.name),
+            csvSafe(member.email),
+            csvSafe(member.qualification),
+            csvSafe(regNumber),
+            csvSafe(member.certExpiry)
+          ].join(',') + '\n';
+        });
+        
+        // Create download blob
+        const blob = new Blob([summaryCSV], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        
+        // Create temporary download link
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `fms-qualification-report-${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        
+        // Trigger download
+        link.click();
+        
+        // Clean up
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        qualificationExportStatus.innerHTML = '<span class="text-success"><i class="bi bi-check-circle"></i> Generated successfully</span>';
+        showAlert('Qualification report exported successfully.', 'success');
+      } catch (error) {
+        console.error('Error exporting qualifications data:', error);
+        qualificationExportStatus.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-triangle"></i> Failed</span>';
+        showAlert('Error exporting qualifications: ' + error.message, 'danger');
+      } finally {
+        setButtonLoading('exportQualificationsBtn', false);
+      }
+    }
+
+    // Event Listeners
+    exportMemberDataBtn.addEventListener('click', exportMemberData);
+    exportQualificationsBtn.addEventListener('click', exportQualifications);
+    
+    // Logout handler
+    logoutLink.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        await signOut(auth);
+        window.location.href = 'index.html';
+      } catch (error) {
+        alert('Logout failed: ' + error.message);
+      }
+    });
+
+    // Check authentication and admin status
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      try {
+        // Check if user is admin
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (!userDoc.exists() || userDoc.data().isAdmin !== true) {
+          window.location.href = 'dashboard.html';
+          return;
+        }
+        
+        // Admin is authenticated, initialize any additional functionality here
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        window.location.href = 'dashboard.html';
+      }
+    });
+  </script>
+</body>
+</html>
