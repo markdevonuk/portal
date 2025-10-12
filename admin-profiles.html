@@ -6,6 +6,7 @@
   <title>Profile Management - FMS Prehospital Portal</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <style>
     body { background:#f8f9fa; min-height:100vh; }
     .navbar { 
@@ -179,6 +180,19 @@
       color: #084298;
       border-left: 3px solid #0d6efd;
     }
+    /* New styles for edit mode */
+    .edit-section {
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    .edit-controls {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 15px;
+    }
     /* New responsive styles for mobile */
     @media (max-width: 768px) {
       .page-header {
@@ -217,6 +231,13 @@
       }
       .modal-footer button {
         margin-bottom: 8px;
+        width: 100%;
+      }
+      /* Edit controls responsive */
+      .edit-controls {
+        flex-direction: column;
+      }
+      .edit-controls button {
         width: 100%;
       }
     }
@@ -367,7 +388,190 @@
     </div>
   </div>
 
+  <!-- Profile Edit Modal -->
+  <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editProfileForm">
+            <!-- User Information Section -->
+            <div class="edit-section">
+              <h5 class="mb-3"><i class="bi bi-person-circle"></i> User Information</h5>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">First Name</label>
+                  <input type="text" class="form-control" id="editFirstName" name="firstName" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Surname</label>
+                  <input type="text" class="form-control" id="editSurname" name="surname" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Email</label>
+                  <input type="email" class="form-control" id="editEmail" name="email" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Mobile</label>
+                  <input type="tel" class="form-control" id="editMobile" name="mobile">
+                </div>
+                <div class="col-12 mb-3">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="editIsAdmin" name="isAdmin">
+                    <label class="form-check-label" for="editIsAdmin">Admin Access</label>
+                  </div>
+                </div>
+                <div class="col-12 mb-3">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="editHas2FA" name="has2FA">
+                    <label class="form-check-label" for="editHas2FA">2FA Enabled</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Personal Details Section -->
+            <div class="edit-section">
+              <h5 class="mb-3"><i class="bi bi-person-fill"></i> Personal Details</h5>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Date of Birth</label>
+                  <input type="text" class="form-control" id="editDOB" name="dob" placeholder="DD/MM/YYYY">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Emergency Contact</label>
+                  <input type="text" class="form-control" id="editEmergencyContact" name="emergencyContact">
+                </div>
+              </div>
+            </div>
+
+            <!-- Driving Details Section -->
+            <div class="edit-section">
+              <h5 class="mb-3"><i class="bi bi-car-front-fill"></i> Driving Details</h5>
+              <div class="row">
+                <div class="col-12 mb-3">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="editC1Classification" name="c1Classification">
+                    <label class="form-check-label" for="editC1Classification">C1 Classification</label>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Driving License Number</label>
+                  <input type="text" class="form-control" id="editDLNumber" name="dlNumber">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">National Insurance Number</label>
+                  <input type="text" class="form-control" id="editNINumber" name="niNumber">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">License Points</label>
+                  <input type="text" class="form-control" id="editPoints" name="points">
+                </div>
+              </div>
+            </div>
+
+            <!-- Medical Qualifications Section -->
+            <div class="edit-section">
+              <h5 class="mb-3"><i class="bi bi-award"></i> Qualifications</h5>
+              <div class="row">
+                <div class="col-12 mb-3">
+                  <label class="form-label">Main Qualification</label>
+                  <select class="form-select" id="editQualification" name="qualification">
+                    <option value="">Select qualification</option>
+                    <option value="AAP">AAP</option>
+                    <option value="Doctor">Doctor</option>
+                    <option value="Doctor (Critical Care/BASICS/Merit)">Doctor (Critical Care/BASICS/Merit)</option>
+                    <option value="Doctor (with FREC/PHTLS or similar)">Doctor (with FREC/PHTLS or similar)</option>
+                    <option value="EAA">EAA</option>
+                    <option value="ECA">ECA</option>
+                    <option value="FREC 3 (or similar level 3 certification)">FREC 3 (or similar level 3 certification)</option>
+                    <option value="FREC 4">FREC 4</option>
+                    <option value="Nurse">Nurse</option>
+                    <option value="Nurse (Ambulance Nurse)">Nurse (Ambulance Nurse)</option>
+                    <option value="Nurse (with FREC/PHTLS or similar)">Nurse (with FREC/PHTLS or similar)</option>
+                    <option value="Paramedic">Paramedic</option>
+                    <option value="Paramedic (Critical care)">Paramedic (Critical care)</option>
+                    <option value="Paramedic (CTM/OO)">Paramedic (CTM/OO)</option>
+                    <option value="Paramedic (HART)">Paramedic (HART)</option>
+                    <option value="Paramedic (in Primary Care)">Paramedic (in Primary Care)</option>
+                    <option value="Paramedic (Specialist)">Paramedic (Specialist)</option>
+                    <option value="PHTLS">PHTLS</option>
+                    <option value="Student Paramedic (Year 2)">Student Paramedic (Year 2)</option>
+                    <option value="Student Paramedic (Year 3)">Student Paramedic (Year 3)</option>
+                    <option value="Technician">Technician</option>
+                  </select>
+                </div>
+                
+                <!-- Conditional fields will be shown based on qualification -->
+                <div class="col-md-6 mb-3 hidden" id="editHCPCSection">
+                  <label class="form-label">HCPC Registration</label>
+                  <input type="text" class="form-control" id="editHCPC" name="hcpc">
+                </div>
+                
+                <div class="col-md-6 mb-3 hidden" id="editGMCSection">
+                  <label class="form-label">GMC Registration</label>
+                  <input type="text" class="form-control" id="editGMC" name="gmc">
+                </div>
+                
+                <div class="col-md-6 mb-3 hidden" id="editNMCSection">
+                  <label class="form-label">NMC Registration</label>
+                  <input type="text" class="form-control" id="editNMC" name="nmc">
+                </div>
+                
+                <div class="col-md-6 mb-3 hidden" id="editCertExpirySection">
+                  <label class="form-label">Certificate Expiry</label>
+                  <input type="text" class="form-control" id="editCertExpiry" name="certExpiry" placeholder="DD/MM/YYYY">
+                </div>
+                
+                <div class="col-12 mb-3">
+                  <label class="form-label">Details</label>
+                  <textarea class="form-control" id="editDetails" name="details" rows="3"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Submission Status Section -->
+            <div class="edit-section">
+              <h5 class="mb-3"><i class="bi bi-check2-square"></i> Submission Status</h5>
+              <div class="row">
+                <div class="col-12 mb-3">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="editAgreedToTerms" name="agreedToTerms">
+                    <label class="form-check-label" for="editAgreedToTerms">Agreed to Terms</label>
+                  </div>
+                </div>
+                <div class="col-12 mb-3">
+                  <label class="form-label">Profile Status</label>
+                  <select class="form-select" id="editProfileStatus" name="profileStatus">
+                    <option value="pending">Pending Review</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hidden fields for user ID and data tracking -->
+            <input type="hidden" id="editUserId" name="userId">
+          </form>
+        </div>
+        <div class="modal-footer">
+          <div class="d-flex justify-content-between w-100">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="saveProfileChangesBtn">
+              <i class="bi bi-save"></i> Save Changes
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
@@ -379,7 +583,10 @@
       where, 
       getDocs, 
       doc, 
-      getDoc 
+      getDoc,
+      updateDoc,
+      setDoc,
+      serverTimestamp
     } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
     import { firebaseConfig } from './firebase-config.js';
     import { reviewProfile, getUserProfile } from './profile-service.js';
@@ -402,8 +609,24 @@
     const profileModalBody = document.getElementById('profileModalBody');
     const profileModalFooter = document.getElementById('profileModalFooter');
     const profileModal = new bootstrap.Modal(document.getElementById('profileModal'));
+    const editProfileModal = new bootstrap.Modal(document.getElementById('editProfileModal'));
+    const editProfileForm = document.getElementById('editProfileForm');
+    const saveProfileChangesBtn = document.getElementById('saveProfileChangesBtn');
     const alertContainer = document.getElementById('alertContainer');
     const logoutLink = document.getElementById('logoutLink');
+
+    // Initialize Flatpickr date pickers
+    function initDatePickers() {
+      flatpickr("#editDOB", {
+        dateFormat: "d/m/Y",
+        maxDate: new Date() // Can't select future dates
+      });
+      
+      flatpickr("#editCertExpiry", {
+        dateFormat: "d/m/Y",
+        minDate: new Date() // Can't select past dates
+      });
+    }
 
     // Store all profiles by status for filtering
     let allProfiles = {
@@ -472,6 +695,51 @@
         console.error('Error formatting date:', error);
         return 'Date Error';
       }
+    }
+
+    // Format date for input fields (DD/MM/YYYY)
+    function formatDateForInput(timestamp) {
+      if (!timestamp) return '';
+      
+      let date;
+      try {
+        // Handle different timestamp formats
+        if (timestamp.seconds) {
+          date = new Date(timestamp.seconds * 1000);
+        } else if (timestamp instanceof Date) {
+          date = timestamp;
+        } else {
+          date = new Date(timestamp);
+        }
+        
+        if (isNaN(date.getTime())) {
+          return '';
+        }
+        
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0'); // +1 because months are 0-indexed
+        const year = date.getFullYear();
+        
+        return `${day}/${month}/${year}`;
+      } catch (error) {
+        console.error('Error formatting date for input:', error);
+        return '';
+      }
+    }
+
+    // Parse date string (DD/MM/YYYY) to Date object
+    function parseDateString(dateStr) {
+      if (!dateStr) return null;
+      
+      // Parse UK format date (DD/MM/YYYY)
+      const parts = dateStr.split('/');
+      if (parts.length !== 3) return null;
+      
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // Months are 0-based
+      const year = parseInt(parts[2], 10);
+      
+      return new Date(year, month, day);
     }
 
     // Check if a profile has been updated
@@ -562,7 +830,10 @@
             userInfo: {
               firstName: userData.firstName || '',
               surname: userData.surname || '',
-              email: userData.email || ''
+              email: userData.email || '',
+              mobile: userData.mobile || '',
+              isAdmin: userData.isAdmin || false,
+              has2FA: userData.has2FA || false
             },
             // Add a flag for profiles that have been updated by the user
             hasBeenUpdated: hasProfileBeenUpdated(profileData)
@@ -635,9 +906,14 @@
                   <i class="bi bi-${status === 'pending' ? 'hourglass-split' : (status === 'approved' ? 'check-circle' : 'x-circle')}"></i> 
                   ${status.charAt(0).toUpperCase() + status.slice(1)}
                 </span>
-                <button class="btn btn-outline-primary btn-sm view-profile-btn" data-user-id="${profile.userId}">
-                  <i class="bi bi-eye"></i> Review
-                </button>
+                <div class="btn-group">
+                  <button class="btn btn-outline-primary btn-sm view-profile-btn" data-user-id="${profile.userId}">
+                    <i class="bi bi-eye"></i> Review
+                  </button>
+                  <button class="btn btn-outline-warning btn-sm edit-profile-btn" data-user-id="${profile.userId}">
+                    <i class="bi bi-pencil-square"></i> Edit
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -646,11 +922,18 @@
       
       container.innerHTML = html;
       
-      // Add click handlers for view buttons
+      // Add click handlers for view and edit buttons
       container.querySelectorAll('.view-profile-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const userId = btn.getAttribute('data-user-id');
           openProfileModal(userId);
+        });
+      });
+      
+      container.querySelectorAll('.edit-profile-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const userId = btn.getAttribute('data-user-id');
+          openEditProfileModal(userId);
         });
       });
     }
@@ -705,6 +988,15 @@
         // Start building HTML content
         let html = buildProfileHeader(userData, hasProfileBeenUpdated(profile));
         
+        // Add edit button at top of modal
+        html += `
+          <div class="d-flex justify-content-end mb-3">
+            <button class="btn btn-outline-warning btn-sm edit-profile-btn" data-user-id="${userId}">
+              <i class="bi bi-pencil-square"></i> Edit Profile
+            </button>
+          </div>
+        `;
+        
         // Add update info section if the profile has been updated by user
         if (hasProfileBeenUpdated(profile)) {
           const updateInfo = getUpdateInfo(profile.adminUse?.notes);
@@ -737,11 +1029,146 @@
         // Add event listeners for buttons
         addButtonEventListeners(userId);
         
+        // Add event listener for edit button in modal
+        document.querySelector('.edit-profile-btn').addEventListener('click', () => {
+          profileModal.hide();
+          openEditProfileModal(userId);
+        });
+        
         // Show the modal
         profileModal.show();
       } catch (error) {
         console.error('Error opening profile modal:', error);
         showAlert('Error loading profile details: ' + error.message, 'danger');
+      }
+    }
+
+    // Open edit profile modal
+    async function openEditProfileModal(userId) {
+      try {
+        console.log('Opening edit profile modal for user ID:', userId);
+        
+        // Get profile data
+        const profile = await getUserProfile(userId);
+        console.log('Profile data received:', profile);
+        
+        if (!profile) {
+          showAlert('Profile not found or is empty', 'danger');
+          return;
+        }
+        
+        // Get user data
+        const userDoc = await getDoc(doc(db, 'users', userId));
+        console.log('User document exists:', userDoc.exists());
+        
+        const userData = userDoc.exists() ? userDoc.data() : {
+          firstName: 'Unknown',
+          surname: 'User',
+          email: 'No email available',
+          mobile: '',
+          isAdmin: false,
+          has2FA: false
+        };
+        
+        // Set values in the form
+        document.getElementById('editUserId').value = userId;
+        
+        // User Information
+        document.getElementById('editFirstName').value = userData.firstName || '';
+        document.getElementById('editSurname').value = userData.surname || '';
+        document.getElementById('editEmail').value = userData.email || '';
+        document.getElementById('editMobile').value = userData.mobile || '';
+        document.getElementById('editIsAdmin').checked = userData.isAdmin || false;
+        document.getElementById('editHas2FA').checked = userData.has2FA || false;
+        
+        // Personal Details
+        if (profile.personalDetails) {
+          document.getElementById('editDOB').value = formatDateForInput(profile.personalDetails.DOB);
+          document.getElementById('editEmergencyContact').value = profile.personalDetails.emergencyContact || '';
+        }
+        
+        // Driving Details
+        if (profile.driving) {
+          document.getElementById('editC1Classification').checked = profile.driving.c1Classification || false;
+          document.getElementById('editDLNumber').value = profile.driving.dlNumber || '';
+          document.getElementById('editNINumber').value = profile.driving.niNumber || '';
+          document.getElementById('editPoints').value = profile.driving.points || '';
+        }
+        
+        // Medical Qualifications
+        if (profile.medicalQualifications) {
+          document.getElementById('editQualification').value = profile.medicalQualifications.qualification || '';
+          document.getElementById('editHCPC').value = profile.medicalQualifications.hcpc || '';
+          document.getElementById('editGMC').value = profile.medicalQualifications.gmc || '';
+          document.getElementById('editNMC').value = profile.medicalQualifications.nmc || '';
+          document.getElementById('editDetails').value = profile.medicalQualifications.details || '';
+          document.getElementById('editCertExpiry').value = formatDateForInput(profile.medicalQualifications.certExpiry);
+          
+          // Trigger the qualification change to show/hide appropriate fields
+          updateQualificationFields();
+        }
+        
+        // Submission Status
+        if (profile.submission) {
+          document.getElementById('editAgreedToTerms').checked = profile.submission.agreedToTerms || false;
+        }
+        
+        // Profile Status
+        if (profile.adminUse && profile.adminUse.status) {
+          document.getElementById('editProfileStatus').value = profile.adminUse.status;
+        } else {
+          document.getElementById('editProfileStatus').value = 'pending';
+        }
+        
+        // Initialize date pickers
+        initDatePickers();
+        
+        // Show the modal
+        editProfileModal.show();
+      } catch (error) {
+        console.error('Error opening edit profile modal:', error);
+        showAlert('Error loading profile for editing: ' + error.message, 'danger');
+      }
+    }
+
+    // Update qualification fields based on selection
+    function updateQualificationFields() {
+      const qualification = document.getElementById('editQualification').value;
+      
+      // Reset all conditional sections to hidden
+      document.getElementById('editHCPCSection').classList.add('hidden');
+      document.getElementById('editGMCSection').classList.add('hidden');
+      document.getElementById('editNMCSection').classList.add('hidden');
+      document.getElementById('editCertExpirySection').classList.add('hidden');
+      
+      // Remove required attribute from all fields
+      document.getElementById('editHCPC').removeAttribute('required');
+      document.getElementById('editGMC').removeAttribute('required');
+      document.getElementById('editNMC').removeAttribute('required');
+      document.getElementById('editCertExpiry').removeAttribute('required');
+      
+      // Show appropriate sections based on qualification
+      if (['Paramedic', 'Paramedic (Specialist)', 'Paramedic (HART)', 
+           'Paramedic (Critical care)', 'Paramedic (in Primary Care)', 
+           'Paramedic (CTM/OO)'].includes(qualification)) {
+        document.getElementById('editHCPCSection').classList.remove('hidden');
+        document.getElementById('editHCPC').setAttribute('required', 'required');
+      } else if (['Doctor', 'Doctor (Critical Care/BASICS/Merit)', 
+                  'Doctor (with FREC/PHTLS or similar)'].includes(qualification)) {
+        document.getElementById('editGMCSection').classList.remove('hidden');
+        document.getElementById('editGMC').setAttribute('required', 'required');
+      } else if (['Nurse', 'Nurse (Ambulance Nurse)', 
+                  'Nurse (with FREC/PHTLS or similar)'].includes(qualification)) {
+        document.getElementById('editNMCSection').classList.remove('hidden');
+        document.getElementById('editNMC').setAttribute('required', 'required');
+        
+        if (qualification === 'Nurse (with FREC/PHTLS or similar)') {
+          document.getElementById('editCertExpirySection').classList.remove('hidden');
+          document.getElementById('editCertExpiry').setAttribute('required', 'required');
+        }
+      } else if (['FREC 3 (or similar level 3 certification)', 'FREC 4', 'PHTLS'].includes(qualification)) {
+        document.getElementById('editCertExpirySection').classList.remove('hidden');
+        document.getElementById('editCertExpiry').setAttribute('required', 'required');
       }
     }
 
@@ -1010,146 +1437,3 @@
           await handleSaveNotes(userId);
         });
       }
-    }
-
-    // Handle saving notes without changing profile status
-    async function handleSaveNotes(userId) {
-      const notesEl = document.getElementById('adminNotes');
-      const notes = notesEl ? notesEl.value.trim() : '';
-      
-      // Don't do anything if notes are empty
-      if (!notes) {
-        showAlert('Please enter some notes to save.', 'warning');
-        return;
-      }
-      
-      try {
-        setButtonLoading('saveNotesBtn', true);
-        
-        // Get the existing profile
-        const existingProfile = await getUserProfile(userId);
-        if (!existingProfile) {
-          throw new Error('Profile not found');
-        }
-        
-        // Get current status or set to pending if none exists
-        const currentStatus = existingProfile.adminUse?.status || 'pending';
-        
-        // Append new notes to existing notes
-        let finalNotes = '';
-        if (existingProfile.adminUse?.notes) {
-          const currentDate = new Date().toLocaleDateString('en-GB', {
-            day: '2-digit', month: 'short', year: 'numeric'
-          });
-          finalNotes = `${existingProfile.adminUse.notes}\n\nUpdate (${currentDate}):\n${notes}`;
-        } else {
-          finalNotes = notes;
-        }
-        
-        // Update profile in Firestore - maintain current status but update notes
-        await reviewProfile(userId, currentStatus, finalNotes);
-        
-        // Show success message
-        showAlert('Notes saved successfully!', 'success');
-        
-        // Refresh the modal with updated notes
-        await openProfileModal(userId);
-      } catch (error) {
-        console.error('Error saving notes:', error);
-        showAlert(`Error saving notes: ${error.message}`, 'danger');
-      } finally {
-        setButtonLoading('saveNotesBtn', false);
-      }
-    }
-
-    // Handle profile approval or rejection
-    async function handleProfileAction(userId, status) {
-      const notesEl = document.getElementById('adminNotes');
-      const notes = notesEl ? notesEl.value.trim() : '';
-      
-      try {
-        setButtonLoading(status === 'approved' ? 'approveProfileBtn' : 'rejectProfileBtn', true);
-        
-        // Get the existing profile first
-        const existingProfile = await getUserProfile(userId);
-        
-        // Preserve existing notes if new notes are empty
-        let finalNotes = notes;
-        if (!notes && existingProfile?.adminUse?.notes) {
-          finalNotes = existingProfile.adminUse.notes;
-        } 
-        // If both existing and new notes exist, append the new notes
-        else if (notes && existingProfile?.adminUse?.notes) {
-          const currentDate = new Date().toLocaleDateString('en-GB', {
-            day: '2-digit', month: 'short', year: 'numeric'
-          });
-          finalNotes = `${existingProfile.adminUse.notes}\n\nUpdate (${currentDate}):\n${notes}`;
-        }
-        
-        // Update profile status in Firestore with preserved/amended notes
-        await reviewProfile(userId, status, finalNotes);
-        
-        // Hide modal
-        profileModal.hide();
-        
-        // Show success message
-        showAlert(`Profile ${status} successfully!`, 'success');
-        
-        // Reload profiles
-        await loadAllProfiles();
-      } catch (error) {
-        console.error(`Error ${status} profile:`, error);
-        showAlert(`Error updating profile: ${error.message}`, 'danger');
-        setButtonLoading(status === 'approved' ? 'approveProfileBtn' : 'rejectProfileBtn', false);
-      }
-    }
-
-    // Setup search filters
-    pendingSearchInput.addEventListener('input', () => {
-      filterProfiles('pending', pendingSearchInput.value);
-    });
-    
-    approvedSearchInput.addEventListener('input', () => {
-      filterProfiles('approved', approvedSearchInput.value);
-    });
-    
-    rejectedSearchInput.addEventListener('input', () => {
-      filterProfiles('rejected', rejectedSearchInput.value);
-    });
-
-    // Logout handler
-    logoutLink.addEventListener('click', async (e) => {
-      e.preventDefault();
-      try {
-        await signOut(auth);
-        window.location.href = 'index.html';
-      } catch (error) {
-        showAlert('Logout failed: ' + error.message, 'danger');
-      }
-    });
-
-    // Check authentication and load profiles
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        window.location.href = 'index.html';
-        return;
-      }
-
-      try {
-        // Check if user is admin
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (!userDoc.exists() || userDoc.data().isAdmin !== true) {
-          window.location.href = 'dashboard.html';
-          return;
-        }
-        
-        // Load profile data
-        await loadAllProfiles();
-      } catch (error) {
-        console.error('Error checking admin status:', error);
-        window.location.href = 'dashboard.html';
-      }
-    });
-  </script>
-</body>
-</html>
