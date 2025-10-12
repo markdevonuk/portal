@@ -402,23 +402,17 @@
       }
     });
 
-    // Initialize Flatpickr date pickers - initialize without default values first
-    const dobPicker = flatpickr("#dob", {
+    // Initialize Flatpickr date pickers
+    flatpickr("#dob", {
       dateFormat: "d/m/Y",
       maxDate: new Date(), // Can't select future dates
-      allowInput: true,
-      clickOpens: true,
-      onReady: function() {
-        // This is called when Flatpickr is fully initialized
-        logDebug("DOB Flatpickr initialized");
-      }
+      allowInput: true
     });
     
-    const certExpiryPicker = flatpickr("#certExpiry", {
+    flatpickr("#certExpiry", {
       dateFormat: "d/m/Y",
       minDate: new Date(), // Can't select past dates
-      allowInput: true,
-      clickOpens: true
+      allowInput: true
     });
 
     // DOM elements
@@ -616,85 +610,43 @@
             logDebug('Loading personal details:', profile.personalDetails);
             
             if (profile.personalDetails.DOB) {
-              logDebug('DOB data from profile:', JSON.stringify(profile.personalDetails.DOB));
-              
-              // Handle various date formats more robustly for mobile compatibility
+              // Convert timestamp to date string
               let date = null;
               
-              // Case 1: Firebase Timestamp object
-              if (profile.personalDetails.DOB.seconds && profile.personalDetails.DOB.nanoseconds) {
-                date = new Date(profile.personalDetails.DOB.seconds * 1000);
-                logDebug('Parsed Firebase timestamp to:', date);
-              } 
-              // Case 2: JavaScript Date object
-              else if (profile.personalDetails.DOB instanceof Date) {
-                date = profile.personalDetails.DOB;
-                logDebug('Using JavaScript Date object:', date);
-              }
-              // Case 3: String with timestamp (from Firestore)
-              else if (typeof profile.personalDetails.DOB === 'object' && profile.personalDetails.DOB._seconds) {
-                date = new Date(profile.personalDetails.DOB._seconds * 1000);
-                logDebug('Parsed _seconds timestamp to:', date);
-              }
-              // Case 4: ISO string or other date string
-              else if (typeof profile.personalDetails.DOB === 'string') {
-                try {
+              try {
+                // Handle Firebase timestamp
+                if (profile.personalDetails.DOB.seconds) {
+                  date = new Date(profile.personalDetails.DOB.seconds * 1000);
+                } 
+                // Handle regular Date object
+                else if (profile.personalDetails.DOB instanceof Date) {
+                  date = profile.personalDetails.DOB;
+                } 
+                // Try to convert any other format to a date
+                else {
                   date = new Date(profile.personalDetails.DOB);
-                  logDebug('Parsed date string to:', date);
-                } catch (e) {
-                  logDebug('Failed to parse date string:', e);
                 }
-              }
-              // Case 5: Unix timestamp as a number
-              else if (typeof profile.personalDetails.DOB === 'number') {
-                date = new Date(profile.personalDetails.DOB);
-                logDebug('Parsed number timestamp to:', date);
-              }
-              // Case 6: Last attempt with any other format
-              else {
-                try {
-                  date = new Date(profile.personalDetails.DOB);
-                  logDebug('Attempted general parse to:', date);
-                } catch (e) {
-                  logDebug('All parsing attempts failed:', e);
-                }
-              }
-              
-              if (date && !isNaN(date.getTime())) {
-                // Format the date consistently for display
-                const day = date.getDate().toString().padStart(2, '0');
-                const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                const year = date.getFullYear();
                 
-                const formattedDate = `${day}/${month}/${year}`;
-                
-                // Set the value directly first, then update flatpickr
-                const dobInput = document.getElementById('dob');
-                dobInput.value = formattedDate;
-                
-                // Set the value in a different way for mobile browsers
-                dobInput.setAttribute('value', formattedDate);
-                
-                // Also try setting it with a small delay to handle possible browser-specific issues
-                setTimeout(() => {
-                  dobInput.value = formattedDate;
-                  // Force the element to refresh - sometimes helps with mobile browsers
-                  dobInput.style.display = 'none';
-                  dobInput.offsetHeight; // Force reflow
-                  dobInput.style.display = '';
+                if (date && !isNaN(date.getTime())) {
+                  // Format to DD/MM/YYYY
+                  const day = String(date.getDate()).padStart(2, '0');
+                  const month = String(date.getMonth() + 1).padStart(2, '0');
+                  const year = date.getFullYear();
+                  const formattedDate = `${day}/${month}/${year}`;
                   
-                  // Try to set flatpickr with the date
-                  try {
-                    dobPicker.setDate(date);
-                    logDebug('Flatpickr date set to:', date);
-                  } catch (e) {
-                    logDebug('Error setting flatpickr date:', e);
-                  }
-                }, 100);
-                
-                logDebug('Loaded DOB value:', formattedDate);
-              } else {
-                logDebug('Could not parse DOB to valid date');
+                  document.getElementById('dob').value = formattedDate;
+                  logDebug('Set DOB value to:', formattedDate);
+                  
+                  // Re-initialize flatpickr with this date
+                  flatpickr("#dob", {
+                    dateFormat: "d/m/Y",
+                    maxDate: new Date(),
+                    defaultDate: date,
+                    allowInput: true
+                  });
+                }
+              } catch (error) {
+                logDebug('Error setting DOB:', error);
               }
             }
             
@@ -724,22 +676,42 @@
             
             if (profile.medicalQualifications.certExpiry) {
               // Convert timestamp to date string
-              let date;
-              if (profile.medicalQualifications.certExpiry.seconds) {
-                date = new Date(profile.medicalQualifications.certExpiry.seconds * 1000);
-              } else if (profile.medicalQualifications.certExpiry instanceof Date) {
-                date = profile.medicalQualifications.certExpiry;
-              } else {
-                try {
-                  date = new Date(profile.medicalQualifications.certExpiry);
-                } catch (e) {
-                  logDebug('Failed to parse certExpiry:', e);
-                  date = null;
-                }
-              }
+              let date = null;
               
-              if (date && !isNaN(date.getTime())) {
-                document.getElementById('certExpiry').value = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+              try {
+                // Handle Firebase timestamp
+                if (profile.medicalQualifications.certExpiry.seconds) {
+                  date = new Date(profile.medicalQualifications.certExpiry.seconds * 1000);
+                } 
+                // Handle regular Date object
+                else if (profile.medicalQualifications.certExpiry instanceof Date) {
+                  date = profile.medicalQualifications.certExpiry;
+                } 
+                // Try to convert any other format to a date
+                else {
+                  date = new Date(profile.medicalQualifications.certExpiry);
+                }
+                
+                if (date && !isNaN(date.getTime())) {
+                  // Format to DD/MM/YYYY
+                  const day = String(date.getDate()).padStart(2, '0');
+                  const month = String(date.getMonth() + 1).padStart(2, '0');
+                  const year = date.getFullYear();
+                  const formattedDate = `${day}/${month}/${year}`;
+                  
+                  document.getElementById('certExpiry').value = formattedDate;
+                  logDebug('Set certExpiry value to:', formattedDate);
+                  
+                  // Re-initialize flatpickr with this date
+                  flatpickr("#certExpiry", {
+                    dateFormat: "d/m/Y",
+                    minDate: new Date(),
+                    defaultDate: date,
+                    allowInput: true
+                  });
+                }
+              } catch (error) {
+                logDebug('Error setting certExpiry:', error);
               }
             }
             
