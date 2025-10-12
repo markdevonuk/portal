@@ -22,6 +22,46 @@
       padding:30px; 
       margin:20px 0; 
     }
+    .nav-tabs {
+  display: flex;
+  width: 100%;
+  margin-bottom: 20px;
+  border: none;
+}
+
+.nav-tabs .nav-item {
+  flex: 1;
+  text-align: center;
+  margin: 0 10px;
+}
+
+.nav-tabs .nav-link {
+  color: #6c757d;
+  font-weight: 500;
+  padding: 12px 5px;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  font-size: 16px;
+  height: 100%;
+}
+
+.nav-tabs .nav-link.active {
+  color: #fff;
+  background: linear-gradient(135deg, #00a896 0%, #028090 100%);
+  border-color: transparent;
+  box-shadow: 0 5px 15px rgba(0,168,150,.3);
+}
+
+.tab-header {
+  margin-bottom: 20px;
+}
+
+.search-container {
+  margin-bottom: 20px;
+}
     .page-header { 
       background:linear-gradient(135deg,#00a896 0%,#028090 100%); 
       color:#fff; 
@@ -118,16 +158,7 @@
     }
     .tab-content {
       padding-top: 20px;
-    }
-    .nav-tabs .nav-link {
-      color: #6c757d;
-      font-weight: 500;
-    }
-    .nav-tabs .nav-link.active {
-      color: #00a896;
-      font-weight: 600;
-      border-bottom: 3px solid #00a896;
-    }
+   
     .profile-section {
       border-bottom: 1px solid #e9ecef;
       padding-bottom: 15px;
@@ -263,13 +294,15 @@
       <div class="tab-content" id="profileTabContent">
         <!-- Pending Profiles Tab -->
         <div class="tab-pane fade show active" id="pending-profiles" role="tabpanel" aria-labelledby="pending-tab">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="mb-0">Profiles Awaiting Review</h4>
-            <div class="input-group" style="max-width: 300px;">
-              <span class="input-group-text"><i class="bi bi-search"></i></span>
-              <input type="text" class="form-control" id="pendingSearchInput" placeholder="Search profiles...">
-            </div>
-          </div>
+  <div class="tab-header">
+    <h4 class="mb-3">Profiles Awaiting Review</h4>
+    <div class="search-container">
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="text" class="form-control" id="pendingSearchInput" placeholder="Search profiles...">
+      </div>
+    </div>
+  </div>
           
           <div id="pendingProfilesContainer">
             <div class="text-center py-4">
@@ -280,14 +313,17 @@
         </div>
         
         <!-- Approved Profiles Tab -->
-        <div class="tab-pane fade" id="approved-profiles" role="tabpanel" aria-labelledby="approved-tab">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="mb-0">Approved Profiles</h4>
-            <div class="input-group" style="max-width: 300px;">
-              <span class="input-group-text"><i class="bi bi-search"></i></span>
-              <input type="text" class="form-control" id="approvedSearchInput" placeholder="Search profiles...">
-            </div>
-          </div>
+        <!-- With this: -->
+<div class="tab-pane fade" id="approved-profiles" role="tabpanel" aria-labelledby="approved-tab">
+  <div class="tab-header">
+    <h4 class="mb-3">Approved Profiles</h4>
+    <div class="search-container">
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="text" class="form-control" id="approvedSearchInput" placeholder="Search profiles...">
+      </div>
+    </div>
+  </div>
           
           <div id="approvedProfilesContainer">
             <div class="text-center py-4">
@@ -297,14 +333,17 @@
           </div>
         </div>
         <!-- Rejected Profiles Tab -->
-        <div class="tab-pane fade" id="rejected-profiles" role="tabpanel" aria-labelledby="rejected-tab">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="mb-0">Rejected Profiles</h4>
-            <div class="input-group" style="max-width: 300px;">
-              <span class="input-group-text"><i class="bi bi-search"></i></span>
-              <input type="text" class="form-control" id="rejectedSearchInput" placeholder="Search profiles...">
-            </div>
-          </div>
+        <!-- With this: -->
+<div class="tab-pane fade" id="rejected-profiles" role="tabpanel" aria-labelledby="rejected-tab">
+  <div class="tab-header">
+    <h4 class="mb-3">Rejected Profiles</h4>
+    <div class="search-container">
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="text" class="form-control" id="rejectedSearchInput" placeholder="Search profiles...">
+      </div>
+    </div>
+  </div>
           
           <div id="rejectedProfilesContainer">
             <div class="text-center py-4">
@@ -929,11 +968,6 @@
           </h4>
           <p class="text-muted">${userData.email || 'No email available'}</p>
           
-          <div class="d-flex justify-content-end mb-3">
-            <button class="btn btn-outline-warning btn-sm edit-profile-btn" data-user-id="${userId}">
-              <i class="bi bi-pencil-square"></i> Edit Profile
-            </button>
-          </div>
         `;
         
         // Add update notification if profile has been updated
@@ -1163,12 +1197,6 @@
         
         document.getElementById('rejectProfileBtn').addEventListener('click', async () => {
           await handleProfileAction(userId, 'rejected');
-        });
-        
-        // Add event listener for edit button in modal
-        document.querySelector('.edit-profile-btn').addEventListener('click', () => {
-          profileModal.hide();
-          openEditProfileModal(userId);
         });
         
         // Show modal
