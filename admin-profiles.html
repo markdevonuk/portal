@@ -67,7 +67,7 @@
 /* Make badges a bit smaller */
 .nav-tabs .badge-container {
   width: 65px; /* Reduce from 70px */
-  height: 65px; /* Reduce from 70px 
+  height: 65px; /* Reduce from 70px */
     border-radius: 50%;
     background-color: #f8f9fa;
     border: 2px solid #dee2e6;
@@ -185,14 +185,18 @@
     width: 95%; /* Use more width on small screens */
     gap: 5px; /* Smaller gap on mobile */
   }
-    
-    .nav-tabs .badge-icon {
-      font-size: 16px;
-    }
-    
-    .nav-tabs .badge-count {
-      font-size: 18px;
-    }
+  
+  .nav-tabs .badge-container {
+    width: 50px; /* Smaller on mobile */
+    height: 50px;
+  }
+  
+  .nav-tabs .badge-icon {
+    font-size: 16px;
+  }
+  
+  .nav-tabs .badge-count {
+    font-size: 18px;
   }
 
   .tab-header {
