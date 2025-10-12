@@ -805,6 +805,14 @@
       return new Date(year, month, day);
     }
 
+    // Helper function to format a date to a human-readable string
+    function formatDateString(date) {
+      if (!date) return '';
+      
+      const options = { day: '2-digit', month: 'short', year: 'numeric' };
+      return date.toLocaleDateString('en-GB', options);
+    }
+
     // Submit Profile
     profileForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -853,28 +861,26 @@
           }
         };
         
-        // If there are existing adminUse notes, preserve them
-        if (profile && profile.adminUse && profile.adminUse.notes) {
-          updatedProfile.adminUse = {
-            notes: profile.adminUse.notes
-          };
+        // IMPORTANT CHANGE: Preserve existing admin notes and add update information
+        if (profile && profile.adminUse) {
+          // Create a new adminUse object to include in the updated profile
+          updatedProfile.adminUse = {};
+          
+          // If there are existing notes, preserve them and add update information
+          if (profile.adminUse.notes) {
+            const currentDate = formatDateString(new Date());
+            updatedProfile.adminUse.notes = `${profile.adminUse.notes}\n\nProfile updated by user on ${currentDate}. Requires review.`;
+          } else {
+            // If no existing notes, create a simple note
+            const currentDate = formatDateString(new Date());
+            updatedProfile.adminUse.notes = `Profile updated by user on ${currentDate}. Requires review.`;
+          }
         }
         
         logDebug('Updated profile data:', updatedProfile);
         
         if (isResubmission) {
           logDebug('Resubmitting profile');
-          
-          // If this is a resubmission, add a date stamp to notes
-          if (profile && profile.adminUse && profile.adminUse.notes) {
-            const currentDate = new Date().toLocaleDateString('en-GB', {
-              day: '2-digit', month: 'short', year: 'numeric'
-            });
-            updatedProfile.adminUse = {
-              notes: `${profile.adminUse.notes}\n\nProfile resubmitted by user on ${currentDate}`
-            };
-          }
-          
           // Use the function for updating and resubmitting
           await updateAndResubmitProfile(updatedProfile);
           showAlert('Profile updated and resubmitted for review!', 'success');
