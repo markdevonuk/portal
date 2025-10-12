@@ -108,25 +108,38 @@
       padding-top: 20px;
     }
     .nav-tabs {
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      white-space: nowrap;
+      display: flex;
       border-bottom: 1px solid #dee2e6;
     }
     .nav-tabs .nav-item {
-      flex: 0 0 auto;
+      flex: 1;
+      text-align: center;
     }
     .nav-tabs .nav-link {
       color: #6c757d;
       font-weight: 500;
-      padding: 0.5rem 1rem;
-      white-space: nowrap;
+      padding: 0.5rem 0.25rem;
+      font-size: 0.9rem;
+      border: none;
     }
     .nav-tabs .nav-link.active {
       color: #00a896;
       font-weight: 600;
+      border: none;
       border-bottom: 3px solid #00a896;
+    }
+    @media (max-width: 576px) {
+      .nav-tabs .nav-link {
+        font-size: 0.8rem;
+        padding: 0.5rem 0.1rem;
+      }
+      .nav-tabs .nav-link i {
+        margin-right: 2px;
+      }
+      .badge {
+        font-size: 0.65rem;
+        padding: 0.2em 0.4em;
+      }
     }
     .profile-section {
       border-bottom: 1px solid #e9ecef;
@@ -216,7 +229,6 @@
     <div id="alertContainer"></div>
 
     <div class="admin-card">
-      <!-- Modified tabs with simpler UI for mobile -->
       <ul class="nav nav-tabs" id="profileTabs" role="tablist">
         <li class="nav-item" role="presentation">
           <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending-profiles" type="button" role="tab" aria-controls="pending-profiles" aria-selected="true">
