@@ -247,16 +247,52 @@ async function updateAndResubmitProfile(updatedProfile) {
   try {
     const profileRef = doc(db, 'profiles', user.uid);
     
+    // Get existing profile to preserve notes
+    const existingProfileSnap = await getDoc(profileRef);
+    let adminNotes = "";
+    
+    if (existingProfileSnap.exists()) {
+      const existingProfile = existingProfileSnap.data();
+      
+      // If there are existing admin notes, preserve them
+      if (existingProfile.adminUse && existingProfile.adminUse.notes) {
+        // Format current date for the note
+        const currentDate = new Date().toLocaleDateString('en-GB', {
+          day: '2-digit', 
+          month: 'short', 
+          year: 'numeric'
+        });
+        
+        // If updatedProfile already has adminUse.notes, use that (from profile.html)
+        // Otherwise, create a standard update note
+        if (updatedProfile.adminUse && updatedProfile.adminUse.notes) {
+          adminNotes = updatedProfile.adminUse.notes;
+        } else {
+          adminNotes = `${existingProfile.adminUse.notes}\n\nProfile updated by user on ${currentDate}. Requires review.`;
+        }
+      } else {
+        // No existing notes, create a simple note about the update
+        const currentDate = new Date().toLocaleDateString('en-GB', {
+          day: '2-digit', 
+          month: 'short', 
+          year: 'numeric'
+        });
+        adminNotes = `Profile updated by user on ${currentDate}. Requires review.`;
+      }
+    }
+    
     // Update profile with new data
-    await updateDoc(profileRef, {
+    const updateData = {
       personalDetails: updatedProfile.personalDetails || {},
       driving: updatedProfile.driving || {},
       medicalQualifications: updatedProfile.medicalQualifications || {},
       "submission.submittedAt": serverTimestamp(),
       // Reset to pending status
       "adminUse.status": "pending",
-      "adminUse.notes": "Profile updated by user, requires review."
-    });
+      "adminUse.notes": adminNotes
+    };
+    
+    await updateDoc(profileRef, updateData);
     
     console.log("Profile updated and resubmitted for review");
   } catch (error) {
