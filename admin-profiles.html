@@ -25,14 +25,16 @@
   }
   /* Updated tab styles to ensure they fit on one line on mobile */
 
-  /* Completely redesigned tab navigation */
-  .nav-tabs {
-    display: flex;
-    width: 100%;
-    margin-bottom: 25px;
-    border: none;
-    gap: 15px;
-  }
+  /* Centralize tabs and make them closer together */
+.nav-tabs {
+  display: flex;
+  width: 80%; /* Reduce from 100% to create centered layout */
+  max-width: 600px; /* Set a maximum width */
+  margin: 0 auto 25px; /* Center the tabs with auto margin on left/right */
+  border: none;
+  gap: 10px; /* Reduce gap from 15px to 10px */
+  justify-content: center; /* Center the tabs */
+}
 
   .nav-tabs .nav-item {
     flex: 1;
@@ -62,9 +64,10 @@
   }
 
   /* Big, prominent badge styling */
-  .nav-tabs .badge-container {
-    width: 70px;
-    height: 70px;
+/* Make badges a bit smaller */
+.nav-tabs .badge-container {
+  width: 65px; /* Reduce from 70px */
+  height: 65px; /* Reduce from 70px 
     border-radius: 50%;
     background-color: #f8f9fa;
     border: 2px solid #dee2e6;
@@ -176,12 +179,12 @@
     color: #dc3545;
   }
 
-  /* Responsive adjustments */
-  @media (max-width: 576px) {
-    .nav-tabs .badge-container {
-      width: 60px;
-      height: 60px;
-    }
+ /* For mobile devices, make the tabs even more compact */
+@media (max-width: 576px) {
+  .nav-tabs {
+    width: 95%; /* Use more width on small screens */
+    gap: 5px; /* Smaller gap on mobile */
+  }
     
     .nav-tabs .badge-icon {
       font-size: 16px;
