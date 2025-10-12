@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Security Rules Helper - FMS Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      min-height: 100vh; 
+      padding: 20px; 
+    }
+    .main-card { 
+      background: #fff; 
+      border-radius: 20px; 
+      box-shadow: 0 20px 60px rgba(0,0,0,.3); 
+      overflow: hidden; 
+      max-width: 900px; 
+      margin: 20px auto;
+      padding: 30px;
+    }
+    .section-header {
+      color: #028090;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #00a896;
+    }
+    .code-block {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 10px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      margin: 15px 0;
+    }
+    .btn-primary { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      border: none; 
+    }
+    .btn-primary:hover { 
+      box-shadow: 0 5px 15px rgba(0,168,150,.4); 
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="main-card">
+      <h1 class="mb-4"><i class="bi bi-shield-lock"></i> Firebase Security Rules Helper</h1>
+      
+      <div id="alertContainer"></div>
+      
+      <div class="row">
+        <div class="col-md-12">
+          <h2 class="section-header">1. Diagnose Registration Issue</h2>
+          
+          <p>If you're getting a "database access denied" error during registration, it's likely due to Firebase security rules preventing access to the <code>allowedEmails</code> collection.</p>
+          
+          <div class="alert alert-info">
+            <strong>Common issue:</strong> The security rules may be restricting read access to the allowedEmails collection for unauthenticated users.
+          </div>
+          
+          <h3 class="mt-4">Recommended Firestore Rules</h3>
+          
+          <div class="code-block">// Allow read access to allowedEmails collection for everyone
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow access to allowedEmails collection for checking during registration
+    match /allowedEmails/{email} {
+      allow read: if true;  // Allow public read access
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // User profiles - users can read/write their own data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // Profiles collection
+    match /profiles/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // Default deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}</div>
+          
+          <p>The key is allowing <strong>public read access</strong> to the allowedEmails collection.</p>
+        </div>
+      </div>
+      
+      <hr class="my-4">
+      
+      <h2 class="section-header">2. Test the Allowlist</h2>
+      
+      <p>Use this form to directly check if an email exists in the allowedEmails collection:</p>
+      
+      <form id="checkForm">
+        <div class="mb-3">
+          <label for="emailInput" class="form-label">Email Address</label>
+          <input type="email" class="form-control" id="emailInput" placeholder="Enter email to check" value="test@test.com" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary" id="checkBtn">
+          <i class="bi bi-search"></i> Check Email Status
+        </button>
+      </form>
+      
+      <div id="results" class="mt-4" style="display:none;">
+        <h5>Results:</h5>
+        <div id="resultContent"></div>
+      </div>
+      
+      <hr class="my-4">
+      
+      <h2 class="section-header">3. Add Email to Allowlist (Admin Only)</h2>
+      
+      <form id="addEmailForm">
+        <div class="mb-3">
+          <label for="newEmailInput" class="form-label">New Email</label>
+          <input type="email" class="form-control" id="newEmailInput" placeholder="Enter new email to add" value="test@test.com" required>
+        </div>
+        
+        <button type="submit" class="btn btn-success" id="addBtn">
+          <i class="bi bi-plus-circle"></i> Add to Allowlist
+        </button>
+      </form>
+      
+      <hr class="my-4">
+      
+      <h2 class="section-header">4. How to Update Firestore Rules</h2>
+      
+      <p>To update your Firebase security rules:</p>
+      <ol>
+        <li>Go to the <a href="https://console.firebase.google.com/" target="_blank">Firebase Console</a></li>
+        <li>Select your project: <strong>fmsportal-dbfb3</strong></li>
+        <li>Navigate to Firestore Database → Rules</li>
+        <li>Replace the current rules with the recommended rules above</li>
+        <li>Click "Publish"</li>
+      </ol>
+      
+      <div class="alert alert-warning">
+        <strong>Note:</strong> Changes to security rules can take a few minutes to propagate.
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { firebaseConfig } from './firebase-config.js';
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    
+    // Helper functions
+    function showAlert(message, type) {
+      const html = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>`;
+      document.getElementById('alertContainer').innerHTML = html;
+    }
+    
+    function setButtonLoading(id, loading) {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      if (loading) {
+        btn.classList.add('disabled');
+        btn.disabled = true;
+        btn.innerHTML = loading ? 
+          '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...' : 
+          btn.originalText;
+      } else {
+        btn.classList.remove('disabled');
+        btn.disabled = false;
+        if (btn.originalText) {
+          btn.innerHTML = btn.originalText;
+        }
+      }
+    }
+    
+    // Store original button text
+    document.querySelectorAll('button').forEach(btn => {
+      btn.originalText = btn.innerHTML;
+    });
+    
+    // Email check form
+    document.getElementById('checkForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('emailInput').value.trim().toLowerCase();
+      setButtonLoading('checkBtn', true);
+      
+      try {
+        // Check if email exists in allowedEmails collection
+        const emailDocRef = doc(db, 'allowedEmails', email);
+        const emailDocSnap = await getDoc(emailDocRef);
+        
+        const results = document.getElementById('results');
+        const resultContent = document.getElementById('resultContent');
+        results.style.display = 'block';
+        
+        if (emailDocSnap.exists()) {
+          resultContent.innerHTML = `
+            <div class="alert alert-success mb-0">
+              <strong>✅ Email is allowed!</strong><br>
+              The email address <strong>${email}</strong> is in the allowedEmails collection.
+              <hr>
+              <pre>${JSON.stringify(emailDocSnap.data(), null, 2)}</pre>
+            </div>
+          `;
+        } else {
+          resultContent.innerHTML = `
+            <div class="alert alert-danger mb-0">
+              <strong>❌ Email not found!</strong><br>
+              The email address <strong>${email}</strong> is NOT in the allowedEmails collection.
+              <hr>
+              <p>This is why registration fails - the email needs to be added to the allowlist first.</p>
+            </div>
+          `;
+        }
+      } catch (error) {
+        results.style.display = 'block';
+        const resultContent = document.getElementById('resultContent');
+        resultContent.innerHTML = `
+          <div class="alert alert-danger mb-0">
+            <strong>❌ Error checking email:</strong><br>
+            ${error.message}
+            <hr>
+            <p>This confirms you have a Firebase security rules issue. The rules need to be updated to allow unauthenticated read access to the allowedEmails collection.</p>
+          </div>
+        `;
+        console.error('Error checking email:', error);
+      } finally {
+        setButtonLoading('checkBtn', false);
+      }
+    });
+    
+    // Add email form
+    document.getElementById('addEmailForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('newEmailInput').value.trim().toLowerCase();
+      setButtonLoading('addBtn', true);
+      
+      try {
+        // Check if user is admin (this is a simple check - real implementation would be more secure)
+        const user = auth.currentUser;
+        if (!user) {
+          throw new Error('You must be logged in to add emails');
+        }
+        
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (!userDoc.exists() || userDoc.data().isAdmin !== true) {
+          throw new Error('Only admin users can add emails to the allowlist');
+        }
+        
+        // Check if email already exists
+        const emailDocRef = doc(db, 'allowedEmails', email);
+        const emailDocSnap = await getDoc(emailDocRef);
+        
+        if (emailDocSnap.exists()) {
+          showAlert(`Email ${email} is already in the allowlist`, 'warning');
+        } else {
+          // Add email to allowedEmails collection
+          await setDoc(emailDocRef, {
+            allowed: true,
+            addedDate: new Date().toISOString()
+          });
+          
+          showAlert(`Email ${email} added to allowlist successfully!`, 'success');
+          document.getElementById('newEmailInput').value = '';
+        }
+      } catch (error) {
+        showAlert(`Error adding email: ${error.message}`, 'danger');
+        console.error('Error adding email:', error);
+      } finally {
+        setButtonLoading('addBtn', false);
+      }
+    });
+    
+    // Check auth status and show appropriate message
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        showAlert('You are not logged in. Some functions may be restricted.', 'info');
+      } else {
+        // Check if admin
+        getDoc(doc(db, 'users', user.uid)).then(userDoc => {
+          if (userDoc.exists() && userDoc.data().isAdmin === true) {
+            showAlert(`Welcome, admin user. You have full access to this tool.`, 'success');
+          } else {
+            showAlert(`Logged in as ${user.email}. Admin functions may be restricted.`, 'info');
+          }
+        }).catch(err => {
+          console.error("Error checking admin status:", err);
+        });
+      }
+    });
+  </script>
+</body>
+</html>
