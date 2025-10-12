@@ -402,15 +402,23 @@
       }
     });
 
-    // Initialize Flatpickr date pickers
-    flatpickr("#dob", {
+    // Initialize Flatpickr date pickers - initialize without default values first
+    const dobPicker = flatpickr("#dob", {
       dateFormat: "d/m/Y",
-      maxDate: new Date() // Can't select future dates
+      maxDate: new Date(), // Can't select future dates
+      allowInput: true,
+      clickOpens: true,
+      onReady: function() {
+        // This is called when Flatpickr is fully initialized
+        logDebug("DOB Flatpickr initialized");
+      }
     });
     
-    flatpickr("#certExpiry", {
+    const certExpiryPicker = flatpickr("#certExpiry", {
       dateFormat: "d/m/Y",
-      minDate: new Date() // Can't select past dates
+      minDate: new Date(), // Can't select past dates
+      allowInput: true,
+      clickOpens: true
     });
 
     // DOM elements
@@ -608,7 +616,7 @@
             logDebug('Loading personal details:', profile.personalDetails);
             
             if (profile.personalDetails.DOB) {
-              logDebug('DOB data from profile:', profile.personalDetails.DOB);
+              logDebug('DOB data from profile:', JSON.stringify(profile.personalDetails.DOB));
               
               // Handle various date formats more robustly for mobile compatibility
               let date = null;
@@ -659,15 +667,32 @@
                 const year = date.getFullYear();
                 
                 const formattedDate = `${day}/${month}/${year}`;
-                document.getElementById('dob').value = formattedDate;
-                logDebug('Loaded DOB:', formattedDate);
                 
-                // Initialize flatpickr with the date to ensure it's displayed correctly
-                flatpickr("#dob", {
-                  dateFormat: "d/m/Y",
-                  maxDate: new Date(),
-                  defaultDate: date
-                });
+                // Set the value directly first, then update flatpickr
+                const dobInput = document.getElementById('dob');
+                dobInput.value = formattedDate;
+                
+                // Set the value in a different way for mobile browsers
+                dobInput.setAttribute('value', formattedDate);
+                
+                // Also try setting it with a small delay to handle possible browser-specific issues
+                setTimeout(() => {
+                  dobInput.value = formattedDate;
+                  // Force the element to refresh - sometimes helps with mobile browsers
+                  dobInput.style.display = 'none';
+                  dobInput.offsetHeight; // Force reflow
+                  dobInput.style.display = '';
+                  
+                  // Try to set flatpickr with the date
+                  try {
+                    dobPicker.setDate(date);
+                    logDebug('Flatpickr date set to:', date);
+                  } catch (e) {
+                    logDebug('Error setting flatpickr date:', e);
+                  }
+                }, 100);
+                
+                logDebug('Loaded DOB value:', formattedDate);
               } else {
                 logDebug('Could not parse DOB to valid date');
               }
