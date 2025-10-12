@@ -60,10 +60,11 @@
     .profile-card:hover {
       box-shadow: 0 5px 15px rgba(0,0,0,.1);
     }
+    /* Modified profile-info to be flex-column on mobile */
     .profile-info {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-direction: column;
+      gap: 15px;
     }
     .profile-details h5 {
       margin: 0 0 5px 0;
@@ -79,6 +80,8 @@
       border-radius: 20px;
       font-size: 0.85rem;
       font-weight: 600;
+      display: inline-block;
+      margin-bottom: 10px;
     }
     .approved-badge {
       background: #d1e7dd;
@@ -87,6 +90,8 @@
       border-radius: 20px;
       font-size: 0.85rem;
       font-weight: 600;
+      display: inline-block;
+      margin-bottom: 10px;
     }
     .rejected-badge {
       background: #f8d7da;
@@ -95,13 +100,28 @@
       border-radius: 20px;
       font-size: 0.85rem;
       font-weight: 600;
+      display: inline-block;
+      margin-bottom: 10px;
     }
+    /* Modified tabs for better mobile experience */
     .tab-content {
       padding-top: 20px;
+    }
+    .nav-tabs {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      white-space: nowrap;
+      border-bottom: 1px solid #dee2e6;
+    }
+    .nav-tabs .nav-item {
+      flex: 0 0 auto;
     }
     .nav-tabs .nav-link {
       color: #6c757d;
       font-weight: 500;
+      padding: 0.5rem 1rem;
+      white-space: nowrap;
     }
     .nav-tabs .nav-link.active {
       color: #00a896;
@@ -123,6 +143,38 @@
     .profile-modal-content {
       max-height: 75vh;
       overflow-y: auto;
+    }
+    /* New responsive styles for mobile */
+    @media (max-width: 768px) {
+      .page-header {
+        padding: 20px;
+      }
+      .admin-card {
+        padding: 20px 15px;
+      }
+      .tab-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+      }
+      .tab-header h4 {
+        margin-bottom: 15px !important;
+      }
+      .tab-search {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      .profile-card {
+        padding: 15px;
+      }
+      .profile-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+      }
+      .profile-buttons button {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -164,10 +216,11 @@
     <div id="alertContainer"></div>
 
     <div class="admin-card">
+      <!-- Modified tabs with simpler UI for mobile -->
       <ul class="nav nav-tabs" id="profileTabs" role="tablist">
         <li class="nav-item" role="presentation">
           <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending-profiles" type="button" role="tab" aria-controls="pending-profiles" aria-selected="true">
-            <i class="bi bi-hourglass-split"></i> Pending Review <span class="badge bg-warning text-dark" id="pendingCount">0</span>
+            <i class="bi bi-hourglass-split"></i> Pending <span class="badge bg-warning text-dark" id="pendingCount">0</span>
           </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -185,9 +238,9 @@
       <div class="tab-content" id="profileTabContent">
         <!-- Pending Profiles Tab -->
         <div class="tab-pane fade show active" id="pending-profiles" role="tabpanel" aria-labelledby="pending-tab">
-          <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-3 tab-header">
             <h4 class="mb-0">Profiles Awaiting Review</h4>
-            <div class="input-group" style="max-width: 300px;">
+            <div class="input-group tab-search" style="max-width: 300px;">
               <span class="input-group-text"><i class="bi bi-search"></i></span>
               <input type="text" class="form-control" id="pendingSearchInput" placeholder="Search profiles...">
             </div>
@@ -203,9 +256,9 @@
         
         <!-- Approved Profiles Tab -->
         <div class="tab-pane fade" id="approved-profiles" role="tabpanel" aria-labelledby="approved-tab">
-          <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-3 tab-header">
             <h4 class="mb-0">Approved Profiles</h4>
-            <div class="input-group" style="max-width: 300px;">
+            <div class="input-group tab-search" style="max-width: 300px;">
               <span class="input-group-text"><i class="bi bi-search"></i></span>
               <input type="text" class="form-control" id="approvedSearchInput" placeholder="Search profiles...">
             </div>
@@ -221,9 +274,9 @@
         
         <!-- Rejected Profiles Tab -->
         <div class="tab-pane fade" id="rejected-profiles" role="tabpanel" aria-labelledby="rejected-tab">
-          <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-3 tab-header">
             <h4 class="mb-0">Rejected Profiles</h4>
-            <div class="input-group" style="max-width: 300px;">
+            <div class="input-group tab-search" style="max-width: 300px;">
               <span class="input-group-text"><i class="bi bi-search"></i></span>
               <input type="text" class="form-control" id="rejectedSearchInput" placeholder="Search profiles...">
             </div>
@@ -420,7 +473,7 @@
       }
     }
 
-    // Display profiles by status
+    // Display profiles by status - MODIFIED FOR MOBILE
     function displayProfiles(status, profiles) {
       const container = document.getElementById(`${status}ProfilesContainer`);
       
@@ -447,7 +500,7 @@
                 </p>
                 <small class="text-muted">Submitted: ${submittedDate}</small>
               </div>
-              <div class="d-flex align-items-center gap-3">
+              <div class="profile-buttons">
                 <span class="${status}-badge">
                   <i class="bi bi-${status === 'pending' ? 'hourglass-split' : (status === 'approved' ? 'check-circle' : 'x-circle')}"></i> 
                   ${status.charAt(0).toUpperCase() + status.slice(1)}
