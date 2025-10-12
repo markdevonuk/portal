@@ -22,37 +22,66 @@
       padding:30px; 
       margin:20px 0; 
     }
-    .nav-tabs {
+/* Updated tab styles to ensure they fit on one line on mobile */
+.nav-tabs {
   display: flex;
   width: 100%;
   margin-bottom: 20px;
   border: none;
+  flex-wrap: nowrap; /* Prevent wrapping */
+  overflow-x: auto; /* Allow horizontal scrolling if needed */
 }
 
 .nav-tabs .nav-item {
   flex: 1;
   text-align: center;
-  margin: 0 10px;
+  min-width: 100px; /* Set a minimum width */
+  margin: 0 3px; /* Reduce margin for mobile */
 }
 
 .nav-tabs .nav-link {
   color: #6c757d;
   font-weight: 500;
-  padding: 12px 5px;
+  padding: 10px 5px;
   border-radius: 8px;
   background-color: #f8f9fa;
   border: 1px solid #dee2e6;
   transition: all 0.3s ease;
   white-space: nowrap;
-  font-size: 16px;
+  font-size: 14px; /* Smaller font size for mobile */
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
-.nav-tabs .nav-link.active {
-  color: #fff;
-  background: linear-gradient(135deg, #00a896 0%, #028090 100%);
-  border-color: transparent;
-  box-shadow: 0 5px 15px rgba(0,168,150,.3);
+.nav-tabs .nav-link i {
+  margin-bottom: 3px;
+  font-size: 16px;
+}
+
+/* Make badges more compact */
+.nav-tabs .badge {
+  font-size: 0.7rem;
+  padding: 0.2em 0.5em;
+}
+
+/* Media query for larger screens */
+@media (min-width: 576px) {
+  .nav-tabs .nav-item {
+    margin: 0 10px;
+  }
+  
+  .nav-tabs .nav-link {
+    font-size: 16px;
+    padding: 12px 5px;
+  }
+  
+  .nav-tabs .badge {
+    font-size: 0.75rem;
+    padding: 0.25em 0.6em;
+  }
 }
 
 .tab-header {
@@ -272,24 +301,26 @@
 
     <div id="alertContainer"></div>
 
-    <div class="admin-card">
-      <ul class="nav nav-tabs" id="profileTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending-profiles" type="button" role="tab" aria-controls="pending-profiles" aria-selected="true">
-            <i class="bi bi-hourglass-split"></i> Pending <span class="badge bg-warning text-dark" id="pendingCount">0</span>
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved-profiles" type="button" role="tab" aria-controls="approved-profiles" aria-selected="false">
-            <i class="bi bi-check-circle"></i> Approved <span class="badge bg-success" id="approvedCount">0</span>
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected-profiles" type="button" role="tab" aria-controls="rejected-profiles" aria-selected="false">
-            <i class="bi bi-x-circle"></i> Rejected <span class="badge bg-danger" id="rejectedCount">0</span>
-          </button>
-        </li>
-      </ul>
+   <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending-profiles" type="button" role="tab" aria-controls="pending-profiles" aria-selected="true">
+      <i class="bi bi-hourglass-split"></i>
+      Pending <span class="badge bg-warning text-dark" id="pendingCount">0</span>
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved-profiles" type="button" role="tab" aria-controls="approved-profiles" aria-selected="false">
+      <i class="bi bi-check-circle"></i>
+      Approved <span class="badge bg-success" id="approvedCount">0</span>
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected-profiles" type="button" role="tab" aria-controls="rejected-profiles" aria-selected="false">
+      <i class="bi bi-x-circle"></i>
+      Rejected <span class="badge bg-danger" id="rejectedCount">0</span>
+    </button>
+  </li>
+</ul>
       
       <div class="tab-content" id="profileTabContent">
         <!-- Pending Profiles Tab -->
