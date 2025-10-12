@@ -42,6 +42,17 @@
       transform: translateY(-2px); 
       box-shadow: 0 5px 15px rgba(0,168,150,.4); 
     }
+    .btn-warning { 
+      background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%); 
+      border: none; 
+      font-weight: 600; 
+      color: white;
+    }
+    .btn-warning:hover { 
+      transform: translateY(-2px); 
+      box-shadow: 0 5px 15px rgba(255,193,7,.4);
+      color: white; 
+    }
     .section-title {
       border-bottom: 2px solid #00a896;
       padding-bottom: 10px;
@@ -72,6 +83,12 @@
     .form-check-input:checked {
       background-color: #00a896;
       border-color: #00a896;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 15px;
     }
   </style>
 </head>
@@ -106,8 +123,16 @@
 
   <div class="container">
     <div class="page-header">
-      <h1 class="mb-2"><i class="bi bi-person-vcard-fill"></i> My Profile</h1>
-      <p class="mb-0">Complete your professional details</p>
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <h1 class="mb-2"><i class="bi bi-person-vcard-fill"></i> My Profile</h1>
+          <p class="mb-0">Complete your professional details</p>
+        </div>
+        <!-- Edit Profile Button - Now at the top -->
+        <button type="button" id="editProfileBtn" class="btn btn-warning hidden">
+          <i class="bi bi-pencil-square"></i> Edit Profile
+        </button>
+      </div>
     </div>
 
     <div id="alertContainer"></div>
@@ -158,10 +183,11 @@
         </div>
         
         <div class="mb-3">
-          <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" id="c1Classification" name="c1Classification">
-            <label class="form-check-label" for="c1Classification">I have a C1 classification on my driving licence</label>
-          </div>
+          <label class="form-label">Do you have a C1 classification on your driving licence?</label>
+          <select class="form-select" id="c1Classification" name="c1Classification">
+            <option value="false">No</option>
+            <option value="true">Yes</option>
+          </select>
         </div>
         
         <div class="mb-3">
@@ -391,6 +417,7 @@
     const profileForm = document.getElementById('profileForm');
     const saveAsDraftBtn = document.getElementById('saveAsDraftBtn');
     const submitProfileBtn = document.getElementById('submitProfileBtn');
+    const editProfileBtn = document.getElementById('editProfileBtn');
     const qualification = document.getElementById('qualification');
     const hcpcSection = document.getElementById('hcpcSection');
     const gmcSection = document.getElementById('gmcSection');
@@ -524,22 +551,16 @@
       saveAsDraftBtn.classList.add('hidden');
       submitProfileBtn.classList.add('hidden');
       
-      // Add an Edit button when the profile is approved or rejected
+      // Show the Edit button when the profile is approved or rejected
       if (profileStatus === 'approved' || profileStatus === 'rejected') {
-        const formActions = document.querySelector('.d-flex.justify-content-between.mb-5');
-        if (!document.getElementById('editProfileBtn')) {
-          const editButton = document.createElement('button');
-          editButton.type = 'button';
-          editButton.id = 'editProfileBtn';
-          editButton.className = 'btn btn-warning';
-          editButton.innerHTML = '<i class="bi bi-pencil-square"></i> Edit Profile';
-          editButton.addEventListener('click', enableForm);
-          formActions.appendChild(editButton);
-        }
+        editProfileBtn.classList.remove('hidden');
         
         showAlert(`Your profile status is "${profileStatus}". To make changes, click the "Edit Profile" button.`, 'info');
       }
     }
+
+    // Add event listener to Edit Profile button
+    editProfileBtn.addEventListener('click', enableForm);
 
     // Enable form for editing
     function enableForm() {
@@ -556,11 +577,8 @@
       submitProfileBtn.classList.remove('hidden');
       submitProfileBtn.innerHTML = '<i class="bi bi-send"></i> Resubmit Profile';
       
-      // Remove the edit button
-      const editButton = document.getElementById('editProfileBtn');
-      if (editButton) {
-        editButton.remove();
-      }
+      // Hide the edit button
+      editProfileBtn.classList.add('hidden');
       
       // Show an alert about resubmission
       showAlert('You are now editing your profile. Any changes will require admin approval again.', 'warning');
@@ -594,12 +612,22 @@
               let date;
               if (profile.personalDetails.DOB.seconds) {
                 date = new Date(profile.personalDetails.DOB.seconds * 1000);
+              } else if (profile.personalDetails.DOB instanceof Date) {
+                date = profile.personalDetails.DOB;
               } else {
-                date = new Date(profile.personalDetails.DOB);
+                try {
+                  // If it's a string or another format, try to parse it
+                  date = new Date(profile.personalDetails.DOB);
+                } catch (e) {
+                  logDebug('Failed to parse DOB:', e);
+                  date = null;
+                }
               }
               
-              document.getElementById('dob').value = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
-              logDebug('Loaded DOB:', document.getElementById('dob').value);
+              if (date && !isNaN(date.getTime())) {
+                document.getElementById('dob').value = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+                logDebug('Loaded DOB:', document.getElementById('dob').value);
+              }
             }
             
             document.getElementById('emergencyContact').value = profile.personalDetails.emergencyContact || '';
@@ -608,7 +636,10 @@
           if (profile.driving) {
             logDebug('Loading driving details:', profile.driving);
             
-            document.getElementById('c1Classification').checked = profile.driving.c1Classification || false;
+            // Set the C1 classification dropdown value
+            const c1Select = document.getElementById('c1Classification');
+            c1Select.value = profile.driving.c1Classification === true ? 'true' : 'false';
+            
             document.getElementById('dlNumber').value = profile.driving.dlNumber || '';
             document.getElementById('niNumber').value = profile.driving.niNumber || '';
             document.getElementById('points').value = profile.driving.points || '';
@@ -628,11 +659,20 @@
               let date;
               if (profile.medicalQualifications.certExpiry.seconds) {
                 date = new Date(profile.medicalQualifications.certExpiry.seconds * 1000);
+              } else if (profile.medicalQualifications.certExpiry instanceof Date) {
+                date = profile.medicalQualifications.certExpiry;
               } else {
-                date = new Date(profile.medicalQualifications.certExpiry);
+                try {
+                  date = new Date(profile.medicalQualifications.certExpiry);
+                } catch (e) {
+                  logDebug('Failed to parse certExpiry:', e);
+                  date = null;
+                }
               }
               
-              document.getElementById('certExpiry').value = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+              if (date && !isNaN(date.getTime())) {
+                document.getElementById('certExpiry').value = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+              }
             }
             
             // Trigger change event to show/hide appropriate fields
@@ -676,7 +716,7 @@
         };
         
         const driving = {
-          c1Classification: document.getElementById('c1Classification').checked,
+          c1Classification: document.getElementById('c1Classification').value === 'true',
           dlNumber: document.getElementById('dlNumber').value,
           niNumber: document.getElementById('niNumber').value,
           points: document.getElementById('points').value
@@ -758,7 +798,7 @@
             emergencyContact: document.getElementById('emergencyContact').value
           },
           driving: {
-            c1Classification: document.getElementById('c1Classification').checked,
+            c1Classification: document.getElementById('c1Classification').value === 'true',
             dlNumber: document.getElementById('dlNumber').value,
             niNumber: document.getElementById('niNumber').value,
             points: document.getElementById('points').value
@@ -773,10 +813,28 @@
           }
         };
         
+        // If there are existing adminUse notes, preserve them
+        if (profile && profile.adminUse && profile.adminUse.notes) {
+          updatedProfile.adminUse = {
+            notes: profile.adminUse.notes
+          };
+        }
+        
         logDebug('Updated profile data:', updatedProfile);
         
         if (isResubmission) {
           logDebug('Resubmitting profile');
+          
+          // If this is a resubmission, add a date stamp to notes
+          if (profile && profile.adminUse && profile.adminUse.notes) {
+            const currentDate = new Date().toLocaleDateString('en-GB', {
+              day: '2-digit', month: 'short', year: 'numeric'
+            });
+            updatedProfile.adminUse = {
+              notes: `${profile.adminUse.notes}\n\nProfile resubmitted by user on ${currentDate}`
+            };
+          }
+          
           // Use the function for updating and resubmitting
           await updateAndResubmitProfile(updatedProfile);
           showAlert('Profile updated and resubmitted for review!', 'success');
