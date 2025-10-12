@@ -103,6 +103,16 @@
       display: inline-block;
       margin-bottom: 10px;
     }
+    .updated-badge {
+      background: #cfe2ff;
+      color: #084298;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: inline-block;
+      margin-left: 8px;
+    }
     /* Modified tabs for better mobile experience */
     .tab-content {
       padding-top: 20px;
@@ -143,6 +153,31 @@
     .profile-modal-content {
       max-height: 75vh;
       overflow-y: auto;
+    }
+    .notes-diff {
+      background-color: #fff8e1;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid #ffc107;
+      margin-bottom: 15px;
+    }
+    .notes-diff h6 {
+      font-weight: 600;
+      color: #856404;
+    }
+    .notes-pre {
+      white-space: pre-wrap;
+      margin-bottom: 0;
+      font-size: 0.9rem;
+    }
+    .updated-note {
+      background-color: #e8f4f8;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 8px;
+      font-style: italic;
+      color: #084298;
+      border-left: 3px solid #0d6efd;
     }
     /* New responsive styles for mobile */
     @media (max-width: 768px) {
@@ -413,12 +448,56 @@
     function formatDate(timestamp) {
       if (!timestamp) return 'N/A';
       
-      const date = new Date(timestamp.seconds * 1000);
+      const date = timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
       return date.toLocaleDateString('en-GB', {
         day: '2-digit',
         month: 'short',
         year: 'numeric'
       });
+    }
+
+    // Check if a profile has been updated
+    function hasProfileBeenUpdated(profile) {
+      if (!profile || !profile.adminUse || !profile.adminUse.notes) return false;
+      
+      // Check if notes contain "updated by user" text
+      return profile.adminUse.notes.toLowerCase().includes("updated by user") || 
+             profile.adminUse.notes.toLowerCase().includes("resubmitted");
+    }
+
+    // Extract the most recent update information from notes
+    function getUpdateInfo(notes) {
+      if (!notes) return null;
+      
+      // Find the last instance of "updated by user" or "profile updated"
+      const updatePatterns = [
+        /Profile updated by user on ([^\.]+)/i,
+        /Updated by user on ([^\.]+)/i,
+        /Resubmitted by user on ([^\.]+)/i
+      ];
+      
+      let lastMatch = null;
+      let lastIndex = -1;
+      
+      for (const pattern of updatePatterns) {
+        const matches = [...notes.matchAll(pattern)];
+        if (matches.length > 0) {
+          const match = matches[matches.length - 1]; // Get the last match
+          if (match.index > lastIndex) {
+            lastMatch = match;
+            lastIndex = match.index;
+          }
+        }
+      }
+      
+      if (lastMatch) {
+        return {
+          date: lastMatch[1],
+          text: lastMatch[0]
+        };
+      }
+      
+      return null;
     }
 
     // Load all profiles
@@ -459,7 +538,9 @@
               firstName: userData.firstName || '',
               surname: userData.surname || '',
               email: userData.email || ''
-            }
+            },
+            // Add a flag for profiles that have been updated by the user
+            hasBeenUpdated: hasProfileBeenUpdated(profileData)
           };
           
           // Only show profiles that have been submitted
@@ -514,7 +595,10 @@
           <div class="profile-card">
             <div class="profile-info">
               <div class="profile-details">
-                <h5>${userName}</h5>
+                <h5>${userName}
+                  ${profile.hasBeenUpdated ? 
+                    '<span class="updated-badge"><i class="bi bi-arrow-clockwise"></i> Updated</span>' : ''}
+                </h5>
                 <p>
                   <i class="bi bi-envelope"></i> ${profile.userInfo.email}<br>
                   <i class="bi bi-mortarboard"></i> ${qualification}
@@ -594,7 +678,14 @@
         };
         
         // Start building HTML content
-        let html = buildProfileHeader(userData);
+        let html = buildProfileHeader(userData, hasProfileBeenUpdated(profile));
+        
+        // Add update info section if the profile has been updated by user
+        if (hasProfileBeenUpdated(profile)) {
+          const updateInfo = getUpdateInfo(profile.adminUse?.notes);
+          html += buildUpdateInfoSection(updateInfo);
+        }
+        
         html += buildPersonalDetails(profile);
         html += buildDrivingDetails(profile);
         html += buildQualifications(profile);
@@ -629,10 +720,26 @@
 
     // Helper functions to build different parts of the profile modal
 
-    function buildProfileHeader(userData) {
+    function buildProfileHeader(userData, hasBeenUpdated = false) {
       return `
-        <h4>${userData.firstName || ''} ${userData.surname || ''}</h4>
+        <h4>
+          ${userData.firstName || ''} ${userData.surname || ''}
+          ${hasBeenUpdated ? 
+            '<span class="updated-badge"><i class="bi bi-arrow-clockwise"></i> Updated</span>' : ''}
+        </h4>
         <p class="text-muted">${userData.email || 'No email available'}</p>
+      `;
+    }
+    
+    function buildUpdateInfoSection(updateInfo) {
+      if (!updateInfo) return '';
+      
+      return `
+        <div class="notes-diff">
+          <h6><i class="bi bi-arrow-clockwise"></i> This profile has been updated</h6>
+          <p class="notes-pre updated-note">${updateInfo.text}</p>
+          <small class="text-muted">Please review the full profile and update notes for details</small>
+        </div>
       `;
     }
 
@@ -768,7 +875,7 @@
         <div class="profile-section">
           <h5><i class="bi bi-chat-left-text"></i> Admin Notes History</h5>
           <div class="p-3 bg-light rounded">
-            <pre style="white-space: pre-wrap; margin-bottom: 0;">${notes}</pre>
+            <pre class="notes-pre">${notes}</pre>
           </div>
         </div>
       `;
@@ -827,60 +934,30 @@
     }
 
     function buildModalFooter(profile, userId) {
-      if (!profile.adminUse || !profile.adminUse.status || profile.adminUse.status === 'pending') {
-        // For pending profiles, show approve and reject buttons
-        return `
-          <div class="w-100">
-            <div class="mb-3">
-              <label class="form-label">Admin Notes</label>
-              <textarea class="form-control" id="adminNotes" rows="3" placeholder="Add new notes about this profile"></textarea>
-              <small class="text-muted">New notes will be added to existing notes, not replace them</small>
-            </div>
-            <div class="d-flex justify-content-between align-items-center gap-2">
-              <button type="button" class="btn btn-info" id="saveNotesBtn" data-user-id="${userId}">
-                <i class="bi bi-save"></i> Save Notes
+      // Always show notes and action buttons, regardless of status
+      return `
+        <div class="w-100">
+          <div class="mb-3">
+            <label class="form-label">Admin Notes</label>
+            <textarea class="form-control" id="adminNotes" rows="3" placeholder="Add new notes about this profile"></textarea>
+            <small class="text-muted">New notes will be added to existing notes, not replace them</small>
+          </div>
+          <div class="d-flex justify-content-between align-items-center gap-2">
+            <button type="button" class="btn btn-info" id="saveNotesBtn" data-user-id="${userId}">
+              <i class="bi bi-save"></i> Save Notes
+            </button>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-danger" id="rejectProfileBtn" data-user-id="${userId}">
+                <i class="bi bi-x-circle"></i> Reject
               </button>
-              <div class="d-flex gap-2">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-danger" id="rejectProfileBtn" data-user-id="${userId}">
-                  <i class="bi bi-x-circle"></i> Reject
-                </button>
-                <button type="button" class="btn btn-success" id="approveProfileBtn" data-user-id="${userId}">
-                  <i class="bi bi-check-circle"></i> Approve
-                </button>
-              </div>
+              <button type="button" class="btn btn-success" id="approveProfileBtn" data-user-id="${userId}">
+                <i class="bi bi-check-circle"></i> Approve
+              </button>
             </div>
           </div>
-        `;
-      } else {
-        // For already reviewed profiles, show update button
-        return `
-          <div class="w-100">
-            <div class="mb-3">
-              <label class="form-label">Admin Notes</label>
-              <textarea class="form-control" id="adminNotes" rows="3" placeholder="Add new notes about this profile"></textarea>
-              <small class="text-muted">New notes will be added to existing notes, not replace them</small>
-            </div>
-            <div class="d-flex justify-content-between align-items-center gap-2">
-              <button type="button" class="btn btn-info" id="saveNotesBtn" data-user-id="${userId}">
-                <i class="bi bi-save"></i> Save Notes
-              </button>
-              <div class="d-flex gap-2">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                ${profile.adminUse.status === 'approved' ?
-                  `<button type="button" class="btn btn-danger" id="rejectProfileBtn" data-user-id="${userId}">
-                    <i class="bi bi-x-circle"></i> Change to Rejected
-                  </button>`
-                :
-                  `<button type="button" class="btn btn-success" id="approveProfileBtn" data-user-id="${userId}">
-                    <i class="bi bi-check-circle"></i> Change to Approved
-                  </button>`
-                }
-              </div>
-            </div>
-          </div>
-        `;
-      }
+        </div>
+      `;
     }
 
     function addButtonEventListeners(userId) {
