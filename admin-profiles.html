@@ -305,7 +305,6 @@
           </button>
         </li>
       </ul>
-      
       <div class="tab-content" id="profileTabContent">
         <!-- Pending Profiles Tab -->
         <div class="tab-pane fade show active" id="pending-profiles" role="tabpanel" aria-labelledby="pending-tab">
@@ -392,7 +391,7 @@
         </div>
         <div class="modal-body">
           <form id="editProfileForm">
-          <!-- User Information Section -->
+            <!-- User Information Section -->
             <div class="edit-section">
               <h5 class="mb-3"><i class="bi bi-person-circle"></i> User Information</h5>
               <div class="row">
@@ -498,6 +497,7 @@
                     <option value="Technician">Technician</option>
                   </select>
                 </div>
+                
                 <!-- Conditional fields will be shown based on qualification -->
                 <div class="col-md-6 mb-3 hidden" id="editHCPCSection">
                   <label class="form-label">HCPC Registration</label>
@@ -565,7 +565,7 @@
       </div>
     </div>
   </div>
-
+  
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   
@@ -610,6 +610,7 @@
     const saveProfileChangesBtn = document.getElementById('saveProfileChangesBtn');
     const alertContainer = document.getElementById('alertContainer');
     const logoutLink = document.getElementById('logoutLink');
+
     // Store all profiles by status for filtering
     let allProfiles = {
       pending: [],
@@ -723,7 +724,7 @@
       
       return new Date(year, month, day);
     }
-
+    
     // Check if a profile has been updated
     function hasProfileBeenUpdated(profile) {
       if (!profile || !profile.adminUse || !profile.adminUse.notes) return false;
@@ -748,7 +749,7 @@
       });
     }
 
-    // Load all profiles
+    // Load all profiles - FIXED VERSION WITH BETTER STATUS HANDLING
     async function loadAllProfiles() {
       try {
         // Get all users
@@ -764,6 +765,9 @@
         // Get all profiles
         const profilesQuery = query(collection(db, 'profiles'));
         const profilesSnapshot = await getDocs(profilesQuery);
+        
+        console.log(`Found ${profilesSnapshot.size} total profiles`);
+        
         // Reset profile counts
         allProfiles = {
           pending: [],
@@ -777,6 +781,12 @@
           const userId = doc.id;
           const userData = usersData[userId] || {};
           
+          // Debug log for each profile
+          console.log(`Processing profile ${userId} - ${userData.email || 'Unknown email'}`);
+          console.log(`Status: "${profileData.adminUse?.status || 'undefined'}" (type: ${typeof profileData.adminUse?.status})`);
+          console.log(`Has submission: ${!!profileData.submission}`);
+          console.log(`Has submittedAt: ${!!profileData.submission?.submittedAt}`);
+          
           // Add user info to profile
           const profileWithUser = {
             ...profileData,
@@ -789,25 +799,42 @@
               isAdmin: userData.isAdmin || false,
               has2FA: userData.has2FA || false
             },
-            // Add a flag for profiles that have been updated by the user
             hasBeenUpdated: hasProfileBeenUpdated(profileData)
           };
           
           // Only show profiles that have been submitted
           if (!profileData.submission || !profileData.submission.submittedAt) {
+            console.log(`Skipping profile ${userId} - not submitted`);
             return;
           }
           
-          // Categorize by status
-          const status = profileData.adminUse?.status || 'pending';
-          if (status === 'pending') {
+          // Get status and normalize to lowercase
+          let status = (profileData.adminUse?.status || '').toLowerCase();
+          console.log(`Normalized status: "${status}"`);
+          
+          // Special handling for profiles with missing or unusual status
+          if (!status) {
+            console.warn(`Profile ${userId} has empty status, defaulting to "pending"`);
+            status = 'pending';
+          }
+          
+          // Categorize by status with more flexible matching
+          if (status.includes('pend')) {
+            console.log(`Adding to pending: ${userId}`);
             allProfiles.pending.push(profileWithUser);
-          } else if (status === 'approved') {
+          } else if (status.includes('approv')) {
+            console.log(`Adding to approved: ${userId}`);
             allProfiles.approved.push(profileWithUser);
-          } else if (status === 'rejected') {
+          } else if (status.includes('reject')) {
+            console.log(`Adding to rejected: ${userId}`);
             allProfiles.rejected.push(profileWithUser);
+          } else {
+            console.warn(`Unknown status "${status}" for profile ${userId}, defaulting to pending`);
+            allProfiles.pending.push(profileWithUser);
           }
         });
+        
+        console.log(`Categorized profiles - Pending: ${allProfiles.pending.length}, Approved: ${allProfiles.approved.length}, Rejected: ${allProfiles.rejected.length}`);
         
         // Update counts
         pendingCount.textContent = allProfiles.pending.length;
@@ -891,7 +918,6 @@
         });
       });
     }
-
     // Filter profiles
     function filterProfiles(status, searchTerm) {
       const profiles = allProfiles[status];
@@ -914,6 +940,7 @@
       
       displayProfiles(status, filtered);
     }
+
     // Open profile modal for review
     async function openProfileModal(userId) {
       try {
@@ -1251,7 +1278,7 @@
         setButtonLoading('saveNotesBtn', false);
       }
     }
-
+    
     // Handle profile approval or rejection
     async function handleProfileAction(userId, status) {
       const notes = document.getElementById('adminNotes').value.trim();
@@ -1277,7 +1304,7 @@
         setButtonLoading(status === 'approved' ? 'approveProfileBtn' : 'rejectProfileBtn', false);
       }
     }
-    
+
     // Open edit profile modal
     async function openEditProfileModal(userId) {
       try {
@@ -1376,6 +1403,16 @@
       // Remove required attribute from all fields
       document.getElementById('editHCPC').removeAttribute('required');
       document.getElementById('editGMC').removeAttribute('required');
+      
+      // Reset all conditional sections to hidden
+      document.getElementById('editHCPCSection').classList.add('hidden');
+      document.getElementById('editGMCSection').classList.add('hidden');
+      document.getElementById('editNMCSection').classList.add('hidden');
+      document.getElementById('editCertExpirySection').classList.add('hidden');
+      
+      // Remove required attribute from all fields
+      document.getElementById('editHCPC').removeAttribute('required');
+      document.getElementById('editGMC').removeAttribute('required');
       document.getElementById('editNMC').removeAttribute('required');
       document.getElementById('editCertExpiry').removeAttribute('required');
       
@@ -1449,17 +1486,19 @@
             certExpiry: parseDateString(document.getElementById('editCertExpiry').value)
           },
           submission: {
-            agreedToTerms: document.getElementById('editAgreedToTerms').checked,
+            agreedToTerms: document.getElementById('editAgreedToTerms').checked
             // We don't update submittedAt here to preserve the original submission timestamp
           }
         };
         
         // Get admin notes and status
-        const newStatus = document.getElementById('editProfileStatus').value;
+        const newStatus = document.getElementById('editProfileStatus').value.toLowerCase(); // Use lowercase for consistency
+        console.log(`Setting profile ${userId} status to: "${newStatus}"`);
+        
         const adminNotes = document.getElementById('editAdminNotes').value.trim();
         
         // Format admin note to append if there's a new note
-        let updatedNotes = adminNotes;
+        let updatedNotes = '';
         if (adminNotes) {
           // Get the current profile to check existing notes
           const profileRef = doc(db, 'profiles', userId);
@@ -1489,7 +1528,7 @@
         await updateDoc(profileRef, {
           ...profileData,
           adminUse: {
-            status: newStatus,
+            status: newStatus, // Using lowercase status
             approvedBy: currentUser.uid,
             notes: updatedNotes,
             reviewedAt: serverTimestamp()
@@ -1525,6 +1564,9 @@
       filterProfiles('rejected', rejectedSearchInput.value);
     });
 
+    // Qualification field change handler
+    document.getElementById('editQualification').addEventListener('change', updateQualificationFields);
+
     // Logout handler
     logoutLink.addEventListener('click', async (e) => {
       e.preventDefault();
@@ -1553,9 +1595,6 @@
         
         // Load profile data
         await loadAllProfiles();
-        
-        // Initialize qualification change handler
-        document.getElementById('editQualification').addEventListener('change', updateQualificationFields);
       } catch (error) {
         console.error('Error checking admin status:', error);
         window.location.href = 'dashboard.html';
@@ -1564,5 +1603,3 @@
   </script>
 </body>
 </html>
-          
-    
