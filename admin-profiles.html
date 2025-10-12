@@ -448,12 +448,30 @@
     function formatDate(timestamp) {
       if (!timestamp) return 'N/A';
       
-      const date = timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
-      return date.toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      });
+      let date;
+      try {
+        // Handle different timestamp formats
+        if (timestamp.seconds) {
+          date = new Date(timestamp.seconds * 1000);
+        } else if (timestamp instanceof Date) {
+          date = timestamp;
+        } else {
+          date = new Date(timestamp);
+        }
+        
+        if (isNaN(date.getTime())) {
+          return 'Invalid Date';
+        }
+        
+        return date.toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric'
+        });
+      } catch (error) {
+        console.error('Error formatting date:', error);
+        return 'Date Error';
+      }
     }
 
     // Check if a profile has been updated
@@ -461,43 +479,50 @@
       if (!profile || !profile.adminUse || !profile.adminUse.notes) return false;
       
       // Check if notes contain "updated by user" text
-      return profile.adminUse.notes.toLowerCase().includes("updated by user") || 
-             profile.adminUse.notes.toLowerCase().includes("resubmitted");
+      const notesLower = profile.adminUse.notes.toLowerCase();
+      return notesLower.includes("updated by user") || 
+             notesLower.includes("resubmitted");
     }
 
     // Extract the most recent update information from notes
     function getUpdateInfo(notes) {
       if (!notes) return null;
       
-      // Find the last instance of "updated by user" or "profile updated"
-      const updatePatterns = [
-        /Profile updated by user on ([^\.]+)/i,
-        /Updated by user on ([^\.]+)/i,
-        /Resubmitted by user on ([^\.]+)/i
-      ];
+      // Look for update patterns in the notes
+      let updateInfo = null;
       
-      let lastMatch = null;
-      let lastIndex = -1;
-      
-      for (const pattern of updatePatterns) {
-        const matches = [...notes.matchAll(pattern)];
-        if (matches.length > 0) {
-          const match = matches[matches.length - 1]; // Get the last match
-          if (match.index > lastIndex) {
-            lastMatch = match;
-            lastIndex = match.index;
-          }
-        }
-      }
-      
-      if (lastMatch) {
-        return {
-          date: lastMatch[1],
-          text: lastMatch[0]
+      // First try to find "Profile updated by user on [date]"
+      const updateMatch = notes.match(/Profile updated by user on ([^\.\n]+)/i);
+      if (updateMatch) {
+        updateInfo = {
+          date: updateMatch[1],
+          text: updateMatch[0]
         };
       }
       
-      return null;
+      // If not found, try "Updated by user on [date]"
+      if (!updateInfo) {
+        const altMatch = notes.match(/Updated by user on ([^\.\n]+)/i);
+        if (altMatch) {
+          updateInfo = {
+            date: altMatch[1],
+            text: altMatch[0]
+          };
+        }
+      }
+      
+      // If still not found, try "Resubmitted by user on [date]"
+      if (!updateInfo) {
+        const resubMatch = notes.match(/Resubmitted by user on ([^\.\n]+)/i);
+        if (resubMatch) {
+          updateInfo = {
+            date: resubMatch[1],
+            text: resubMatch[0]
+          };
+        }
+      }
+      
+      return updateInfo;
     }
 
     // Load all profiles
@@ -683,7 +708,9 @@
         // Add update info section if the profile has been updated by user
         if (hasProfileBeenUpdated(profile)) {
           const updateInfo = getUpdateInfo(profile.adminUse?.notes);
-          html += buildUpdateInfoSection(updateInfo);
+          if (updateInfo) {
+            html += buildUpdateInfoSection(updateInfo);
+          }
         }
         
         html += buildPersonalDetails(profile);
