@@ -1171,8 +1171,8 @@
       
       // Validation based on upload type
       if (uploadType === 'photo') {
-        // Validate file size (max 2MB)
-        if (file.size > 2 * 1024 * 1024) {
+        // Validate file size (max 7.5MB)
+        if (file.size > 7.5 * 1024 * 1024) {
           showAlert('Photo size exceeds 2MB limit', 'warning');
           return;
         }
@@ -1237,9 +1237,9 @@
           progressContainer.classList.add('hidden');
         }
       } else if (uploadType === 'qualification') {
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          showAlert('Document size exceeds 5MB limit', 'warning');
+        // Validate file size (max 7,5MB)
+        if (file.size > 7.5 * 1024 * 1024) {
+          showAlert('Document size exceeds 7.5MB limit', 'warning');
           return;
         }
         
