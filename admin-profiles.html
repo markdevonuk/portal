@@ -886,89 +886,120 @@
       }
     }
     
-    // Add note only
-    async function handleAddNote(userId) {
-      const notes = document.getElementById('adminNotes').value.trim();
-      
-      if (!notes) {
-        showAlert('Please enter a note before saving.', 'warning');
-        return;
-      }
-      
-      try {
-        setButtonLoading('addNoteOnlyBtn', true);
-        
-        const user = auth.currentUser;
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        const userData = userDoc.exists() ? userDoc.data() : {};
-        const adminName = `${userData.firstName || ''} ${userData.surname || ''}`.trim() || user.email || 'Unknown';
-        
-        // Add note to profile
-        const profileRef = doc(db, 'profiles', userId);
-        await updateDoc(profileRef, {
-          'adminUse.notes': arrayUnion({
-            text: notes,
-            author: adminName,
-            timestamp: serverTimestamp()
-          })
-        });
-        
-        showAlert('Note added successfully!', 'success');
-        
-        // Close modal
-        profileModal.hide();
-        
-        // Reload profiles
-        await loadAllProfiles();
-      } catch (error) {
-        console.error('Error adding note:', error);
-        showAlert('Error adding note: ' + error.message, 'danger');
-      } finally {
-        setButtonLoading('addNoteOnlyBtn', false);
-      }
+// Add note only
+async function handleAddNote(userId) {
+  const notes = document.getElementById('adminNotes').value.trim();
+  
+  if (!notes) {
+    showAlert('Please enter a note before saving.', 'warning');
+    return;
+  }
+  
+  try {
+    setButtonLoading('addNoteOnlyBtn', true);
+    
+    const user = auth.currentUser;
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const userData = userDoc.exists() ? userDoc.data() : {};
+    const adminName = `${userData.firstName || ''} ${userData.surname || ''}`.trim() || user.email || 'Unknown';
+    
+    // First get the current profile
+    const profileRef = doc(db, 'profiles', userId);
+    const profileSnap = await getDoc(profileRef);
+    
+    if (!profileSnap.exists()) {
+      throw new Error("Profile not found");
     }
+    
+    const profileData = profileSnap.data();
+    
+    // Create notes array if it doesn't exist
+    const currentNotes = profileData.adminUse?.notes || [];
+    
+    // Add the new note with the current timestamp
+    const newNotes = [...currentNotes, {
+      text: notes,
+      author: adminName,
+      timestamp: new Date() // Use JS Date object instead of serverTimestamp()
+    }];
+    
+    // Update the profile with the new notes array
+    await updateDoc(profileRef, {
+      'adminUse.notes': newNotes
+    });
+    
+    showAlert('Note added successfully!', 'success');
+    
+    // Close modal
+    profileModal.hide();
+    
+    // Reload profiles
+    await loadAllProfiles();
+  } catch (error) {
+    console.error('Error adding note:', error);
+    showAlert('Error adding note: ' + error.message, 'danger');
+  } finally {
+    setButtonLoading('addNoteOnlyBtn', false);
+  }
+}
 
-    // Handle profile approval or rejection
-    async function handleProfileAction(userId, status) {
-      const notes = document.getElementById('adminNotes').value.trim();
+// Handle profile approval or rejection
+async function handleProfileAction(userId, status) {
+  const notes = document.getElementById('adminNotes').value.trim();
+  
+  try {
+    setButtonLoading(status === 'approved' ? 'approveProfileBtn' : 'rejectProfileBtn', true);
+    
+    const user = auth.currentUser;
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const userData = userDoc.exists() ? userDoc.data() : {};
+    const adminName = `${userData.firstName || ''} ${userData.surname || ''}`.trim() || user.email || 'Unknown';
+    
+    // First get the current profile
+    const profileRef = doc(db, 'profiles', userId);
+    const profileSnap = await getDoc(profileRef);
+    
+    if (profileSnap.exists()) {
+      const profileData = profileSnap.data();
       
-      try {
-        setButtonLoading(status === 'approved' ? 'approveProfileBtn' : 'rejectProfileBtn', true);
+      // Create notes array if it doesn't exist
+      const currentNotes = profileData.adminUse?.notes || [];
+      
+      // Add note to profile if provided
+      if (notes) {
+        // Add the new note with the current timestamp
+        const newNotes = [...currentNotes, {
+          text: notes,
+          author: adminName,
+          timestamp: new Date() // Use JS Date object instead of serverTimestamp()
+        }];
         
-        const user = auth.currentUser;
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        const userData = userDoc.exists() ? userDoc.data() : {};
-        const adminName = `${userData.firstName || ''} ${userData.surname || ''}`.trim() || user.email || 'Unknown';
-        
-        // Add note to profile if provided
-        if (notes) {
-          const profileRef = doc(db, 'profiles', userId);
-          await updateDoc(profileRef, {
-            'adminUse.notes': arrayUnion({
-              text: notes,
-              author: adminName,
-              timestamp: serverTimestamp()
-            })
-          });
-        }
-        
-        // Update profile status in Firestore
-        await reviewProfile(userId, status, '');
-        
-        // Hide modal
-        profileModal.hide();
-        
-        // Show success message
-        showAlert(`Profile ${status} successfully!`, 'success');
-        
-        // Reload profiles
-        await loadAllProfiles();
-      } catch (error) {
-        console.error(`Error ${status} profile:`, error);
-        showAlert(`Error updating profile: ${error.message}`, 'danger');
-        setButtonLoading(status === 'approved' ? 'approveProfileBtn' : 'rejectProfileBtn', false);
+        // Update the profile with the new notes array
+        await updateDoc(profileRef, {
+          'adminUse.notes': newNotes
+        });
       }
     }
+    
+    // Update profile status in Firestore
+    await reviewProfile(userId, status, '');
+    
+    // Hide modal
+    profileModal.hide();
+    
+    // Show success message
+    showAlert(`Profile ${status} successfully!`, 'success');
+    
+    // Reload profiles
+    await loadAllProfiles();
+  } catch (error) {
+    console.error(`Error ${status} profile:`, error);
+    showAlert(`Error updating profile: ${error.message}`, 'danger');
+    setButtonLoading(status === 'approved' ? 'approveProfileBtn' : 'rejectProfileBtn', false);
+  }
+}
+
+
 
     // Setup search filters
     pendingSearchInput.addEventListener('input', () => {
