@@ -124,56 +124,41 @@
       max-height: 75vh;
       overflow-y: auto;
     }
-    /* Document styles */
-    .document-preview {
-      background: #f8f9fa;
-      border-radius: 10px;
+    .notes-container {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #dee2e6;
+      border-radius: 0.375rem;
       padding: 15px;
       margin-bottom: 15px;
-      display: flex;
-      align-items: center;
-      gap: 15px;
+      background-color: #f8f9fa;
     }
-    .document-icon {
-      font-size: 2.5rem;
-      color: #00a896;
+    .note-entry {
+      padding: 10px;
+      border-bottom: 1px solid #dee2e6;
+      margin-bottom: 10px;
     }
-    .document-info {
-      flex-grow: 1;
+    .note-entry:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
     }
-    .document-title {
-      font-weight: 600;
+    .note-meta {
+      font-size: 0.8rem;
+      color: #6c757d;
       margin-bottom: 5px;
     }
-    .document-meta {
-      font-size: 0.85rem;
-      color: #6c757d;
+    .note-text {
+      white-space: pre-wrap;
     }
-    .document-actions {
+    .modal-footer {
+      display: block;
+      padding: 1rem;
+    }
+    .modal-actions {
       display: flex;
-      gap: 5px;
-    }
-    .profile-photo-container {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .profile-photo {
-      width: 150px;
-      height: 150px;
-      object-fit: cover;
-      border-radius: 10px;
-      border: 3px solid #00a896;
-    }
-    .doc-upload-container {
-      margin-top: 20px;
-      padding: 15px;
-      background: #f8f9fa;
-      border-radius: 10px;
-      border: 1px dashed #dee2e6;
-    }
-    .upload-progress {
-      height: 5px;
-      margin-top: 10px;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      margin-top: 1rem;
     }
   </style>
 </head>
@@ -303,53 +288,34 @@
           <!-- Profile content will be loaded here -->
         </div>
         <div class="modal-footer" id="profileModalFooter">
-          <!-- Action buttons will be added dynamically -->
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Document Preview Modal -->
-  <div class="modal fade" id="documentPreviewModal" tabindex="-1" aria-labelledby="documentPreviewModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="documentPreviewModalLabel">Document Preview</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body" id="documentPreviewContent">
-          <!-- Preview content will be inserted here -->
-        </div>
-        <div class="modal-footer">
-          <a href="#" class="btn btn-primary" id="downloadDocBtn" target="_blank">
-            <i class="bi bi-download"></i> Download
-          </a>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Admin Approval Modal -->
-  <div class="modal fade" id="fileApprovalModal" tabindex="-1" aria-labelledby="fileApprovalModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="fileApprovalModalLabel">Approve Public File</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <p>Are you sure you want to approve this file for public access? This will make it visible to all users.</p>
-          <div class="mb-3">
-            <label for="approvalNotes" class="form-label">Notes (Optional)</label>
-            <textarea class="form-control" id="approvalNotes" rows="3" placeholder="Add notes about this file"></textarea>
+          <!-- Previous notes section -->
+          <div class="w-100 mb-3">
+            <label class="form-label">Previous Notes:</label>
+            <div class="notes-container" id="previousNotes">
+              <p class="text-muted text-center">No previous notes found</p>
+            </div>
           </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-success" id="approveFileBtn">
-            <i class="bi bi-check-circle"></i> Approve File
-          </button>
+          
+          <!-- Add notes section -->
+          <div class="w-100 mb-3">
+            <label class="form-label">Add Notes:</label>
+            <textarea class="form-control" id="adminNotes" rows="3" placeholder="Add new notes about this profile..."></textarea>
+            <small class="text-muted">Notes will be appended to the previous notes and cannot be edited or removed later.</small>
+          </div>
+          
+          <!-- Action buttons -->
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-info" id="saveNotesBtn">
+              <i class="bi bi-save"></i> Save Notes Only
+            </button>
+            <button type="button" class="btn btn-danger" id="rejectProfileBtn">
+              <i class="bi bi-x-circle"></i> Reject
+            </button>
+            <button type="button" class="btn btn-success" id="approveProfileBtn">
+              <i class="bi bi-check-circle"></i> Approve
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -367,25 +333,16 @@
       where, 
       getDocs, 
       doc, 
-      getDoc,
+      getDoc, 
       updateDoc,
       serverTimestamp
     } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-    import { 
-      getStorage, 
-      ref, 
-      uploadBytesResumable, 
-      getDownloadURL, 
-      deleteObject 
-    } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
     import { firebaseConfig } from './firebase-config.js';
     import { reviewProfile, getUserProfile } from './profile-service.js';
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const storage = getStorage(app);
 
     // DOM elements
     const pendingProfilesContainer = document.getElementById('pendingProfilesContainer');
@@ -398,13 +355,12 @@
     const approvedSearchInput = document.getElementById('approvedSearchInput');
     const rejectedSearchInput = document.getElementById('rejectedSearchInput');
     const profileModalBody = document.getElementById('profileModalBody');
-    const profileModalFooter = document.getElementById('profileModalFooter');
+    const previousNotes = document.getElementById('previousNotes');
+    const adminNotes = document.getElementById('adminNotes');
+    const saveNotesBtn = document.getElementById('saveNotesBtn');
+    const approveProfileBtn = document.getElementById('approveProfileBtn');
+    const rejectProfileBtn = document.getElementById('rejectProfileBtn');
     const profileModal = new bootstrap.Modal(document.getElementById('profileModal'));
-    const documentPreviewModal = new bootstrap.Modal(document.getElementById('documentPreviewModal'));
-    const documentPreviewContent = document.getElementById('documentPreviewContent');
-    const downloadDocBtn = document.getElementById('downloadDocBtn');
-    const fileApprovalModal = new bootstrap.Modal(document.getElementById('fileApprovalModal'));
-    const approveFileBtn = document.getElementById('approveFileBtn');
     const alertContainer = document.getElementById('alertContainer');
     const logoutLink = document.getElementById('logoutLink');
 
@@ -414,11 +370,14 @@
       approved: [],
       rejected: []
     };
-
-    // For document upload
-    let currentUserForUpload = null;
-    let currentUploadType = null;
-    let currentUploadFile = null;
+    
+    // Current user and profile
+    let currentAdminInfo = {
+      uid: null,
+      name: 'Unknown Admin'
+    };
+    let currentUserId = null;
+    let currentProfile = null;
 
     // Helper Functions
     function setButtonLoading(id, loading) {
@@ -456,56 +415,144 @@
     function formatDate(timestamp) {
       if (!timestamp) return 'N/A';
       
-      const date = timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
-      return date.toLocaleDateString('en-GB', {
+      let date;
+      if (timestamp.seconds) {
+        // Firestore timestamp
+        date = new Date(timestamp.seconds * 1000);
+      } else if (timestamp.toDate) {
+        // Firestore timestamp object with toDate method
+        date = timestamp.toDate();
+      } else if (timestamp instanceof Date) {
+        // JavaScript Date object
+        date = timestamp;
+      } else {
+        // Try to parse as string or number
+        try {
+          date = new Date(timestamp);
+        } catch (e) {
+          return 'Invalid Date';
+        }
+      }
+      
+      if (isNaN(date.getTime())) {
+        return 'Invalid Date';
+      }
+      
+      return new Date(date).toLocaleString('en-GB', {
         day: '2-digit',
         month: 'short',
-        year: 'numeric'
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
       });
     }
 
-    // File utility functions
-    // Check if file is an image
-    function isImageFile(fileName) {
-      const extension = fileName.split('.').pop().toLowerCase();
-      return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension);
-    }
-
-    // Check if file is a pdf
-    function isPdfFile(fileName) {
-      const extension = fileName.split('.').pop().toLowerCase();
-      return extension === 'pdf';
-    }
-
-    // Check if file can be displayed in browser
-    function canPreviewFile(fileName) {
-      const extension = fileName.split('.').pop().toLowerCase();
-      return ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'mp4', 'webm', 'mp3', 'wav', 'txt'].includes(extension);
-    }
-
-    // Get file icon based on extension
-    function getFileIcon(fileName) {
-      const extension = fileName.split('.').pop().toLowerCase();
-      if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension)) {
-        return 'bi-file-earmark-image';
-      } else if (extension === 'pdf') {
-        return 'bi-file-earmark-pdf';
-      } else if (['doc', 'docx'].includes(extension)) {
-        return 'bi-file-earmark-word';
-      } else {
-        return 'bi-file-earmark';
+    // Format and append new note
+    async function appendNote(text, status = null) {
+      if (!text.trim()) return null;
+      
+      try {
+        // Get existing notes
+        let notesEntries = [];
+        
+        if (currentProfile.adminUse?.notes) {
+          try {
+            if (currentProfile.adminUse.notes.startsWith('[') && currentProfile.adminUse.notes.endsWith(']')) {
+              notesEntries = JSON.parse(currentProfile.adminUse.notes);
+            } else {
+              // Legacy format - convert to new format
+              notesEntries = [{
+                text: currentProfile.adminUse.notes,
+                timestamp: currentProfile.adminUse.reviewedAt || null,
+                adminId: currentProfile.adminUse.approvedBy || null,
+                adminName: 'Unknown Admin'
+              }];
+            }
+          } catch (error) {
+            // If parsing fails, treat as a single entry
+            notesEntries = [{
+              text: currentProfile.adminUse.notes,
+              timestamp: currentProfile.adminUse.reviewedAt || null,
+              adminId: currentProfile.adminUse.approvedBy || null,
+              adminName: 'Unknown Admin'
+            }];
+          }
+        }
+        
+        // Create new note entry
+        const newNote = {
+          text: text.trim(),
+          timestamp: new Date(),
+          adminId: currentAdminInfo.uid,
+          adminName: currentAdminInfo.name
+        };
+        
+        // Add status change note if provided
+        if (status) {
+          newNote.text += `\n\nStatus changed to: ${status.toUpperCase()}`;
+        }
+        
+        // Add to notes array
+        notesEntries.push(newNote);
+        
+        // Convert to JSON string
+        return JSON.stringify(notesEntries);
+      } catch (error) {
+        console.error('Error formatting notes:', error);
+        return null;
       }
     }
 
-    // Format file size
-    function formatFileSize(bytes) {
-      if (!bytes) return '';
-      if (bytes < 1024) {
-        return bytes + ' B';
-      } else if (bytes < 1024 * 1024) {
-        return (bytes / 1024).toFixed(1) + ' KB';
-      } else {
-        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    // Save notes without changing status
+    async function saveNotes() {
+      const notesText = adminNotes.value.trim();
+      if (!notesText) {
+        showAlert('Please enter notes before saving', 'warning');
+        return;
+      }
+      
+      try {
+        setButtonLoading('saveNotesBtn', true);
+        
+        // Format notes
+        const updatedNotes = await appendNote(notesText);
+        if (!updatedNotes) {
+          throw new Error('Failed to format notes');
+        }
+        
+        // Update profile in Firestore
+        const profileRef = doc(db, 'profiles', currentUserId);
+        
+        // Initialize adminUse if it doesn't exist
+        if (!currentProfile.adminUse) {
+          currentProfile.adminUse = {
+            status: 'pending',
+            approvedBy: null,
+            reviewedAt: null,
+            notes: '[]'
+          };
+        }
+        
+        await updateDoc(profileRef, {
+          'adminUse.notes': updatedNotes,
+          'adminUse.reviewedAt': serverTimestamp()
+        });
+        
+        showAlert('Notes saved successfully!', 'success');
+        
+        // Clear notes field
+        adminNotes.value = '';
+        
+        // Hide the modal
+        profileModal.hide();
+        
+        // Reload all profiles
+        await loadAllProfiles();
+      } catch (error) {
+        console.error('Error saving notes:', error);
+        showAlert('Error saving notes: ' + error.message, 'danger');
+      } finally {
+        setButtonLoading('saveNotesBtn', false);
       }
     }
 
@@ -598,12 +645,6 @@
         const qualification = profile.medicalQualifications?.qualification || 'Not specified';
         const submittedDate = formatDate(profile.submission?.submittedAt);
         
-        // Check for profile photo
-        const hasPhoto = profile.profilePhotoURL ? true : false;
-        
-        // Check for qualification document
-        const hasDocument = profile.qualificationDocURL ? true : false;
-        
         html += `
           <div class="profile-card">
             <div class="profile-info">
@@ -614,19 +655,20 @@
                   <i class="bi bi-mortarboard"></i> ${qualification}
                 </p>
                 <small class="text-muted">Submitted: ${submittedDate}</small>
-                <div class="mt-2">
-                  ${hasPhoto ? '<span class="badge bg-info me-2"><i class="bi bi-person-badge"></i> Has Profile Photo</span>' : ''}
-                  ${hasDocument ? '<span class="badge bg-info"><i class="bi bi-file-earmark"></i> Has Qualification Doc</span>' : ''}
-                </div>
               </div>
               <div class="d-flex align-items-center gap-3">
                 <span class="${status}-badge">
                   <i class="bi bi-${status === 'pending' ? 'hourglass-split' : (status === 'approved' ? 'check-circle' : 'x-circle')}"></i> 
                   ${status.charAt(0).toUpperCase() + status.slice(1)}
                 </span>
-                <button class="btn btn-outline-primary btn-sm view-profile-btn" data-user-id="${profile.userId}">
-                  <i class="bi bi-eye"></i> Review
-                </button>
+                <div class="btn-group">
+                  <button class="btn btn-outline-primary btn-sm view-profile-btn" data-user-id="${profile.userId}">
+                    <i class="bi bi-eye"></i> Review
+                  </button>
+                  <a href="admin-edit-profile.html?id=${profile.userId}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-pencil"></i> Edit
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -667,19 +709,24 @@
       displayProfiles(status, filtered);
     }
 
-    // Open profile modal for review including document uploads
+    // Open profile modal for review
     async function openProfileModal(userId) {
       try {
         console.log('Opening profile modal for user ID:', userId);
         
-        // Get profile data with proper error handling
-        const profile = await getUserProfile(userId);
-        console.log('Profile data received:', profile);
+        // Reset notes field
+        adminNotes.value = '';
         
-        if (!profile) {
+        // Store current user ID and get profile data
+        currentUserId = userId;
+        currentProfile = await getUserProfile(userId);
+        
+        if (!currentProfile) {
           showAlert('Profile not found or is empty', 'danger');
           return;
         }
+        
+        console.log('Profile data received:', currentProfile);
         
         // Get user data
         const userDoc = await getDoc(doc(db, 'users', userId));
@@ -691,104 +738,70 @@
           email: 'No email available'
         };
         
-        // Format modal content with safe property access
-        let html = ``;
-        
-        // Add profile photo section if available
-        if (profile.profilePhotoURL) {
-          html += `
-            <div class="profile-section">
-              <h5><i class="bi bi-person-badge"></i> Profile Photo</h5>
-              <div class="profile-photo-container">
-                <img src="${profile.profilePhotoURL}" alt="Profile Photo" class="profile-photo">
-              </div>
-            </div>
-          `;
-        } else {
-          html += `
-            <div class="profile-section">
-              <h5><i class="bi bi-person-badge"></i> Profile Photo</h5>
-              <div class="alert alert-warning">
-                <i class="bi bi-exclamation-triangle"></i> No profile photo uploaded
-              </div>
-              <div id="photoUploadContainer" class="doc-upload-container hidden">
-                <h6>Upload a profile photo for this user</h6>
-                <input type="file" class="form-control mb-2" id="photoFileInput" accept="image/jpeg, image/png">
-                <button type="button" class="btn btn-primary btn-sm" id="uploadPhotoBtn" data-user-id="${userId}">
-                  <i class="bi bi-cloud-upload"></i> Upload Photo
-                </button>
-                <div class="progress hidden mt-2" id="photoUploadProgress">
-                  <div class="progress-bar bg-success" role="progressbar" style="width: 0%" id="photoUploadProgressBar"></div>
-                </div>
-              </div>
-              <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="showPhotoUploadBtn">
-                <i class="bi bi-plus-circle"></i> Add Photo
-              </button>
-            </div>
-          `;
-        }
-        
-        // Add qualification document section
-        html += `
-          <div class="profile-section">
-            <h5><i class="bi bi-file-earmark"></i> Qualification Document</h5>
-        `;
-        
-        if (profile.qualificationDocURL) {
-          const docName = profile.qualificationDocName || 'Qualification Document';
-          const docSize = formatFileSize(profile.qualificationDocSize);
-          const uploadDate = profile.qualificationDocUploadedAt ? formatDate(profile.qualificationDocUploadedAt) : 'Unknown';
-          const docIcon = getFileIcon(docName);
+        // Display previous notes
+        if (currentProfile.adminUse?.notes) {
+          // Parse existing notes if they are in JSON format
+          let notesEntries = [];
           
-          html += `
-            <div class="document-preview">
-              <i class="bi ${docIcon} document-icon"></i>
-              <div class="document-info">
-                <div class="document-title">${docName}</div>
-                <div class="document-meta">
-                  <span>${docSize}</span> • Uploaded on ${uploadDate}
+          try {
+            if (currentProfile.adminUse.notes.startsWith('[') && currentProfile.adminUse.notes.endsWith(']')) {
+              // It appears to be a JSON array
+              notesEntries = JSON.parse(currentProfile.adminUse.notes);
+            } else {
+              // Legacy format - convert to new format
+              notesEntries = [{
+                text: currentProfile.adminUse.notes,
+                timestamp: currentProfile.adminUse.reviewedAt || null,
+                adminId: currentProfile.adminUse.approvedBy || null,
+                adminName: 'Unknown Admin'
+              }];
+            }
+          } catch (error) {
+            // If parsing fails, treat as a single entry
+            notesEntries = [{
+              text: currentProfile.adminUse.notes,
+              timestamp: currentProfile.adminUse.reviewedAt || null,
+              adminId: currentProfile.adminUse.approvedBy || null,
+              adminName: 'Unknown Admin'
+            }];
+          }
+          
+          // Format notes entries
+          let notesHtml = '';
+          
+          for (const entry of notesEntries) {
+            let adminName = entry.adminName || 'Unknown Admin';
+            
+            // Try to get admin name if we have an ID but no name
+            if (entry.adminId && (!entry.adminName || entry.adminName === 'Unknown Admin')) {
+              try {
+                const adminDoc = await getDoc(doc(db, 'users', entry.adminId));
+                if (adminDoc.exists()) {
+                  const adminData = adminDoc.data();
+                  adminName = `${adminData.firstName || ''} ${adminData.surname || ''}`.trim() || 'Unknown Admin';
+                }
+              } catch (error) {
+                console.error('Error fetching admin details:', error);
+              }
+            }
+            
+            notesHtml += `
+              <div class="note-entry">
+                <div class="note-meta">
+                  <strong>${adminName}</strong> - ${formatDate(entry.timestamp) || 'No date recorded'}
                 </div>
+                <div class="note-text">${entry.text}</div>
               </div>
-              <div class="document-actions">
-                <button type="button" class="btn btn-outline-primary btn-sm view-document-btn" 
-                        data-url="${profile.qualificationDocURL}" 
-                        data-name="${docName}"
-                        data-type="${profile.qualificationDocType || 'application/octet-stream'}">
-                  <i class="bi bi-eye"></i>
-                </button>
-                <a href="${profile.qualificationDocURL}" class="btn btn-outline-success btn-sm" target="_blank" download>
-                  <i class="bi bi-download"></i>
-                </a>
-              </div>
-            </div>
-          `;
+            `;
+          }
+          
+          previousNotes.innerHTML = notesHtml;
         } else {
-          html += `
-            <div class="alert alert-warning">
-              <i class="bi bi-exclamation-triangle"></i> No qualification document uploaded
-            </div>
-            <div id="docUploadContainer" class="doc-upload-container hidden">
-              <h6>Upload a qualification document for this user</h6>
-              <input type="file" class="form-control mb-2" id="docFileInput" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
-              <button type="button" class="btn btn-primary btn-sm" id="uploadDocBtn" data-user-id="${userId}">
-                <i class="bi bi-cloud-upload"></i> Upload Document
-              </button>
-              <div class="progress hidden mt-2" id="docUploadProgress">
-                <div class="progress-bar bg-success" role="progressbar" style="width: 0%" id="docUploadProgressBar"></div>
-              </div>
-            </div>
-            <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="showDocUploadBtn">
-              <i class="bi bi-plus-circle"></i> Add Document
-            </button>
-          `;
+          previousNotes.innerHTML = '<p class="text-muted text-center">No previous notes found</p>';
         }
         
-        html += `
-          </div>
-        `;
-        
-        // User details
-        html += `
+        // Format modal content with safe property access
+        let html = `
           <h4>${userData.firstName || ''} ${userData.surname || ''}</h4>
           <p class="text-muted">${userData.email || 'No email available'}</p>
           
@@ -797,11 +810,11 @@
             <div class="row">
               <div class="col-md-6 mb-2">
                 <span class="profile-label">Date of Birth:</span>
-                <span>${profile.personalDetails && profile.personalDetails.DOB ? formatDate(profile.personalDetails.DOB) : 'Not provided'}</span>
+                <span>${currentProfile.personalDetails && currentProfile.personalDetails.DOB ? formatDate(currentProfile.personalDetails.DOB) : 'Not provided'}</span>
               </div>
               <div class="col-md-6 mb-2">
                 <span class="profile-label">Emergency Contact:</span>
-                <span>${profile.personalDetails && profile.personalDetails.emergencyContact ? profile.personalDetails.emergencyContact : 'Not provided'}</span>
+                <span>${currentProfile.personalDetails && currentProfile.personalDetails.emergencyContact ? currentProfile.personalDetails.emergencyContact : 'Not provided'}</span>
               </div>
             </div>
           </div>
@@ -811,19 +824,19 @@
             <div class="row">
               <div class="col-md-6 mb-2">
                 <span class="profile-label">C1 Classification:</span>
-                <span>${profile.driving && profile.driving.c1Classification ? 'Yes' : 'No'}</span>
+                <span>${currentProfile.driving && currentProfile.driving.c1Classification ? 'Yes' : 'No'}</span>
               </div>
               <div class="col-md-6 mb-2">
                 <span class="profile-label">Driving License Number:</span>
-                <span>${profile.driving && profile.driving.dlNumber ? profile.driving.dlNumber : 'Not provided'}</span>
+                <span>${currentProfile.driving && currentProfile.driving.dlNumber ? currentProfile.driving.dlNumber : 'Not provided'}</span>
               </div>
               <div class="col-md-6 mb-2">
                 <span class="profile-label">National Insurance Number:</span>
-                <span>${profile.driving && profile.driving.niNumber ? profile.driving.niNumber : 'Not provided'}</span>
+                <span>${currentProfile.driving && currentProfile.driving.niNumber ? currentProfile.driving.niNumber : 'Not provided'}</span>
               </div>
               <div class="col-md-6 mb-2">
                 <span class="profile-label">License Points:</span>
-                <span>${profile.driving && profile.driving.points ? profile.driving.points : 'Not provided'}</span>
+                <span>${currentProfile.driving && currentProfile.driving.points ? currentProfile.driving.points : 'Not provided'}</span>
               </div>
             </div>
           </div>
@@ -833,20 +846,22 @@
             <div class="row">
               <div class="col-md-6 mb-2">
                 <span class="profile-label">Main Qualification:</span>
-                <span>${profile.medicalQualifications && profile.medicalQualifications.qualification ? profile.medicalQualifications.qualification : 'Not provided'}</span>
+                <span>${currentProfile.medicalQualifications && currentProfile.medicalQualifications.qualification ? currentProfile.medicalQualifications.qualification : 'Not provided'}</span>
               </div>
         `;
-        
-        // Conditionally show appropriate registration based on qualification - with safety checks
-        const qualification = profile.medicalQualifications && profile.medicalQualifications.qualification ? profile.medicalQualifications.qualification : '';
-        
+
+        // Conditionally show appropriate registration based on qualification
+        const qualification = currentProfile.medicalQualifications && currentProfile.medicalQualifications.qualification 
+          ? currentProfile.medicalQualifications.qualification 
+          : '';
+          
         if (['Paramedic', 'Paramedic (Specialist)', 'Paramedic (HART)', 
              'Paramedic (Critical care)', 'Paramedic (in Primary Care)', 
              'Paramedic (CTM/OO)'].includes(qualification)) {
           html += `
               <div class="col-md-6 mb-2">
                 <span class="profile-label">HCPC Registration:</span>
-                <span>${profile.medicalQualifications && profile.medicalQualifications.hcpc ? profile.medicalQualifications.hcpc : 'Not provided'}</span>
+                <span>${currentProfile.medicalQualifications && currentProfile.medicalQualifications.hcpc ? currentProfile.medicalQualifications.hcpc : 'Not provided'}</span>
               </div>
           `;
         } else if (['Doctor', 'Doctor (Critical Care/BASICS/Merit)', 
@@ -854,7 +869,7 @@
           html += `
               <div class="col-md-6 mb-2">
                 <span class="profile-label">GMC Registration:</span>
-                <span>${profile.medicalQualifications && profile.medicalQualifications.gmc ? profile.medicalQualifications.gmc : 'Not provided'}</span>
+                <span>${currentProfile.medicalQualifications && currentProfile.medicalQualifications.gmc ? currentProfile.medicalQualifications.gmc : 'Not provided'}</span>
               </div>
           `;
         } else if (['Nurse', 'Nurse (Ambulance Nurse)', 
@@ -862,27 +877,27 @@
           html += `
               <div class="col-md-6 mb-2">
                 <span class="profile-label">NMC Registration:</span>
-                <span>${profile.medicalQualifications && profile.medicalQualifications.nmc ? profile.medicalQualifications.nmc : 'Not provided'}</span>
+                <span>${currentProfile.medicalQualifications && currentProfile.medicalQualifications.nmc ? currentProfile.medicalQualifications.nmc : 'Not provided'}</span>
               </div>
           `;
         }
-        
-        // Certificate Expiry if applicable - with safety checks
+
+        // Certificate Expiry if applicable
         if (['FREC 3 (or similar level 3 certification)', 'FREC 4', 'PHTLS', 'Nurse (with FREC/PHTLS or similar)']
-             .includes(qualification)) {
+            .includes(qualification)) {
           html += `
               <div class="col-md-6 mb-2">
                 <span class="profile-label">Certificate Expiry:</span>
-                <span>${profile.medicalQualifications && profile.medicalQualifications.certExpiry ? formatDate(profile.medicalQualifications.certExpiry) : 'Not provided'}</span>
+                <span>${currentProfile.medicalQualifications && currentProfile.medicalQualifications.certExpiry ? formatDate(currentProfile.medicalQualifications.certExpiry) : 'Not provided'}</span>
               </div>
           `;
         }
-        
+
         // Complete the qualifications section
         html += `
               <div class="col-12">
                 <span class="profile-label">Details:</span>
-                <p class="mt-1">${profile.medicalQualifications && profile.medicalQualifications.details ? profile.medicalQualifications.details : 'Not provided'}</p>
+                <p class="mt-1">${currentProfile.medicalQualifications && currentProfile.medicalQualifications.details ? currentProfile.medicalQualifications.details : 'Not provided'}</p>
               </div>
             </div>
           </div>
@@ -892,219 +907,55 @@
             <div class="row">
               <div class="col-md-6 mb-2">
                 <span class="profile-label">Agreed to Terms:</span>
-                <span>${profile.submission && profile.submission.agreedToTerms ? 'Yes' : 'No'}</span>
+                <span>${currentProfile.submission && currentProfile.submission.agreedToTerms ? 'Yes' : 'No'}</span>
               </div>
               <div class="col-md-6 mb-2">
                 <span class="profile-label">Submitted Date:</span>
-                <span>${profile.submission && profile.submission.submittedAt ? formatDate(profile.submission.submittedAt) : 'Not provided'}</span>
+                <span>${currentProfile.submission && currentProfile.submission.submittedAt ? formatDate(currentProfile.submission.submittedAt) : 'Not provided'}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="profile-section">
+            <h5><i class="bi bi-shield-check"></i> Review Status</h5>
+            <div class="row">
+              <div class="col-md-6 mb-2">
+                <span class="profile-label">Current Status:</span>
+                <span class="${currentProfile.adminUse?.status || 'pending'}-badge px-3 py-1">
+                  ${currentProfile.adminUse?.status ? (currentProfile.adminUse.status.charAt(0).toUpperCase() + currentProfile.adminUse.status.slice(1)) : 'Pending'}
+                </span>
+              </div>
+              <div class="col-md-6 mb-2">
+                <span class="profile-label">Last Reviewed:</span>
+                <span>${currentProfile.adminUse?.reviewedAt ? formatDate(currentProfile.adminUse.reviewedAt) : 'Not yet reviewed'}</span>
               </div>
             </div>
           </div>
         `;
-        
-        // Add review section if already reviewed - with safety checks
-        if (profile.adminUse && profile.adminUse.status && profile.adminUse.status !== 'pending') {
-          try {
-            let reviewerName = 'Unknown';
-            
-            if (profile.adminUse.approvedBy) {
-              const reviewerDoc = await getDoc(doc(db, 'users', profile.adminUse.approvedBy));
-              if (reviewerDoc.exists()) {
-                const reviewerData = reviewerDoc.data();
-                reviewerName = `${reviewerData.firstName || ''} ${reviewerData.surname || ''}`.trim() || 'Unknown';
-              }
-            }
-            
-            html += `
-              <div class="profile-section">
-                <h5><i class="bi bi-shield-check"></i> Review Information</h5>
-                <div class="row">
-                  <div class="col-md-6 mb-2">
-                    <span class="profile-label">Status:</span>
-                    <span class="${profile.adminUse.status}-badge px-3 py-1">
-                      ${(profile.adminUse.status.charAt(0).toUpperCase() + profile.adminUse.status.slice(1)) || 'Unknown'}
-                    </span>
-                  </div>
-                  <div class="col-md-6 mb-2">
-                    <span class="profile-label">Reviewed On:</span>
-                    <span>${profile.adminUse.reviewedAt ? formatDate(profile.adminUse.reviewedAt) : 'Not recorded'}</span>
-                  </div>
-                  <div class="col-md-6 mb-2">
-                    <span class="profile-label">Approved By:</span>
-                    <span>${reviewerName}</span>
-                  </div>
-                  <div class="col-12">
-                    <span class="profile-label">Notes:</span>
-                    <p class="mt-1">${profile.adminUse.notes || 'No notes provided'}</p>
-                  </div>
-                </div>
-              </div>
-            `;
-          } catch (reviewerError) {
-            console.error('Error getting reviewer information:', reviewerError);
-            // Add a simpler review section if retrieving reviewer info fails
-            html += `
-              <div class="profile-section">
-                <h5><i class="bi bi-shield-check"></i> Review Information</h5>
-                <div class="row">
-                  <div class="col-md-6 mb-2">
-                    <span class="profile-label">Status:</span>
-                    <span class="${profile.adminUse.status}-badge px-3 py-1">
-                      ${(profile.adminUse.status.charAt(0).toUpperCase() + profile.adminUse.status.slice(1)) || 'Unknown'}
-                    </span>
-                  </div>
-                  <div class="col-12">
-                    <span class="profile-label">Notes:</span>
-                    <p class="mt-1">${profile.adminUse.notes || 'No notes provided'}</p>
-                  </div>
-                </div>
-              </div>
-            `;
-          }
-        }
-        
-        // Set modal content
+
         profileModalBody.innerHTML = html;
         
-        // Set modal footer with action buttons based on current status
-        let footerHtml = '';
+        // Set button behavior based on current status
+        const status = currentProfile.adminUse?.status || 'pending';
         
-        if (!profile.adminUse || !profile.adminUse.status || profile.adminUse.status === 'pending') {
-          // For pending profiles, show approve and reject buttons
-          footerHtml = `
-            <div class="w-100">
-              <div class="mb-3">
-                <label class="form-label">Admin Notes (optional)</label>
-                <textarea class="form-control" id="adminNotes" rows="2" placeholder="Add notes about this profile"></textarea>
-              </div>
-              <div class="d-flex justify-content-end gap-2">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-warning" id="editProfileBtn" data-user-id="${userId}">
-                  <i class="bi bi-pencil-square"></i> Edit Profile
-                </button>
-                <button type="button" class="btn btn-danger" id="rejectProfileBtn" data-user-id="${userId}">
-                  <i class="bi bi-x-circle"></i> Reject
-                </button>
-                <button type="button" class="btn btn-success" id="approveProfileBtn" data-user-id="${userId}">
-                  <i class="bi bi-check-circle"></i> Approve
-                </button>
-              </div>
-            </div>
-          `;
-        } else {
-          // For already reviewed profiles, show update button and edit button
-          footerHtml = `
-            <div class="w-100">
-              <div class="mb-3">
-                <label class="form-label">Admin Notes</label>
-                <textarea class="form-control" id="adminNotes" rows="2">${profile.adminUse.notes || ''}</textarea>
-              </div>
-              <div class="d-flex justify-content-end gap-2">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-warning" id="editProfileBtn" data-user-id="${userId}">
-                  <i class="bi bi-pencil-square"></i> Edit Profile
-                </button>
-                ${profile.adminUse.status === 'approved' ?
-                  `<button type="button" class="btn btn-danger" id="rejectProfileBtn" data-user-id="${userId}">
-                     <i class="bi bi-x-circle"></i> Change to Rejected
-                   </button>`
-                :
-                  `<button type="button" class="btn btn-success" id="approveProfileBtn" data-user-id="${userId}">
-                     <i class="bi bi-check-circle"></i> Change to Approved
-                   </button>`
-                }
-              </div>
-            </div>
-          `;
+        // For approved profiles, only show reject button (to change status)
+        if (status === 'approved') {
+          approveProfileBtn.classList.add('hidden');
+          rejectProfileBtn.classList.remove('hidden');
+        } 
+        // For rejected profiles, only show approve button (to change status)
+        else if (status === 'rejected') {
+          approveProfileBtn.classList.remove('hidden');
+          rejectProfileBtn.classList.add('hidden');
+        }
+        // For pending profiles, show both buttons
+        else {
+          approveProfileBtn.classList.remove('hidden');
+          rejectProfileBtn.classList.remove('hidden');
         }
         
-        profileModalFooter.innerHTML = footerHtml;
-        
-        // Add event listeners for document and photo viewing/uploading
-        const viewDocBtn = document.querySelector('.view-document-btn');
-        if (viewDocBtn) {
-          viewDocBtn.addEventListener('click', (e) => {
-            const url = e.currentTarget.getAttribute('data-url');
-            const name = e.currentTarget.getAttribute('data-name');
-            const type = e.currentTarget.getAttribute('data-type');
-            previewDocument(url, name, type);
-          });
-        }
-        
-        // Show document upload form
-        const showDocUploadBtn = document.getElementById('showDocUploadBtn');
-        if (showDocUploadBtn) {
-          showDocUploadBtn.addEventListener('click', () => {
-            document.getElementById('docUploadContainer').classList.remove('hidden');
-            showDocUploadBtn.classList.add('hidden');
-          });
-        }
-        
-        // Upload document button
-        const uploadDocBtn = document.getElementById('uploadDocBtn');
-        if (uploadDocBtn) {
-          uploadDocBtn.addEventListener('click', () => {
-            const fileInput = document.getElementById('docFileInput');
-            if (fileInput.files.length > 0) {
-              currentUserForUpload = userId;
-              currentUploadType = 'qualification';
-              currentUploadFile = fileInput.files[0];
-              uploadDocument();
-            } else {
-              showAlert('Please select a file to upload', 'warning');
-            }
-          });
-        }
-        
-        // Show photo upload form
-        const showPhotoUploadBtn = document.getElementById('showPhotoUploadBtn');
-        if (showPhotoUploadBtn) {
-          showPhotoUploadBtn.addEventListener('click', () => {
-            document.getElementById('photoUploadContainer').classList.remove('hidden');
-            showPhotoUploadBtn.classList.add('hidden');
-          });
-        }
-        
-        // Upload photo button
-        const uploadPhotoBtn = document.getElementById('uploadPhotoBtn');
-        if (uploadPhotoBtn) {
-          uploadPhotoBtn.addEventListener('click', () => {
-            const fileInput = document.getElementById('photoFileInput');
-            if (fileInput.files.length > 0) {
-              currentUserForUpload = userId;
-              currentUploadType = 'photo';
-              currentUploadFile = fileInput.files[0];
-              uploadDocument();
-            } else {
-              showAlert('Please select a photo to upload', 'warning');
-            }
-          });
-        }
-        
-        // Edit profile button handler
-        const editProfileBtn = document.getElementById('editProfileBtn');
-        if (editProfileBtn) {
-          editProfileBtn.addEventListener('click', () => {
-            const userId = editProfileBtn.getAttribute('data-user-id');
-            // Redirect to profile edit page with user ID parameter
-            window.location.href = `admin-edit-profile.html?userId=${userId}`;
-          });
-        }
-        
-        // Add event listeners for action buttons - with safety checks
-        const approveBtn = document.getElementById('approveProfileBtn');
-        if (approveBtn) {
-          approveBtn.addEventListener('click', async () => {
-            await handleProfileAction(userId, 'approved');
-          });
-        }
-        
-        const rejectBtn = document.getElementById('rejectProfileBtn');
-        if (rejectBtn) {
-          rejectBtn.addEventListener('click', async () => {
-            await handleProfileAction(userId, 'rejected');
-          });
-        }
+        // Always show save notes button
+        saveNotesBtn.classList.remove('hidden');
         
         // Show modal
         profileModal.show();
@@ -1114,225 +965,60 @@
       }
     }
 
-    // Preview document
-    function previewDocument(url, name, type) {
-      // Set document title
-      document.getElementById('documentPreviewModalLabel').textContent = name;
-      
-      // Set download button
-      downloadDocBtn.href = url;
-      downloadDocBtn.setAttribute('download', name);
-      
-      // Clear previous content
-      documentPreviewContent.innerHTML = '';
-      
-      // Check if it's an image
-      if (type.startsWith('image/')) {
-        // Image preview
-        documentPreviewContent.innerHTML = `
-          <div class="text-center">
-            <img src="${url}" class="img-fluid" alt="${name}" style="max-height: 60vh;">
-          </div>
-        `;
-      } else if (type === 'application/pdf') {
-        // PDF preview
-        documentPreviewContent.innerHTML = `
-          <div class="ratio ratio-16x9" style="height: 60vh;">
-            <iframe src="${url}" allowfullscreen></iframe>
-          </div>
-        `;
-      } else {
-        // Other document types
-        documentPreviewContent.innerHTML = `
-          <div class="text-center">
-            <i class="${getFileIcon(name)}" style="font-size: 5rem; color: #00a896;"></i>
-            <p class="mt-3">Preview not available for this file type.</p>
-            <a href="${url}" target="_blank" class="btn btn-primary">
-              <i class="bi bi-download"></i> Download to view
-            </a>
-          </div>
-        `;
-      }
-      
-      // Show modal
-      documentPreviewModal.show();
-    }
-
-    // Upload document or photo for a user as admin
-    async function uploadDocument() {
-      if (!currentUserForUpload || !currentUploadFile || !currentUploadType) {
-        showAlert('Upload information is incomplete', 'danger');
-        return;
-      }
-      
-      const userId = currentUserForUpload;
-      const file = currentUploadFile;
-      const uploadType = currentUploadType;
-      
-      // Validation based on upload type
-      if (uploadType === 'photo') {
-        // Validate file size (max 7.5MB)
-        if (file.size > 7.5 * 1024 * 1024) {
-          showAlert('Photo size exceeds 2MB limit', 'warning');
-          return;
-        }
-        
-        // Validate file type
-        if (!isImageFile(file.name)) {
-          showAlert('Only JPG and PNG files are allowed for profile photos', 'warning');
-          return;
-        }
-        
-        // Get DOM elements
-        const uploadBtn = document.getElementById('uploadPhotoBtn');
-        const progressContainer = document.getElementById('photoUploadProgress');
-        const progressBar = document.getElementById('photoUploadProgressBar');
-        
-        setButtonLoading('uploadPhotoBtn', true);
-        progressContainer.classList.remove('hidden');
-        
-        // Generate a unique filename
-        const timestamp = new Date().getTime();
-        const fileExtension = file.name.split('.').pop();
-        const fileName = `profile_photo_${timestamp}.${fileExtension}`;
-        const storagePath = `profilePhotos/${userId}/${fileName}`;
-        
-        try {
-          // Upload file
-          const storageRef = ref(storage, storagePath);
-          const uploadTask = uploadBytesResumable(storageRef, file);
-          
-          uploadTask.on(
-            'state_changed',
-            (snapshot) => {
-              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              progressBar.style.width = progress + '%';
-            },
-            (error) => {
-              console.error('Upload error:', error);
-              showAlert('Error uploading photo: ' + error.message, 'danger');
-              setButtonLoading('uploadPhotoBtn', false);
-            },
-            async () => {
-              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              
-              // Update user profile with photo URL
-              const profileRef = doc(db, 'profiles', userId);
-              await updateDoc(profileRef, {
-                profilePhotoURL: downloadURL,
-                profilePhotoStoragePath: storagePath
-              });
-              
-              showAlert('Profile photo uploaded successfully', 'success');
-              
-              // Refresh profile modal
-              profileModal.hide();
-              openProfileModal(userId);
-            }
-          );
-        } catch (error) {
-          console.error('Error uploading photo:', error);
-          showAlert('Error uploading photo: ' + error.message, 'danger');
-          setButtonLoading('uploadPhotoBtn', false);
-          progressContainer.classList.add('hidden');
-        }
-      } else if (uploadType === 'qualification') {
-        // Validate file size (max 7,5MB)
-        if (file.size > 7.5 * 1024 * 1024) {
-          showAlert('Document size exceeds 7.5MB limit', 'warning');
-          return;
-        }
-        
-        // Validate file type
-        const fileExt = file.name.split('.').pop().toLowerCase();
-        const allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
-        
-        if (!allowedExtensions.includes(fileExt)) {
-          showAlert('Only PDF, Word, JPG, and PNG files are allowed', 'warning');
-          return;
-        }
-        
-        // Get DOM elements
-        const uploadBtn = document.getElementById('uploadDocBtn');
-        const progressContainer = document.getElementById('docUploadProgress');
-        const progressBar = document.getElementById('docUploadProgressBar');
-        
-        setButtonLoading('uploadDocBtn', true);
-        progressContainer.classList.remove('hidden');
-        
-        // Generate a unique filename
-        const timestamp = new Date().getTime();
-        const fileName = `qualification_doc_${timestamp}_${file.name}`;
-        const storagePath = `qualificationDocs/${userId}/${fileName}`;
-        
-        try {
-          // Upload file
-          const storageRef = ref(storage, storagePath);
-          const uploadTask = uploadBytesResumable(storageRef, file);
-          
-          uploadTask.on(
-            'state_changed',
-            (snapshot) => {
-              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              progressBar.style.width = progress + '%';
-            },
-            (error) => {
-              console.error('Upload error:', error);
-              showAlert('Error uploading document: ' + error.message, 'danger');
-              setButtonLoading('uploadDocBtn', false);
-            },
-            async () => {
-              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              
-              // Update user profile with document URL
-              const profileRef = doc(db, 'profiles', userId);
-              await updateDoc(profileRef, {
-                qualificationDocURL: downloadURL,
-                qualificationDocName: file.name,
-                qualificationDocType: file.type,
-                qualificationDocSize: file.size,
-                qualificationDocStoragePath: storagePath,
-                qualificationDocUploadedAt: serverTimestamp()
-              });
-              
-              showAlert('Qualification document uploaded successfully', 'success');
-              
-              // Refresh profile modal
-              profileModal.hide();
-              openProfileModal(userId);
-            }
-          );
-        } catch (error) {
-          console.error('Error uploading document:', error);
-          showAlert('Error uploading document: ' + error.message, 'danger');
-          setButtonLoading('uploadDocBtn', false);
-          progressContainer.classList.add('hidden');
-        }
-      }
-    }
-
     // Handle profile approval or rejection
-    async function handleProfileAction(userId, status) {
-      const notesEl = document.getElementById('adminNotes');
-      const notes = notesEl ? notesEl.value.trim() : '';
+    async function updateProfileStatus(status) {
+      const notesText = adminNotes.value.trim();
       
       try {
         setButtonLoading(status === 'approved' ? 'approveProfileBtn' : 'rejectProfileBtn', true);
         
-        // Update profile status in Firestore
-        await reviewProfile(userId, status, notes);
+        // Format notes, including status change note
+        let formattedNotes = null;
+        
+        if (notesText) {
+          formattedNotes = await appendNote(notesText, status);
+        } else {
+          formattedNotes = await appendNote(`Status changed to: ${status.toUpperCase()}`, status);
+        }
+        
+        if (!formattedNotes) {
+          throw new Error('Failed to format notes');
+        }
+        
+        // Update profile in Firestore
+        const profileRef = doc(db, 'profiles', currentUserId);
+        
+        // Initialize adminUse if it doesn't exist
+        if (!currentProfile.adminUse) {
+          currentProfile.adminUse = {
+            status: 'pending',
+            approvedBy: null,
+            reviewedAt: null,
+            notes: '[]'
+          };
+        }
+        
+        await updateDoc(profileRef, {
+          'adminUse.status': status,
+          'adminUse.approvedBy': currentAdminInfo.uid,
+          'adminUse.notes': formattedNotes,
+          'adminUse.reviewedAt': serverTimestamp()
+        });
+        
+        showAlert(`Profile ${status} successfully!`, 'success');
+        
+        // Clear notes field
+        adminNotes.value = '';
         
         // Hide modal
         profileModal.hide();
         
-        // Show success message
-        showAlert(`Profile ${status} successfully!`, 'success');
-        
-        // Reload profiles
+        // Reload all profiles
         await loadAllProfiles();
       } catch (error) {
         console.error(`Error ${status} profile:`, error);
         showAlert(`Error updating profile: ${error.message}`, 'danger');
+      } finally {
         setButtonLoading(status === 'approved' ? 'approveProfileBtn' : 'rejectProfileBtn', false);
       }
     }
@@ -1349,6 +1035,11 @@
     rejectedSearchInput.addEventListener('input', () => {
       filterProfiles('rejected', rejectedSearchInput.value);
     });
+    
+    // Add event listeners
+    saveNotesBtn.addEventListener('click', saveNotes);
+    approveProfileBtn.addEventListener('click', () => updateProfileStatus('approved'));
+    rejectProfileBtn.addEventListener('click', () => updateProfileStatus('rejected'));
 
     // Logout handler
     logoutLink.addEventListener('click', async (e) => {
@@ -1375,6 +1066,11 @@
           window.location.href = 'dashboard.html';
           return;
         }
+        
+        // Store admin info
+        currentAdminInfo.uid = user.uid;
+        const userData = userDoc.data();
+        currentAdminInfo.name = `${userData.firstName || ''} ${userData.surname || ''}`.trim() || 'Unknown Admin';
         
         // Load profile data
         await loadAllProfiles();
