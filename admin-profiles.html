@@ -992,30 +992,32 @@ footerHtml = `
            </div>
          `;
 } else {
-// For already reviewed profiles, show update button and edit button
+// For already reviewed profiles, show add notes button and update/reject buttons
+const existingNotes = profile.adminUse.notes || '';
 footerHtml = `
-           <div class="w-100">
-             <div class="mb-3">
-               <label class="form-label">Admin Notes</label>
-               <textarea class="form-control" id="adminNotes" rows="2">${profile.adminUse.notes || ''}</textarea>
-             </div>
-             <div class="d-flex justify-content-end gap-2">
-               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-               <button type="button" class="btn btn-warning" id="editProfileBtn" data-user-id="${userId}">
-                 <i class="bi bi-pencil-square"></i> Edit Profile
-               </button>
-               ${profile.adminUse.status === 'approved' ?
-                 `<button type="button" class="btn btn-danger" id="rejectProfileBtn" data-user-id="${userId}">
-                    <i class="bi bi-x-circle"></i> Change to Rejected
-                  </button>`
-               :
-                 `<button type="button" class="btn btn-success" id="approveProfileBtn" data-user-id="${userId}">
-                    <i class="bi bi-check-circle"></i> Change to Approved
-                  </button>`
-               }
-             </div>
-           </div>
-         `;
+  <div class="w-100">
+    <div class="mb-3">
+      <label class="form-label">Add Notes</label>
+      <textarea class="form-control" id="adminNotes" rows="2" placeholder="Add additional notes"></textarea>
+      <small class="form-text text-muted">Notes will be appended to existing notes</small>
+    </div>
+    <div class="d-flex justify-content-end gap-2">
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      <button type="button" class="btn btn-info" id="saveNotesBtn" data-user-id="${userId}">
+        <i class="bi bi-save"></i> Save Notes Only
+      </button>
+      ${profile.adminUse.status === 'approved' ?
+        `<button type="button" class="btn btn-danger" id="rejectProfileBtn" data-user-id="${userId}">
+           <i class="bi bi-x-circle"></i> Change to Rejected
+         </button>`
+      :
+        `<button type="button" class="btn btn-success" id="approveProfileBtn" data-user-id="${userId}">
+           <i class="bi bi-check-circle"></i> Change to Approved
+         </button>`
+      }
+    </div>
+  </div>
+`;
 }
 
 profileModalFooter.innerHTML = footerHtml;
