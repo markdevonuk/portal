@@ -120,29 +120,67 @@
       font-weight: 600;
       color: #495057;
     }
-    .previous-notes {
-      background-color: #f8f9fa;
-      border-left: 4px solid #00a896;
+    .profile-modal-content {
+      max-height: 75vh;
+      overflow-y: auto;
+    }
+    /* Document styles */
+    .profile-photo {
+      width: 150px;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 3px solid #00a896;
+      margin: 0 auto 15px;
+      display: block;
+    }
+    .profile-photo-placeholder {
+      width: 150px;
+      height: 150px;
+      border-radius: 10px;
+      border: 3px solid #e9ecef;
+      margin: 0 auto 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8f9fa;
+      color: #adb5bd;
+      font-size: 2.5rem;
+    }
+    .doc-preview {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 10px;
+    }
+    .doc-preview-icon {
+      font-size: 2rem;
+      color: #00a896;
+    }
+    .doc-preview-info {
+      flex-grow: 1;
+    }
+    .doc-preview-actions {
+      display: flex;
+      gap: 5px;
+    }
+    .profile-notes {
+      background: #f8f9fa;
+      border-radius: 5px;
       padding: 15px;
-      margin-bottom: 15px;
-      border-radius: 4px;
+      margin-top: 15px;
+      font-style: italic;
+      white-space: pre-line;
     }
-    .profile-container {
-      background: #fff;
-      border-radius: 15px;
-      box-shadow: 0 5px 20px rgba(0,0,0,.08);
-      padding: 30px;
-      margin-bottom: 30px;
+    .note-entry {
+      padding: 10px;
+      border-bottom: 1px dashed #dee2e6;
     }
-    .admin-actions {
-      position: sticky;
-      bottom: 0;
-      background: #fff;
-      border-top: 1px solid #e9ecef;
-      padding: 20px;
-      margin: 20px -30px -30px -30px;
-      border-radius: 0 0 15px 15px;
-      z-index: 10;
+    .note-entry:last-child {
+      border-bottom: none;
     }
   </style>
 </head>
@@ -182,20 +220,7 @@
     </div>
 
     <div id="alertContainer"></div>
-
-    <div id="profileContainer" class="profile-container hidden">
-      <button class="btn btn-outline-secondary mb-3" id="backToProfiles">
-        <i class="bi bi-arrow-left"></i> Back to Profiles
-      </button>
-      <div id="profileContent">
-        <!-- Profile content will be loaded here -->
-      </div>
-      <div class="admin-actions" id="adminActions">
-        <!-- Admin action buttons will be added here -->
-      </div>
-    </div>
-
-    <div id="profilesListView" class="admin-card">
+    <div class="admin-card">
       <ul class="nav nav-tabs" id="profileTabs" role="tablist">
         <li class="nav-item" role="presentation">
           <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending-profiles" type="button" role="tab" aria-controls="pending-profiles" aria-selected="true">
@@ -232,6 +257,7 @@
             </div>
           </div>
         </div>
+        
         <!-- Approved Profiles Tab -->
         <div class="tab-pane fade" id="approved-profiles" role="tabpanel" aria-labelledby="approved-tab">
           <div class="d-flex justify-content-between align-items-center mb-3">
@@ -271,6 +297,33 @@
     </div>
   </div>
 
+  <!-- Profile Review Modal -->
+  <div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="profileModalLabel">Profile Review</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body profile-modal-content" id="profileModalBody">
+          <!-- Profile content will be loaded here -->
+        </div>
+        <div class="modal-footer">
+          <div class="w-100">
+            <div class="mb-3">
+              <label class="form-label">Admin Notes</label>
+              <textarea class="form-control" id="adminNotes" rows="3" placeholder="Add notes about this profile"></textarea>
+              <small class="form-text text-muted">New notes will be appended to the top of existing notes with timestamp.</small>
+            </div>
+            <div id="profileModalFooter" class="d-flex justify-content-end gap-2">
+              <!-- Action buttons will be dynamically added here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
   <!-- Document Preview Modal -->
   <div class="modal fade" id="documentPreviewModal" tabindex="-1" aria-labelledby="documentPreviewModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -291,7 +344,6 @@
       </div>
     </div>
   </div>
-
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   
   <script type="module">
@@ -308,6 +360,7 @@
       updateDoc,
       serverTimestamp
     } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { getStorage, ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
     import { firebaseConfig } from './firebase-config.js';
     import { reviewProfile, getUserProfile } from './profile-service.js';
 
@@ -315,13 +368,14 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    const storage = getStorage(app);
+    
+    // Document preview modal
+    const documentPreviewModal = new bootstrap.Modal(document.getElementById('documentPreviewModal'));
+    const documentPreviewContent = document.getElementById('documentPreviewContent');
+    const downloadDocBtn = document.getElementById('downloadDocBtn');
 
     // DOM elements
-    const profileContainer = document.getElementById('profileContainer');
-    const profileContent = document.getElementById('profileContent');
-    const adminActions = document.getElementById('adminActions');
-    const profilesListView = document.getElementById('profilesListView');
-    const backToProfiles = document.getElementById('backToProfiles');
     const pendingProfilesContainer = document.getElementById('pendingProfilesContainer');
     const approvedProfilesContainer = document.getElementById('approvedProfilesContainer');
     const rejectedProfilesContainer = document.getElementById('rejectedProfilesContainer');
@@ -331,11 +385,18 @@
     const pendingSearchInput = document.getElementById('pendingSearchInput');
     const approvedSearchInput = document.getElementById('approvedSearchInput');
     const rejectedSearchInput = document.getElementById('rejectedSearchInput');
-    const documentPreviewModal = new bootstrap.Modal(document.getElementById('documentPreviewModal'));
-    const documentPreviewContent = document.getElementById('documentPreviewContent');
-    const downloadDocBtn = document.getElementById('downloadDocBtn');
+    const profileModalBody = document.getElementById('profileModalBody');
+    const profileModalFooter = document.getElementById('profileModalFooter');
+    const profileModal = new bootstrap.Modal(document.getElementById('profileModal'));
     const alertContainer = document.getElementById('alertContainer');
     const logoutLink = document.getElementById('logoutLink');
+    
+    // Store current admin info
+    let currentAdmin = null;
+    
+    // Store current profile being viewed
+    let currentProfileId = null;
+    let currentProfileStatus = null;
 
     // Store all profiles by status for filtering
     let allProfiles = {
@@ -343,10 +404,6 @@
       approved: [],
       rejected: []
     };
-    
-    // Store current profile info
-    let currentUserId = null;
-    let currentProfile = null;
 
     // Helper Functions
     function setButtonLoading(id, loading) {
@@ -384,16 +441,56 @@
     function formatDate(timestamp) {
       if (!timestamp) return 'N/A';
       
-      const date = timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
+      let date;
+      if (timestamp.seconds) {
+        // Firestore timestamp
+        date = new Date(timestamp.seconds * 1000);
+      } else if (timestamp.toDate) {
+        // Firestore timestamp object with toDate method
+        date = timestamp.toDate();
+      } else if (timestamp instanceof Date) {
+        // JavaScript Date object
+        date = timestamp;
+      } else {
+        // Try to parse as string or number
+        try {
+          date = new Date(timestamp);
+        } catch (e) {
+          return 'N/A';
+        }
+      }
+      
+      if (isNaN(date.getTime())) {
+        return 'N/A';
+      }
+      
       return date.toLocaleDateString('en-GB', {
         day: '2-digit',
         month: 'short',
         year: 'numeric'
+      }) + ' ' + date.toLocaleTimeString('en-GB', { 
+        hour: '2-digit', 
+        minute: '2-digit'
       });
+    }
+    
+    // Check if file is an image
+    function isImageFile(fileName) {
+      if (!fileName) return false;
+      const extension = fileName.split('.').pop().toLowerCase();
+      return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension);
+    }
+
+    // Check if file is a document
+    function isDocFile(fileName) {
+      if (!fileName) return false;
+      const extension = fileName.split('.').pop().toLowerCase();
+      return ['pdf', 'doc', 'docx'].includes(extension);
     }
 
     // Get file icon based on extension
     function getFileIcon(fileName) {
+      if (!fileName) return 'bi-file-earmark';
       const extension = fileName.split('.').pop().toLowerCase();
       if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension)) {
         return 'bi-file-earmark-image';
@@ -408,7 +505,7 @@
 
     // Format file size
     function formatFileSize(bytes) {
-      if (!bytes) return '';
+      if (!bytes) return 'Unknown size';
       if (bytes < 1024) {
         return bytes + ' B';
       } else if (bytes < 1024 * 1024) {
@@ -417,7 +514,52 @@
         return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
       }
     }
-         // Load all profiles
+    
+    // Preview document
+    function previewDocument(url, name, type) {
+      // Set document title
+      document.getElementById('documentPreviewModalLabel').textContent = name || 'Document';
+      
+      // Set download button
+      downloadDocBtn.href = url;
+      downloadDocBtn.setAttribute('download', name || 'document');
+      
+      // Clear previous content
+      documentPreviewContent.innerHTML = '';
+      
+      // Check if it's an image
+      if (type && type.startsWith('image/')) {
+        // Image preview
+        documentPreviewContent.innerHTML = `
+          <div class="text-center">
+            <img src="${url}" class="img-fluid" alt="${name}" style="max-height: 60vh;">
+          </div>
+        `;
+      } else if (type === 'application/pdf') {
+        // PDF preview
+        documentPreviewContent.innerHTML = `
+          <div class="ratio ratio-16x9" style="height: 60vh;">
+            <iframe src="${url}" allowfullscreen></iframe>
+          </div>
+        `;
+      } else {
+        // Other document types
+        documentPreviewContent.innerHTML = `
+          <div class="text-center">
+            <i class="${getFileIcon(name)}" style="font-size: 5rem; color: #00a896;"></i>
+            <p class="mt-3">Preview not available for this file type.</p>
+            <a href="${url}" target="_blank" class="btn btn-primary">
+              <i class="bi bi-download"></i> Download to view
+            </a>
+          </div>
+        `;
+      }
+      
+      // Show modal
+      documentPreviewModal.show();
+    }
+
+    // Load all profiles
     async function loadAllProfiles() {
       try {
         // Get all users
@@ -505,17 +647,26 @@
         const userName = `${profile.userInfo.firstName} ${profile.userInfo.surname}`;
         const qualification = profile.medicalQualifications?.qualification || 'Not specified';
         const submittedDate = formatDate(profile.submission?.submittedAt);
+        const hasPhoto = profile.profilePhotoURL ? true : false;
         
         html += `
           <div class="profile-card">
             <div class="profile-info">
-              <div class="profile-details">
-                <h5>${userName}</h5>
-                <p>
-                  <i class="bi bi-envelope"></i> ${profile.userInfo.email}<br>
-                  <i class="bi bi-mortarboard"></i> ${qualification}
-                </p>
-                <small class="text-muted">Submitted: ${submittedDate}</small>
+              <div class="d-flex align-items-center gap-3">
+                ${hasPhoto ? 
+                  `<img src="${profile.profilePhotoURL}" alt="${userName}" class="rounded-circle" width="50" height="50" style="object-fit: cover;">` : 
+                  `<div class="rounded-circle bg-light text-muted d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <i class="bi bi-person"></i>
+                   </div>`
+                }
+                <div class="profile-details">
+                  <h5>${userName}</h5>
+                  <p>
+                    <i class="bi bi-envelope"></i> ${profile.userInfo.email}<br>
+                    <i class="bi bi-mortarboard"></i> ${qualification}
+                  </p>
+                  <small class="text-muted">Submitted: ${submittedDate}</small>
+                </div>
               </div>
               <div class="d-flex align-items-center gap-3">
                 <span class="${status}-badge">
@@ -537,7 +688,7 @@
       container.querySelectorAll('.view-profile-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const userId = btn.getAttribute('data-user-id');
-          openProfileView(userId);
+          openProfileModal(userId);
         });
       });
     }
@@ -565,86 +716,47 @@
       displayProfiles(status, filtered);
     }
 
-    // Preview document
-    function previewDocument(url, name, type) {
-      // Set document title
-      document.getElementById('documentPreviewModalLabel').textContent = name;
-
-      // Set download button
-      downloadDocBtn.href = url;
-      downloadDocBtn.setAttribute('download', name);
-
-      // Clear previous content
-      documentPreviewContent.innerHTML = '';
-
-      // Check if it's an image
-      if (type.startsWith('image/')) {
-        // Image preview
-        documentPreviewContent.innerHTML = `
-          <div class="text-center">
-            <img src="${url}" class="img-fluid" alt="${name}" style="max-height: 60vh;">
-          </div>
-        `;
-      } else if (type === 'application/pdf') {
-        // PDF preview
-        documentPreviewContent.innerHTML = `
-          <div class="ratio ratio-16x9" style="height: 60vh;">
-            <iframe src="${url}" allowfullscreen></iframe>
-          </div>
-        `;
-      } else {
-        // Other document types
-        documentPreviewContent.innerHTML = `
-          <div class="text-center">
-            <i class="${getFileIcon(name)}" style="font-size: 5rem; color: #00a896;"></i>
-            <p class="mt-3">Preview not available for this file type.</p>
-            <a href="${url}" target="_blank" class="btn btn-primary">
-              <i class="bi bi-download"></i> Download to view
-            </a>
-          </div>
-        `;
-      }
-
-      // Show modal
-      documentPreviewModal.show();
-    }
-
-    // Open profile view
-    async function openProfileView(userId) {
+    // Open profile modal for review
+    async function openProfileModal(userId) {
       try {
-        console.log('Opening profile for user ID:', userId);
-        
-        currentUserId = userId;
+        currentProfileId = userId;
         
         // Get profile data
         const profile = await getUserProfile(userId);
-        console.log('Profile data received:', profile);
-        
         if (!profile) {
           showAlert('Profile not found or is empty', 'danger');
           return;
         }
         
-        currentProfile = profile;
+        // Set current status
+        currentProfileStatus = profile.adminUse?.status || 'pending';
         
         // Get user data
         const userDoc = await getDoc(doc(db, 'users', userId));
-        console.log('User document exists:', userDoc.exists());
-        
         const userData = userDoc.exists() ? userDoc.data() : {
           firstName: 'Unknown',
           surname: 'User',
           email: 'No email available'
         };
-
-        // Hide profiles list and show profile view
-        profilesListView.classList.add('hidden');
-        profileContainer.classList.remove('hidden');
-
-        // Format content
+        
+        // Format modal content
         let html = `
-          <h3>${userData.firstName || ''} ${userData.surname || ''}</h3>
-          <p class="text-muted">${userData.email || 'No email available'}</p>
+          <div class="row mb-4">
+            <div class="col-md-3 text-center">
+              ${profile.profilePhotoURL ? 
+                `<img src="${profile.profilePhotoURL}" alt="Profile Photo" class="profile-photo">` :
+                `<div class="profile-photo-placeholder"><i class="bi bi-person"></i></div>`
+              }
+            </div>
+            <div class="col-md-9">
+              <h4>${userData.firstName || ''} ${userData.surname || ''}</h4>
+              <p class="text-muted"><i class="bi bi-envelope"></i> ${userData.email || 'No email available'}</p>
+              <div class="${currentProfileStatus}-badge d-inline-block px-3 py-1 mt-2">
+                <i class="bi bi-${currentProfileStatus === 'pending' ? 'hourglass-split' : (currentProfileStatus === 'approved' ? 'check-circle' : 'x-circle')}"></i> 
+                ${currentProfileStatus.charAt(0).toUpperCase() + currentProfileStatus.slice(1)}
+              </div>
+            </div>
+          </div>
           
           <div class="profile-section">
             <h5><i class="bi bi-person-fill"></i> Personal Details</h5>
@@ -690,8 +802,8 @@
                 <span>${profile.medicalQualifications && profile.medicalQualifications.qualification ? profile.medicalQualifications.qualification : 'Not provided'}</span>
               </div>
         `;
-
-        // Conditionally show appropriate registration based on qualification - with safety checks
+        
+        // Conditionally show appropriate registration based on qualification
         const qualification = profile.medicalQualifications && profile.medicalQualifications.qualification ? profile.medicalQualifications.qualification : '';
         
         if (['Paramedic', 'Paramedic (Specialist)', 'Paramedic (HART)', 
@@ -721,7 +833,7 @@
           `;
         }
         
-        // Certificate Expiry if applicable - with safety checks
+        // Certificate Expiry if applicable
         if (['FREC 3 (or similar level 3 certification)', 'FREC 4', 'PHTLS', 'Nurse (with FREC/PHTLS or similar)']
              .includes(qualification)) {
           html += `
@@ -732,13 +844,52 @@
           `;
         }
         
-        // Complete the qualifications section
         html += `
               <div class="col-12">
                 <span class="profile-label">Details:</span>
                 <p class="mt-1">${profile.medicalQualifications && profile.medicalQualifications.details ? profile.medicalQualifications.details : 'Not provided'}</p>
               </div>
             </div>
+          </div>
+        `;
+        
+        // Add qualification document section
+        html += `
+          <div class="profile-section">
+            <h5><i class="bi bi-file-earmark-text"></i> Qualification Documents</h5>
+        `;
+        
+        if (profile.qualificationDocURL) {
+          const docName = profile.qualificationDocName || 'Document';
+          const docType = profile.qualificationDocType || 'application/octet-stream';
+          const docSize = profile.qualificationDocSize || 0;
+          
+          html += `
+            <div class="doc-preview">
+              <i class="bi ${getFileIcon(docName)} doc-preview-icon"></i>
+              <div class="doc-preview-info">
+                <div class="fw-bold">${docName}</div>
+                <small class="text-muted">${formatFileSize(docSize)}</small>
+              </div>
+              <div class="doc-preview-actions">
+                <button type="button" class="btn btn-sm btn-primary view-doc-btn" 
+                        data-url="${profile.qualificationDocURL}" 
+                        data-name="${docName}"
+                        data-type="${docType}">
+                  <i class="bi bi-eye"></i> View
+                </button>
+              </div>
+            </div>
+          `;
+        } else {
+          html += `
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle"></i> No qualification documents uploaded
+            </div>
+          `;
+        }
+        
+        html += `
           </div>
           
           <div class="profile-section">
@@ -755,8 +906,8 @@
             </div>
           </div>
         `;
-
-        // Add review section if already reviewed - with safety checks
+        
+        // Add review section if already reviewed
         if (profile.adminUse && profile.adminUse.status && profile.adminUse.status !== 'pending') {
           try {
             let reviewerName = 'Unknown';
@@ -787,218 +938,218 @@
                     <span class="profile-label">Reviewed By:</span>
                     <span>${reviewerName}</span>
                   </div>
-                  <div class="col-12">
-                    <span class="profile-label">Notes:</span>
-                    <div class="previous-notes mt-2">${profile.adminUse.notes || 'No notes provided'}</div>
-                  </div>
                 </div>
               </div>
             `;
           } catch (reviewerError) {
             console.error('Error getting reviewer information:', reviewerError);
-            // Add a simpler review section if retrieving reviewer info fails
-            html += `
-              <div class="profile-section">
-                <h5><i class="bi bi-shield-check"></i> Review Information</h5>
-                <div class="row">
-                  <div class="col-md-6 mb-2">
-                    <span class="profile-label">Status:</span>
-                    <span class="${profile.adminUse.status}-badge px-3 py-1">
-                      ${(profile.adminUse.status.charAt(0).toUpperCase() + profile.adminUse.status.slice(1)) || 'Unknown'}
-                    </span>
-                  </div>
-                  <div class="col-12">
-                    <span class="profile-label">Notes:</span>
-                    <div class="previous-notes mt-2">${profile.adminUse.notes || 'No notes provided'}</div>
-                  </div>
-                </div>
-              </div>
-            `;
           }
         }
-
-        // Set profile content
-        profileContent.innerHTML = html;
         
-        // Set admin actions based on current status
-        let actionsHtml = '';
-        
-        if (!profile.adminUse || !profile.adminUse.status || profile.adminUse.status === 'pending') {
-          // For pending profiles
-          actionsHtml = `
-            <div class="mb-3">
-              <label class="form-label">Admin Notes</label>
-              <textarea class="form-control" id="adminNotes" rows="3" placeholder="Add notes about this profile"></textarea>
-            </div>
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-              <button type="button" class="btn btn-warning" id="editProfileBtn" data-user-id="${userId}">
-                <i class="bi bi-pencil-square"></i> Edit Profile
-              </button>
-              <div>
-                <button type="button" class="btn btn-info" id="saveNotesBtn" data-user-id="${userId}">
-                  <i class="bi bi-save"></i> Save Notes Only
-                </button>
-                <button type="button" class="btn btn-danger" id="rejectProfileBtn" data-user-id="${userId}">
-                  <i class="bi bi-x-circle"></i> Reject
-                </button>
-                <button type="button" class="btn btn-success" id="approveProfileBtn" data-user-id="${userId}">
-                  <i class="bi bi-check-circle"></i> Approve
-                </button>
-              </div>
-            </div>
-          `;
-        } else {
-          // For already reviewed profiles
-          actionsHtml = `
-            <div class="mb-3">
-              <label class="form-label">Add Notes</label>
-              <textarea class="form-control" id="adminNotes" rows="3" placeholder="Add additional notes"></textarea>
-              <small class="form-text text-muted">Notes will be appended to existing notes</small>
-            </div>
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-              <button type="button" class="btn btn-warning" id="editProfileBtn" data-user-id="${userId}">
-                <i class="bi bi-pencil-square"></i> Edit Profile
-              </button>
-              <div>
-                <button type="button" class="btn btn-info" id="saveNotesBtn" data-user-id="${userId}">
-                  <i class="bi bi-save"></i> Save Notes Only
-                </button>
-                ${profile.adminUse.status === 'approved' ?
-                  `<button type="button" class="btn btn-danger" id="rejectProfileBtn" data-user-id="${userId}">
-                     <i class="bi bi-x-circle"></i> Change to Rejected
-                   </button>`
-                :
-                  `<button type="button" class="btn btn-success" id="approveProfileBtn" data-user-id="${userId}">
-                     <i class="bi bi-check-circle"></i> Change to Approved
-                   </button>`
-                }
-              </div>
+        // Add admin notes section if there are notes
+        if (profile.adminUse && profile.adminUse.notes) {
+          html += `
+            <div class="profile-section">
+              <h5><i class="bi bi-journal-text"></i> Admin Notes</h5>
+              <div class="profile-notes">${profile.adminUse.notes}</div>
             </div>
           `;
         }
         
-        adminActions.innerHTML = actionsHtml;
+        // Set modal content
+        profileModalBody.innerHTML = html;
         
-        // Add event listeners for buttons
-        const editProfileBtn = document.getElementById('editProfileBtn');
-        if (editProfileBtn) {
-          editProfileBtn.addEventListener('click', () => {
-            window.location.href = `admin-edit-profile.html?userId=${userId}`;
+        // Add event listeners for document viewers
+        document.querySelectorAll('.view-doc-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const url = e.currentTarget.getAttribute('data-url');
+            const name = e.currentTarget.getAttribute('data-name');
+            const type = e.currentTarget.getAttribute('data-type');
+            previewDocument(url, name, type);
           });
+        });
+        
+        // Load previous notes if they exist
+        const notesTextarea = document.getElementById('adminNotes');
+        if (notesTextarea) {
+          notesTextarea.value = '';
         }
         
-        const approveBtn = document.getElementById('approveProfileBtn');
-        if (approveBtn) {
-          approveBtn.addEventListener('click', async () => {
-            await handleProfileAction(userId, 'approved');
-          });
-        }
+        // Set modal footer with consistent buttons
+        updateModalFooter();
         
-        const rejectBtn = document.getElementById('rejectProfileBtn');
-        if (rejectBtn) {
-          rejectBtn.addEventListener('click', async () => {
-            await handleProfileAction(userId, 'rejected');
-          });
-        }
-        
-        const saveNotesBtn = document.getElementById('saveNotesBtn');
-        if (saveNotesBtn) {
-          saveNotesBtn.addEventListener('click', async () => {
-            await handleSaveNotes(userId, profile.adminUse?.notes || '');
-          });
-        }
-        
+        // Show modal
+        profileModal.show();
       } catch (error) {
-        console.error('Error opening profile:', error);
+        console.error('Error opening profile modal:', error);
         showAlert('Error loading profile details: ' + error.message, 'danger');
       }
     }
+    
+    // Update modal footer with consistent buttons
+    function updateModalFooter() {
+      // Create footer with all the required buttons
+      let footerHtml = `
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x"></i> Close
+        </button>
+        <button type="button" class="btn btn-info" id="saveNoteBtn" data-user-id="${currentProfileId}">
+          <i class="bi bi-journal-plus"></i> Save Note Only
+        </button>
+        <button type="button" class="btn btn-warning" id="editProfileBtn" data-user-id="${currentProfileId}">
+          <i class="bi bi-pencil-square"></i> Edit Profile
+        </button>
+      `;
+      
+      // Add Approve button unless already approved
+      if (currentProfileStatus !== 'approved') {
+        footerHtml += `
+          <button type="button" class="btn btn-success" id="approveProfileBtn" data-user-id="${currentProfileId}">
+            <i class="bi bi-check-circle"></i> Approve
+          </button>
+        `;
+      }
+      
+      // Add Reject button unless already rejected
+      if (currentProfileStatus !== 'rejected') {
+        footerHtml += `
+          <button type="button" class="btn btn-danger" id="rejectProfileBtn" data-user-id="${currentProfileId}">
+            <i class="bi bi-x-circle"></i> Reject
+          </button>
+        `;
+      }
+      
+      profileModalFooter.innerHTML = footerHtml;
+      
+      // Add event listeners
+      const saveNoteBtn = document.getElementById('saveNoteBtn');
+      if (saveNoteBtn) {
+        saveNoteBtn.addEventListener('click', handleSaveNote);
+      }
+      
+      const editProfileBtn = document.getElementById('editProfileBtn');
+      if (editProfileBtn) {
+        editProfileBtn.addEventListener('click', handleEditProfile);
+      }
+      
+      const approveBtn = document.getElementById('approveProfileBtn');
+      if (approveBtn) {
+        approveBtn.addEventListener('click', () => handleProfileAction('approved'));
+      }
+      
+      const rejectBtn = document.getElementById('rejectProfileBtn');
+      if (rejectBtn) {
+        rejectBtn.addEventListener('click', () => handleProfileAction('rejected'));
+      }
+    }
 
-    // Handle profile approval or rejection
-    async function handleProfileAction(userId, status) {
+    // Handle saving note only
+    async function handleSaveNote() {
       const notesEl = document.getElementById('adminNotes');
-      const notes = notesEl ? notesEl.value.trim() : '';
+      const newNote = notesEl ? notesEl.value.trim() : '';
+      
+      if (!newNote) {
+        showAlert('Please enter a note before saving', 'warning');
+        return;
+      }
+      
+      setButtonLoading('saveNoteBtn', true);
       
       try {
-        setButtonLoading(status === 'approved' ? 'approveProfileBtn' : 'rejectProfileBtn', true);
+        // Get current profile
+        const profileRef = doc(db, 'profiles', currentProfileId);
+        const profileSnap = await getDoc(profileRef);
         
-        // Update profile status in Firestore
-        await reviewProfile(userId, status, notes);
+        if (!profileSnap.exists()) {
+          throw new Error('Profile not found');
+        }
+        
+        const profileData = profileSnap.data();
+        const currentNotes = profileData.adminUse?.notes || '';
+        
+        // Format new note with timestamp and admin name
+        const timestamp = new Date().toLocaleString();
+        const adminName = `${currentAdmin.firstName} ${currentAdmin.surname}`;
+        const formattedNote = `[${timestamp}] ${adminName}: ${newNote}\n\n${currentNotes}`;
+        
+        // Make sure adminUse object exists
+        const adminUse = profileData.adminUse || {};
+        
+        // Update only the notes field
+        await updateDoc(profileRef, {
+          "adminUse": {
+            ...adminUse,
+            notes: formattedNote
+          }
+        });
+        
+        showAlert('Note saved successfully', 'success');
+        notesEl.value = '';
+        
+        // Reload the current profile to show updated notes
+        openProfileModal(currentProfileId);
+      } catch (error) {
+        console.error('Error saving note:', error);
+        showAlert('Error saving note: ' + error.message, 'danger');
+      } finally {
+        setButtonLoading('saveNoteBtn', false);
+      }
+    }
+
+    // Handle editing profile (redirect to edit page)
+    function handleEditProfile() {
+      // Implement the edit functionality - redirect to profile edit page
+      window.location.href = `edit-profile.html?id=${currentProfileId}`;
+    }
+
+    // Handle profile approval or rejection
+    async function handleProfileAction(status) {
+      const notesEl = document.getElementById('adminNotes');
+      const note = notesEl ? notesEl.value.trim() : '';
+      
+      try {
+        const buttonId = status === 'approved' ? 'approveProfileBtn' : 'rejectProfileBtn';
+        setButtonLoading(buttonId, true);
+        
+        // Get current profile to get existing notes
+        const profileRef = doc(db, 'profiles', currentProfileId);
+        const profileSnap = await getDoc(profileRef);
+        
+        if (profileSnap.exists()) {
+          const profileData = profileSnap.data();
+          const currentNotes = profileData.adminUse?.notes || '';
+          
+          // Append new note if provided
+          let updatedNotes = currentNotes;
+          if (note) {
+            const timestamp = new Date().toLocaleString();
+            const adminName = `${currentAdmin.firstName} ${currentAdmin.surname}`;
+            updatedNotes = `[${timestamp}] ${adminName}: ${note}\n\n${currentNotes}`;
+          }
+          
+          // Update profile with review information and notes
+          await reviewProfile(currentProfileId, status, updatedNotes);
+        } else {
+          // Just update status without notes if profile doesn't exist (unlikely)
+          await reviewProfile(currentProfileId, status, note);
+        }
+        
+        // Hide modal
+        profileModal.hide();
         
         // Show success message
         showAlert(`Profile ${status} successfully!`, 'success');
         
-        // Go back to profiles list and reload profiles
-        profileContainer.classList.add('hidden');
-        profilesListView.classList.remove('hidden');
+        // Reload profiles
         await loadAllProfiles();
       } catch (error) {
         console.error(`Error ${status} profile:`, error);
         showAlert(`Error updating profile: ${error.message}`, 'danger');
-        setButtonLoading(status === 'approved' ? 'approveProfileBtn' : 'rejectProfileBtn', false);
+      } finally {
+        const buttonId = status === 'approved' ? 'approveProfileBtn' : 'rejectProfileBtn';
+        setButtonLoading(buttonId, false);
       }
     }
-
-    // Handle saving notes only
-    async function handleSaveNotes(userId, existingNotes) {
-      const notesEl = document.getElementById('adminNotes');
-      const newNotes = notesEl ? notesEl.value.trim() : '';
-      
-      if (!newNotes) {
-        showAlert('Please enter notes before saving.', 'warning');
-        return;
-      }
-      
-      try {
-        setButtonLoading('saveNotesBtn', true);
-        
-        // Get current date/time in a readable format
-        const now = new Date();
-        const dateTimeStr = now.toLocaleDateString('en-GB', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        });
-        
-        // Format the notes to append
-        const formattedNotes = `${existingNotes ? existingNotes + '\n\n' : ''}[${dateTimeStr}] ${newNotes}`;
-        
-        // Get current user (admin) info
-        const adminUser = auth.currentUser;
-        const adminDoc = await getDoc(doc(db, 'users', adminUser.uid));
-        const adminName = adminDoc.exists() ? 
-          `${adminDoc.data().firstName || ''} ${adminDoc.data().surname || ''}`.trim() : 
-          adminUser.email;
-        
-        // Update just the notes field
-        const profileRef = doc(db, 'profiles', userId);
-        await updateDoc(profileRef, {
-          "adminUse.notes": formattedNotes,
-          "adminUse.lastUpdatedBy": adminUser.uid,
-          "adminUse.lastUpdatedAt": serverTimestamp()
-        });
-        
-        // Show success message
-        showAlert('Notes saved successfully!', 'success');
-        
-        // Refresh the profile view
-        openProfileView(userId);
-      } catch (error) {
-        console.error('Error saving notes:', error);
-        showAlert(`Error saving notes: ${error.message}`, 'danger');
-        setButtonLoading('saveNotesBtn', false);
-      }
-    }
-
-    // Back to profiles button handler
-    backToProfiles.addEventListener('click', () => {
-      profileContainer.classList.add('hidden');
-      profilesListView.classList.remove('hidden');
-      currentUserId = null;
-      currentProfile = null;
-    });
 
     // Setup search filters
     pendingSearchInput.addEventListener('input', () => {
@@ -1038,6 +1189,10 @@
           window.location.href = 'dashboard.html';
           return;
         }
+        
+        // Store current admin info
+        currentAdmin = userDoc.data();
+        currentAdmin.uid = user.uid;
         
         // Load profile data
         await loadAllProfiles();
