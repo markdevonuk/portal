@@ -106,15 +106,15 @@
       margin-top: 5px;
     }
     
-  /* Mobile-specific styles */
+ /* Mobile-specific styles */
 @media (max-width: 767px) {
   .input-group {
     width: 100%;
   }
   
   input#dob, 
-  .flatpickr-input {
-    display: block !important; /* Force display */
+  input#certExpiry {
+    display: block !important;
     width: 100%;
     visibility: visible !important;
   }
@@ -534,13 +534,16 @@ function setupMobileSupport() {
     certExpiryInput.style.width = "100%";
   }
 }
+  
+  // Check if this is a mobile device
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-// Check for mobile device first
-setupMobileSupport();
-
-// Only initialize flatpickr on non-mobile devices
-if (!/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-  // Initialize Flatpickr date pickers
+if (isMobile) {
+  // For mobile devices, use native date inputs
+  document.getElementById('dob').type = "date";
+  document.getElementById('certExpiry').type = "date";
+} else {
+  // For desktop, use flatpickr
   flatpickr("#dob", {
     dateFormat: "d/m/Y",
     maxDate: new Date() // Can't select future dates
@@ -1298,15 +1301,36 @@ function showInlineConfirmation(message, parentElement, isSubmission = false) {
       if (!dateStr) return null;
       
       // Parse UK format date (DD/MM/YYYY)
-      const parts = dateStr.split('/');
-      if (parts.length !== 3) return null;
-      
+ function parseDateString(dateStr) {
+  if (!dateStr) return null;
+  
+  let date;
+  
+  // Try to handle both formats (YYYY-MM-DD from mobile or DD/MM/YYYY from desktop)
+  if (dateStr.includes('-')) {
+    // Mobile format (YYYY-MM-DD)
+    date = new Date(dateStr);
+  } else if (dateStr.includes('/')) {
+    // Desktop format (DD/MM/YYYY)
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
       const day = parseInt(parts[0], 10);
       const month = parseInt(parts[1], 10) - 1; // Months are 0-based
       const year = parseInt(parts[2], 10);
-      
-      return new Date(year, month, day);
+      date = new Date(year, month, day);
     }
+  } else {
+    // Try direct parsing as fallback
+    date = new Date(dateStr);
+  }
+  
+  // Check if the date is valid
+  if (date instanceof Date && !isNaN(date)) {
+    return date;
+  }
+  
+  return null;
+}
 
 saveAsDraftBtn.addEventListener('click', async () => {
   setButtonLoading('saveAsDraftBtn', true);
