@@ -62,8 +62,10 @@
     }
     .profile-info {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-direction: column;
+    }
+    .profile-details {
+      margin-bottom: 10px;
     }
     .profile-details h5 {
       margin: 0 0 5px 0;
@@ -71,6 +73,12 @@
     .profile-details p {
       margin: 0;
       color: #6c757d;
+    }
+    .profile-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
     }
     .pending-badge {
       background: #fff3cd;
@@ -124,64 +132,6 @@
       max-height: 75vh;
       overflow-y: auto;
     }
-    /* Document styles */
-    .profile-photo {
-      width: 150px;
-      height: 150px;
-      object-fit: cover;
-      border-radius: 10px;
-      border: 3px solid #00a896;
-      margin: 0 auto 15px;
-      display: block;
-    }
-    .profile-photo-placeholder {
-      width: 150px;
-      height: 150px;
-      border-radius: 10px;
-      border: 3px solid #e9ecef;
-      margin: 0 auto 15px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #f8f9fa;
-      color: #adb5bd;
-      font-size: 2.5rem;
-    }
-    .doc-preview {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-top: 10px;
-      background: #f8f9fa;
-      padding: 10px;
-      border-radius: 10px;
-    }
-    .doc-preview-icon {
-      font-size: 2rem;
-      color: #00a896;
-    }
-    .doc-preview-info {
-      flex-grow: 1;
-    }
-    .doc-preview-actions {
-      display: flex;
-      gap: 5px;
-    }
-    .profile-notes {
-      background: #f8f9fa;
-      border-radius: 5px;
-      padding: 15px;
-      margin-top: 15px;
-      font-style: italic;
-      white-space: pre-line;
-    }
-    .note-entry {
-      padding: 10px;
-      border-bottom: 1px dashed #dee2e6;
-    }
-    .note-entry:last-child {
-      border-bottom: none;
-    }
   </style>
 </head>
 <body>
@@ -220,6 +170,7 @@
     </div>
 
     <div id="alertContainer"></div>
+
     <div class="admin-card">
       <ul class="nav nav-tabs" id="profileTabs" role="tablist">
         <li class="nav-item" role="presentation">
@@ -309,21 +260,29 @@
           <!-- Profile content will be loaded here -->
         </div>
         <div class="modal-footer">
-          <div class="w-100">
-            <div class="mb-3">
-              <label class="form-label">Admin Notes</label>
-              <textarea class="form-control" id="adminNotes" rows="3" placeholder="Add notes about this profile"></textarea>
-              <small class="form-text text-muted">New notes will be appended to the top of existing notes with timestamp.</small>
-            </div>
-            <div id="profileModalFooter" class="d-flex justify-content-end gap-2">
-              <!-- Action buttons will be dynamically added here -->
-            </div>
+          <div class="mb-3 w-100">
+            <label class="form-label">Admin Notes</label>
+            <textarea class="form-control" id="adminNotes" rows="3" placeholder="Add notes about this profile"></textarea>
+            <small class="form-text text-muted">New notes will be appended to the top of existing notes with timestamp.</small>
+          </div>
+          <div id="profileModalFooter" class="d-flex justify-content-end gap-2 w-100">
+            <!-- Action buttons will be added dynamically -->
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-info" id="saveNoteBtn">
+              <i class="bi bi-journal-plus"></i> Save Note Only
+            </button>
+            <button type="button" class="btn btn-success" id="approveProfileBtn">
+              <i class="bi bi-check-circle"></i> Approve
+            </button>
+            <button type="button" class="btn btn-danger" id="rejectProfileBtn">
+              <i class="bi bi-x-circle"></i> Reject
+            </button>
           </div>
         </div>
       </div>
     </div>
   </div>
-  
+
   <!-- Document Preview Modal -->
   <div class="modal fade" id="documentPreviewModal" tabindex="-1" aria-labelledby="documentPreviewModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -356,9 +315,7 @@
       where, 
       getDocs, 
       doc, 
-      getDoc,
-      updateDoc,
-      serverTimestamp
+      getDoc 
     } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
     import { getStorage, ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
     import { firebaseConfig } from './firebase-config.js';
@@ -390,13 +347,9 @@
     const profileModal = new bootstrap.Modal(document.getElementById('profileModal'));
     const alertContainer = document.getElementById('alertContainer');
     const logoutLink = document.getElementById('logoutLink');
-    
-    // Store current admin info
-    let currentAdmin = null;
-    
-    // Store current profile being viewed
-    let currentProfileId = null;
-    let currentProfileStatus = null;
+    const saveNoteBtn = document.getElementById('saveNoteBtn');
+    const approveProfileBtn = document.getElementById('approveProfileBtn');
+    const rejectProfileBtn = document.getElementById('rejectProfileBtn');
 
     // Store all profiles by status for filtering
     let allProfiles = {
@@ -404,6 +357,13 @@
       approved: [],
       rejected: []
     };
+    
+    // Store current admin info
+    let currentAdmin = null;
+    
+    // Store current profile being viewed
+    let currentProfileId = null;
+    let currentProfileStatus = null;
 
     // Helper Functions
     function setButtonLoading(id, loading) {
@@ -668,7 +628,7 @@
                   <small class="text-muted">Submitted: ${submittedDate}</small>
                 </div>
               </div>
-              <div class="d-flex align-items-center gap-3">
+              <div class="profile-actions">
                 <span class="${status}-badge">
                   <i class="bi bi-${status === 'pending' ? 'hourglass-split' : (status === 'approved' ? 'check-circle' : 'x-circle')}"></i> 
                   ${status.charAt(0).toUpperCase() + status.slice(1)}
@@ -744,8 +704,10 @@
           <div class="row mb-4">
             <div class="col-md-3 text-center">
               ${profile.profilePhotoURL ? 
-                `<img src="${profile.profilePhotoURL}" alt="Profile Photo" class="profile-photo">` :
-                `<div class="profile-photo-placeholder"><i class="bi bi-person"></i></div>`
+                `<img src="${profile.profilePhotoURL}" alt="Profile Photo" class="img-fluid rounded-circle" style="width: 120px; height: 120px; object-fit: cover;">` :
+                `<div class="rounded-circle bg-light text-muted d-flex align-items-center justify-content-center mx-auto" style="width: 120px; height: 120px;">
+                  <i class="bi bi-person" style="font-size: 3rem;"></i>
+                </div>`
               }
             </div>
             <div class="col-md-9">
@@ -844,6 +806,7 @@
           `;
         }
         
+        // Complete the qualifications section
         html += `
               <div class="col-12">
                 <span class="profile-label">Details:</span>
@@ -865,20 +828,18 @@
           const docSize = profile.qualificationDocSize || 0;
           
           html += `
-            <div class="doc-preview">
-              <i class="bi ${getFileIcon(docName)} doc-preview-icon"></i>
-              <div class="doc-preview-info">
+            <div class="d-flex align-items-center gap-3 p-3 bg-light rounded">
+              <i class="bi ${getFileIcon(docName)} fs-3 text-primary"></i>
+              <div class="flex-grow-1">
                 <div class="fw-bold">${docName}</div>
                 <small class="text-muted">${formatFileSize(docSize)}</small>
               </div>
-              <div class="doc-preview-actions">
-                <button type="button" class="btn btn-sm btn-primary view-doc-btn" 
-                        data-url="${profile.qualificationDocURL}" 
-                        data-name="${docName}"
-                        data-type="${docType}">
-                  <i class="bi bi-eye"></i> View
-                </button>
-              </div>
+              <button type="button" class="btn btn-sm btn-primary view-doc-btn" 
+                      data-url="${profile.qualificationDocURL}" 
+                      data-name="${docName}"
+                      data-type="${docType}">
+                <i class="bi bi-eye"></i> View
+              </button>
             </div>
           `;
         } else {
@@ -951,7 +912,7 @@
           html += `
             <div class="profile-section">
               <h5><i class="bi bi-journal-text"></i> Admin Notes</h5>
-              <div class="profile-notes">${profile.adminUse.notes}</div>
+              <div class="p-3 bg-light rounded" style="white-space: pre-line;">${profile.adminUse.notes}</div>
             </div>
           `;
         }
@@ -969,14 +930,8 @@
           });
         });
         
-        // Load previous notes if they exist
-        const notesTextarea = document.getElementById('adminNotes');
-        if (notesTextarea) {
-          notesTextarea.value = '';
-        }
-        
-        // Set modal footer with consistent buttons
-        updateModalFooter();
+        // Update buttons based on current status
+        updateButtons();
         
         // Show modal
         profileModal.show();
@@ -986,63 +941,27 @@
       }
     }
     
-    // Update modal footer with consistent buttons
-    function updateModalFooter() {
-      // Create footer with all the required buttons
-      let footerHtml = `
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-          <i class="bi bi-x"></i> Close
-        </button>
-        <button type="button" class="btn btn-info" id="saveNoteBtn" data-user-id="${currentProfileId}">
-          <i class="bi bi-journal-plus"></i> Save Note Only
-        </button>
-        <button type="button" class="btn btn-warning" id="editProfileBtn" data-user-id="${currentProfileId}">
-          <i class="bi bi-pencil-square"></i> Edit Profile
-        </button>
-      `;
-      
-      // Add Approve button unless already approved
-      if (currentProfileStatus !== 'approved') {
-        footerHtml += `
-          <button type="button" class="btn btn-success" id="approveProfileBtn" data-user-id="${currentProfileId}">
-            <i class="bi bi-check-circle"></i> Approve
-          </button>
-        `;
+    // Update buttons based on current profile status
+    function updateButtons() {
+      // Show/hide buttons based on status
+      if (currentProfileStatus === 'approved') {
+        approveProfileBtn.classList.add('hidden');
+      } else {
+        approveProfileBtn.classList.remove('hidden');
       }
       
-      // Add Reject button unless already rejected
-      if (currentProfileStatus !== 'rejected') {
-        footerHtml += `
-          <button type="button" class="btn btn-danger" id="rejectProfileBtn" data-user-id="${currentProfileId}">
-            <i class="bi bi-x-circle"></i> Reject
-          </button>
-        `;
+      if (currentProfileStatus === 'rejected') {
+        rejectProfileBtn.classList.add('hidden');
+      } else {
+        rejectProfileBtn.classList.remove('hidden');
       }
       
-      profileModalFooter.innerHTML = footerHtml;
-      
-      // Add event listeners
-      const saveNoteBtn = document.getElementById('saveNoteBtn');
-      if (saveNoteBtn) {
-        saveNoteBtn.addEventListener('click', handleSaveNote);
-      }
-      
-      const editProfileBtn = document.getElementById('editProfileBtn');
-      if (editProfileBtn) {
-        editProfileBtn.addEventListener('click', handleEditProfile);
-      }
-      
-      const approveBtn = document.getElementById('approveProfileBtn');
-      if (approveBtn) {
-        approveBtn.addEventListener('click', () => handleProfileAction('approved'));
-      }
-      
-      const rejectBtn = document.getElementById('rejectProfileBtn');
-      if (rejectBtn) {
-        rejectBtn.addEventListener('click', () => handleProfileAction('rejected'));
-      }
+      // Add user ID to buttons
+      approveProfileBtn.setAttribute('data-user-id', currentProfileId);
+      rejectProfileBtn.setAttribute('data-user-id', currentProfileId);
+      saveNoteBtn.setAttribute('data-user-id', currentProfileId);
     }
-
+    
     // Handle saving note only
     async function handleSaveNote() {
       const notesEl = document.getElementById('adminNotes');
@@ -1094,12 +1013,6 @@
       } finally {
         setButtonLoading('saveNoteBtn', false);
       }
-    }
-
-    // Handle editing profile (redirect to edit page)
-    function handleEditProfile() {
-      // Implement the edit functionality - redirect to profile edit page
-      window.location.href = `admin-edit-profile.html?id=${currentProfileId}`;
     }
 
     // Handle profile approval or rejection
@@ -1162,6 +1075,17 @@
     
     rejectedSearchInput.addEventListener('input', () => {
       filterProfiles('rejected', rejectedSearchInput.value);
+    });
+    
+    // Setup action button handlers
+    saveNoteBtn.addEventListener('click', handleSaveNote);
+    
+    approveProfileBtn.addEventListener('click', () => {
+      handleProfileAction('approved');
+    });
+    
+    rejectProfileBtn.addEventListener('click', () => {
+      handleProfileAction('rejected');
     });
 
     // Logout handler
