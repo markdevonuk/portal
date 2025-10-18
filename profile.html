@@ -1167,18 +1167,31 @@ function showInlineConfirmation(message, parentElement, isSubmission = false) {
           if (profile.personalDetails) {
             logDebug('Loading personal details:', profile.personalDetails);
             
-            if (profile.personalDetails.DOB) {
-              // Convert timestamp to date string
-              let date;
-              if (profile.personalDetails.DOB.seconds) {
-                date = new Date(profile.personalDetails.DOB.seconds * 1000);
-              } else {
-                date = new Date(profile.personalDetails.DOB);
-              }
-              
-              document.getElementById('dob').value = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
-              logDebug('Loaded DOB:', document.getElementById('dob').value);
-            }
+       if (profile.personalDetails.DOB) {
+  // Convert timestamp to date string
+  let date;
+  if (profile.personalDetails.DOB.seconds) {
+    date = new Date(profile.personalDetails.DOB.seconds * 1000);
+  } else {
+    date = new Date(profile.personalDetails.DOB);
+  }
+  
+  const dobInput = document.getElementById('dob');
+  
+  // Format differently based on input type (date for mobile, text for desktop)
+  if (dobInput.type === 'date') {
+    // YYYY-MM-DD format for native date inputs on mobile
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    dobInput.value = `${year}-${month}-${day}`;
+  } else {
+    // DD/MM/YYYY format for flatpickr on desktop
+    dobInput.value = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+  }
+  
+  logDebug('Loaded DOB:', dobInput.value, 'Input type:', dobInput.type);
+}
             
             document.getElementById('emergencyContact').value = profile.personalDetails.emergencyContact || '';
           }
@@ -1201,17 +1214,29 @@ function showInlineConfirmation(message, parentElement, isSubmission = false) {
             document.getElementById('nmc').value = profile.medicalQualifications.nmc || '';
             document.getElementById('details').value = profile.medicalQualifications.details || '';
             
-            if (profile.medicalQualifications.certExpiry) {
-              // Convert timestamp to date string
-              let date;
-              if (profile.medicalQualifications.certExpiry.seconds) {
-                date = new Date(profile.medicalQualifications.certExpiry.seconds * 1000);
-              } else {
-                date = new Date(profile.medicalQualifications.certExpiry);
-              }
-              
-              document.getElementById('certExpiry').value = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
-            }
+         if (profile.medicalQualifications.certExpiry) {
+  // Convert timestamp to date string
+  let date;
+  if (profile.medicalQualifications.certExpiry.seconds) {
+    date = new Date(profile.medicalQualifications.certExpiry.seconds * 1000);
+  } else {
+    date = new Date(profile.medicalQualifications.certExpiry);
+  }
+  
+  const certExpiryInput = document.getElementById('certExpiry');
+  
+  // Format differently based on input type (date for mobile, text for desktop)
+  if (certExpiryInput.type === 'date') {
+    // YYYY-MM-DD format for native date inputs on mobile
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    certExpiryInput.value = `${year}-${month}-${day}`;
+  } else {
+    // DD/MM/YYYY format for flatpickr on desktop
+    certExpiryInput.value = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+  }
+}
             
             // Trigger change event to show/hide appropriate fields
             qualification.dispatchEvent(new Event('change'));
