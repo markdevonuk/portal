@@ -559,24 +559,48 @@
       }
     }
 
-    function showAlert(message, type) {
-      const html = `
-        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-          ${message}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>`;
-      alertContainer.innerHTML = html;
-      
-      if (type === 'success') {
-        setTimeout(() => {
-          const alert = document.querySelector('.alert');
-          if (alert) {
-            alert.classList.remove('show');
-            setTimeout(() => alert.remove(), 150);
-          }
-        }, 5000);
+function showAlert(message, type) {
+  const html = `
+    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>`;
+  alertContainer.innerHTML = html;
+  
+  // Scroll to the top of the page to show the alert
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  
+  if (type === 'success') {
+    setTimeout(() => {
+      const alert = document.querySelector('.alert');
+      if (alert) {
+        alert.classList.remove('show');
+        setTimeout(() => alert.remove(), 150);
       }
-    }
+    }, 5000);
+  }
+}
+
+function showInlineConfirmation(message, parentElement) {
+  // Create the inline confirmation element
+  const inlineConfirmation = document.createElement('div');
+  inlineConfirmation.className = 'alert alert-success mt-3 w-100';
+  inlineConfirmation.innerHTML = `
+    <i class="bi bi-check-circle-fill me-2"></i>
+    ${message}
+  `;
+  
+  // Add it to the DOM after the parent element
+  parentElement.parentNode.insertBefore(inlineConfirmation, parentElement.nextSibling);
+  
+  // Scroll to make the inline confirmation visible
+  inlineConfirmation.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  
+  // Remove after some time
+  setTimeout(() => {
+    inlineConfirmation.remove();
+  }, 7000);
+}
 
     // File upload functions
     
@@ -1226,53 +1250,58 @@
       return new Date(year, month, day);
     }
 
-    // Save as Draft
-    saveAsDraftBtn.addEventListener('click', async () => {
-      setButtonLoading('saveAsDraftBtn', true);
-      
-      try {
-        logDebug('Saving profile as draft');
-        
-        // Get values from form
-        const personalDetails = {
-          DOB: parseDateString(document.getElementById('dob').value),
-          emergencyContact: document.getElementById('emergencyContact').value
-        };
-        
-        const driving = {
-          c1Classification: document.getElementById('c1Classification').checked,
-          dlNumber: document.getElementById('dlNumber').value,
-          niNumber: document.getElementById('niNumber').value,
-          points: document.getElementById('points').value
-        };
-        
-        const medicalQualifications = {
-          qualification: document.getElementById('qualification').value,
-          hcpc: document.getElementById('hcpc').value,
-          gmc: document.getElementById('gmc').value,
-          nmc: document.getElementById('nmc').value,
-          details: document.getElementById('details').value,
-          certExpiry: parseDateString(document.getElementById('certExpiry').value)
-        };
-        
-        logDebug('Saving personal details:', personalDetails);
-        logDebug('Saving driving details:', driving);
-        logDebug('Saving medical qualifications:', medicalQualifications);
-        
-        // Update each section separately
-        await updatePersonalDetails(personalDetails);
-        await updateDriving(driving);
-        await updateMedicalQualifications(medicalQualifications);
-        
-        showAlert('Profile saved as draft successfully!', 'success');
-      } catch (error) {
-        logDebug('Error saving draft:', error);
-        console.error('Error saving draft:', error);
-        showAlert('Error saving profile: ' + error.message, 'danger');
-      } finally {
-        setButtonLoading('saveAsDraftBtn', false);
-      }
-    });
+saveAsDraftBtn.addEventListener('click', async () => {
+  setButtonLoading('saveAsDraftBtn', true);
+  
+  try {
+    logDebug('Saving profile as draft');
+    
+    // Get values from form
+    const personalDetails = {
+      DOB: parseDateString(document.getElementById('dob').value),
+      emergencyContact: document.getElementById('emergencyContact').value
+    };
+    
+    const driving = {
+      c1Classification: document.getElementById('c1Classification').checked,
+      dlNumber: document.getElementById('dlNumber').value,
+      niNumber: document.getElementById('niNumber').value,
+      points: document.getElementById('points').value
+    };
+    
+    const medicalQualifications = {
+      qualification: document.getElementById('qualification').value,
+      hcpc: document.getElementById('hcpc').value,
+      gmc: document.getElementById('gmc').value,
+      nmc: document.getElementById('nmc').value,
+      details: document.getElementById('details').value,
+      certExpiry: parseDateString(document.getElementById('certExpiry').value)
+    };
+    
+    logDebug('Saving personal details:', personalDetails);
+    logDebug('Saving driving details:', driving);
+    logDebug('Saving medical qualifications:', medicalQualifications);
+    
+    // Update each section separately
+    await updatePersonalDetails(personalDetails);
+    await updateDriving(driving);
+    await updateMedicalQualifications(medicalQualifications);
+    
+    // Show alerts
+    showAlert('Profile saved as draft successfully!', 'success');
+    
+    // Show inline confirmation
+    const formActions = document.querySelector('.d-flex.justify-content-between.mb-5');
+    showInlineConfirmation('Your profile has been saved as a draft!', formActions);
+    
+  } catch (error) {
+    logDebug('Error saving draft:', error);
+    console.error('Error saving draft:', error);
+    showAlert('Error saving profile: ' + error.message, 'danger');
+  } finally {
+    setButtonLoading('saveAsDraftBtn', false);
+  }
+});
 
     // Submit Profile
     profileForm.addEventListener('submit', async (e) => {
@@ -1331,22 +1360,39 @@
         
         logDebug('Updated profile data:', updatedProfile);
         
+        
         if (isResubmission) {
-          logDebug('Resubmitting profile');
-          // Use the function for updating and resubmitting
-          await updateAndResubmitProfile(updatedProfile);
-          showAlert('Profile updated and resubmitted for review!', 'success');
-        } else {
-          logDebug('Submitting new profile');
-          // First save all data as draft
-          await updatePersonalDetails(updatedProfile.personalDetails);
-          await updateDriving(updatedProfile.driving);
-          await updateMedicalQualifications(updatedProfile.medicalQualifications);
-          
-          // Then submit the profile
-          await submitProfile(true);
-          showAlert('Profile submitted successfully! It will be reviewed by an administrator.', 'success');
-        }
+  logDebug('Resubmitting profile');
+  // Use the function for updating and resubmitting
+  await updateAndResubmitProfile(updatedProfile);
+  
+  // Show alert message
+  showAlert('Profile updated and resubmitted for review!', 'success');
+  
+  // Show inline confirmation
+  const formActions = document.querySelector('.d-flex.justify-content-between.mb-5');
+  showInlineConfirmation('Your profile has been updated and resubmitted!', formActions);
+  
+} else {
+  logDebug('Submitting new profile');
+  // First save all data as draft
+  await updatePersonalDetails(updatedProfile.personalDetails);
+  await updateDriving(updatedProfile.driving);
+  await updateMedicalQualifications(updatedProfile.medicalQualifications);
+  
+  // Then submit the profile
+  await submitProfile(true);
+  
+  // Show alert message
+  showAlert('Profile submitted successfully! It will be reviewed by an administrator.', 'success');
+  
+  // Show inline confirmation
+  const formActions = document.querySelector('.d-flex.justify-content-between.mb-5');
+  showInlineConfirmation('Your profile has been submitted successfully!', formActions);
+}
+        
+        
+        
         
         // Update the status display with refreshed profile data
         logDebug('Getting refreshed profile data');
