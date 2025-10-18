@@ -106,7 +106,7 @@
       margin-top: 5px;
     }
     
-    /* Mobile-specific styles */
+  /* Mobile-specific styles */
 @media (max-width: 767px) {
   .input-group {
     width: 100%;
@@ -514,21 +514,43 @@
         showAlert('Error deleting profile: ' + error.message, 'danger');
       }
     });
+    
+    // Mobile device detection function
+function setupMobileSupport() {
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  
+  if (isMobile) {
+    // Replace flatpickr with native date inputs on mobile
+    const dobInput = document.getElementById('dob');
+    const certExpiryInput = document.getElementById('certExpiry');
+    
+    // Convert to native date inputs
+    dobInput.type = "date";
+    dobInput.style.display = "block";
+    dobInput.style.width = "100%";
+    
+    certExpiryInput.type = "date";
+    certExpiryInput.style.display = "block";
+    certExpiryInput.style.width = "100%";
+  }
+}
 
-   // Initialize Flatpickr date pickers with better mobile settings
-flatpickr("#dob", {
-  dateFormat: "d/m/Y",
-  maxDate: new Date(), // Can't select future dates
-  disableMobile: false, // Don't use native picker on mobile
-  allowInput: true     // Allow manual input as fallback
-});
+// Check for mobile device first
+setupMobileSupport();
 
-flatpickr("#certExpiry", {
-  dateFormat: "d/m/Y",
-  minDate: new Date(), // Can't select past dates
-  disableMobile: false, // Don't use native picker on mobile
-  allowInput: true     // Allow manual input as fallback
-});
+// Only initialize flatpickr on non-mobile devices
+if (!/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+  // Initialize Flatpickr date pickers
+  flatpickr("#dob", {
+    dateFormat: "d/m/Y",
+    maxDate: new Date() // Can't select future dates
+  });
+  
+  flatpickr("#certExpiry", {
+    dateFormat: "d/m/Y",
+    minDate: new Date() // Can't select past dates
+  });
+}
 
     // DOM elements
     const profileForm = document.getElementById('profileForm');
