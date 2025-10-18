@@ -415,6 +415,15 @@
       dateFormat: "d/m/Y",
       minDate: new Date() // Can't select past dates
     });
+    
+    // Check if this is a mobile device
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+if (isMobile) {
+  // For mobile devices, use native date inputs
+  document.getElementById('dob').type = "date";
+  document.getElementById('certExpiry').type = "date";
+}
 
     // Helper Functions
     function setButtonLoading(id, loading) {
@@ -669,12 +678,32 @@
       if (!currentProfile) return;
       
       // Personal Details
-      if (currentProfile.personalDetails) {
-        if (currentProfile.personalDetails.DOB) {
-          document.getElementById('dob').value = formatDate(currentProfile.personalDetails.DOB);
-        }
-        document.getElementById('emergencyContact').value = currentProfile.personalDetails.emergencyContact || '';
-      }
+if (currentProfile.personalDetails) {
+  if (currentProfile.personalDetails.DOB) {
+    const dobInput = document.getElementById('dob');
+    
+    // Convert timestamp to date string
+    let date;
+    if (currentProfile.personalDetails.DOB.seconds) {
+      date = new Date(currentProfile.personalDetails.DOB.seconds * 1000);
+    } else {
+      date = new Date(currentProfile.personalDetails.DOB);
+    }
+    
+    // Format differently based on input type (date for mobile, text for desktop)
+    if (dobInput.type === 'date') {
+      // YYYY-MM-DD format for native date inputs on mobile
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      dobInput.value = `${year}-${month}-${day}`;
+    } else {
+      // DD/MM/YYYY format for flatpickr on desktop
+      dobInput.value = formatDate(currentProfile.personalDetails.DOB);
+    }
+  }
+  document.getElementById('emergencyContact').value = currentProfile.personalDetails.emergencyContact || '';
+}
       
       // Driving Details
       if (currentProfile.driving) {
@@ -692,9 +721,29 @@
         document.getElementById('nmc').value = currentProfile.medicalQualifications.nmc || '';
         document.getElementById('details').value = currentProfile.medicalQualifications.details || '';
         
-        if (currentProfile.medicalQualifications.certExpiry) {
-          document.getElementById('certExpiry').value = formatDate(currentProfile.medicalQualifications.certExpiry);
-        }
+       if (currentProfile.medicalQualifications.certExpiry) {
+  const certExpiryInput = document.getElementById('certExpiry');
+  
+  // Convert timestamp to date string
+  let date;
+  if (currentProfile.medicalQualifications.certExpiry.seconds) {
+    date = new Date(currentProfile.medicalQualifications.certExpiry.seconds * 1000);
+  } else {
+    date = new Date(currentProfile.medicalQualifications.certExpiry);
+  }
+  
+  // Format differently based on input type (date for mobile, text for desktop)
+  if (certExpiryInput.type === 'date') {
+    // YYYY-MM-DD format for native date inputs on mobile
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    certExpiryInput.value = `${year}-${month}-${day}`;
+  } else {
+    // DD/MM/YYYY format for flatpickr on desktop
+    certExpiryInput.value = formatDate(currentProfile.medicalQualifications.certExpiry);
+  }
+}
         
         // Trigger change event to show/hide appropriate fields
         qualification.dispatchEvent(new Event('change'));
