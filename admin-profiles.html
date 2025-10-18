@@ -64,9 +64,6 @@
       display: flex;
       flex-direction: column;
     }
-    .profile-details {
-      margin-bottom: 10px;
-    }
     .profile-details h5 {
       margin: 0 0 5px 0;
     }
@@ -78,7 +75,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-top: 10px;
+      margin-top: 15px;
     }
     .pending-badge {
       background: #fff3cd;
@@ -128,9 +125,74 @@
       font-weight: 600;
       color: #495057;
     }
-    .profile-modal-content {
-      max-height: 75vh;
-      overflow-y: auto;
+    /* Document styles */
+    .profile-photo {
+      width: 150px;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 3px solid #00a896;
+      margin: 0 auto 15px;
+      display: block;
+    }
+    .profile-photo-placeholder {
+      width: 150px;
+      height: 150px;
+      border-radius: 10px;
+      border: 3px solid #e9ecef;
+      margin: 0 auto 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8f9fa;
+      color: #adb5bd;
+      font-size: 2.5rem;
+    }
+    .doc-preview {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 10px;
+    }
+    .doc-preview-icon {
+      font-size: 2rem;
+      color: #00a896;
+    }
+    .doc-preview-info {
+      flex-grow: 1;
+    }
+    .doc-preview-actions {
+      display: flex;
+      gap: 5px;
+    }
+    .profile-notes {
+      background: #f8f9fa;
+      border-radius: 5px;
+      padding: 15px;
+      margin-top: 15px;
+      font-style: italic;
+      white-space: pre-line;
+    }
+    .note-entry {
+      padding: 10px;
+      border-bottom: 1px dashed #dee2e6;
+    }
+    .note-entry:last-child {
+      border-bottom: none;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .user-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      overflow: hidden;
     }
   </style>
 </head>
@@ -256,33 +318,25 @@
           <h5 class="modal-title" id="profileModalLabel">Profile Review</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body profile-modal-content" id="profileModalBody">
+        <div class="modal-body" id="profileModalBody">
           <!-- Profile content will be loaded here -->
         </div>
         <div class="modal-footer">
-          <div class="mb-3 w-100">
-            <label class="form-label">Admin Notes</label>
-            <textarea class="form-control" id="adminNotes" rows="3" placeholder="Add notes about this profile"></textarea>
-            <small class="form-text text-muted">New notes will be appended to the top of existing notes with timestamp.</small>
-          </div>
-          <div id="profileModalFooter" class="d-flex justify-content-end gap-2 w-100">
-            <!-- Action buttons will be added dynamically -->
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-info" id="saveNoteBtn">
-              <i class="bi bi-journal-plus"></i> Save Note Only
-            </button>
-            <button type="button" class="btn btn-success" id="approveProfileBtn">
-              <i class="bi bi-check-circle"></i> Approve
-            </button>
-            <button type="button" class="btn btn-danger" id="rejectProfileBtn">
-              <i class="bi bi-x-circle"></i> Reject
-            </button>
+          <div class="w-100">
+            <div class="mb-3">
+              <label class="form-label">Admin Notes</label>
+              <textarea class="form-control" id="adminNotes" rows="3" placeholder="Add notes about this profile"></textarea>
+              <small class="form-text text-muted">New notes will be appended to the top of existing notes with timestamp.</small>
+            </div>
+            <div id="profileModalFooter" class="d-flex justify-content-end gap-2">
+              <!-- Action buttons will be dynamically added here -->
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-
+  
   <!-- Document Preview Modal -->
   <div class="modal fade" id="documentPreviewModal" tabindex="-1" aria-labelledby="documentPreviewModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -315,7 +369,9 @@
       where, 
       getDocs, 
       doc, 
-      getDoc 
+      getDoc,
+      updateDoc,
+      serverTimestamp
     } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
     import { getStorage, ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
     import { firebaseConfig } from './firebase-config.js';
@@ -347,16 +403,6 @@
     const profileModal = new bootstrap.Modal(document.getElementById('profileModal'));
     const alertContainer = document.getElementById('alertContainer');
     const logoutLink = document.getElementById('logoutLink');
-    const saveNoteBtn = document.getElementById('saveNoteBtn');
-    const approveProfileBtn = document.getElementById('approveProfileBtn');
-    const rejectProfileBtn = document.getElementById('rejectProfileBtn');
-
-    // Store all profiles by status for filtering
-    let allProfiles = {
-      pending: [],
-      approved: [],
-      rejected: []
-    };
     
     // Store current admin info
     let currentAdmin = null;
@@ -364,6 +410,13 @@
     // Store current profile being viewed
     let currentProfileId = null;
     let currentProfileStatus = null;
+
+    // Store all profiles by status for filtering
+    let allProfiles = {
+      pending: [],
+      approved: [],
+      rejected: []
+    };
 
     // Helper Functions
     function setButtonLoading(id, loading) {
@@ -612,12 +665,10 @@
         html += `
           <div class="profile-card">
             <div class="profile-info">
-              <div class="d-flex align-items-center gap-3">
+              <div class="user-info">
                 ${hasPhoto ? 
-                  `<img src="${profile.profilePhotoURL}" alt="${userName}" class="rounded-circle" width="50" height="50" style="object-fit: cover;">` : 
-                  `<div class="rounded-circle bg-light text-muted d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                    <i class="bi bi-person"></i>
-                   </div>`
+                  `<div class="user-avatar"><img src="${profile.profilePhotoURL}" alt="${userName}" width="50" height="50" style="object-fit: cover;"></div>` : 
+                  `<div class="user-avatar bg-light text-muted d-flex align-items-center justify-content-center"><i class="bi bi-person"></i></div>`
                 }
                 <div class="profile-details">
                   <h5>${userName}</h5>
@@ -676,292 +727,335 @@
       displayProfiles(status, filtered);
     }
 
-    // Open profile modal for review
-    async function openProfileModal(userId) {
+// Open profile modal for review
+async function openProfileModal(userId) {
+  try {
+    currentProfileId = userId;
+    
+    // Get profile data
+    const profile = await getUserProfile(userId);
+    if (!profile) {
+      showAlert('Profile not found or is empty', 'danger');
+      return;
+    }
+    
+    // Set current status
+    currentProfileStatus = profile.adminUse?.status || 'pending';
+    
+    // Get user data
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    const userData = userDoc.exists() ? userDoc.data() : {
+      firstName: 'Unknown',
+      surname: 'User',
+      email: 'No email available'
+    };
+    
+    // Format modal content
+    let html = `
+      <div class="row mb-4">
+        <div class="col-md-3 text-center">
+          ${profile.profilePhotoURL ? 
+            `<img src="${profile.profilePhotoURL}" alt="Profile Photo" class="profile-photo">` :
+            `<div class="profile-photo-placeholder"><i class="bi bi-person"></i></div>`
+          }
+        </div>
+        <div class="col-md-9">
+          <h4>${userData.firstName || ''} ${userData.surname || ''}</h4>
+          <p class="text-muted"><i class="bi bi-envelope"></i> ${userData.email || 'No email available'}</p>
+          <div class="${currentProfileStatus}-badge d-inline-block px-3 py-1 mt-2">
+            <i class="bi bi-${currentProfileStatus === 'pending' ? 'hourglass-split' : (currentProfileStatus === 'approved' ? 'check-circle' : 'x-circle')}"></i> 
+            ${currentProfileStatus.charAt(0).toUpperCase() + currentProfileStatus.slice(1)}
+          </div>
+        </div>
+      </div>
+      
+      <div class="profile-section">
+        <h5><i class="bi bi-person-fill"></i> Personal Details</h5>
+        <div class="row">
+          <div class="col-md-6 mb-2">
+            <span class="profile-label">Date of Birth:</span>
+            <span>${profile.personalDetails && profile.personalDetails.DOB ? formatDate(profile.personalDetails.DOB) : 'Not provided'}</span>
+          </div>
+          <div class="col-md-6 mb-2">
+            <span class="profile-label">Emergency Contact:</span>
+            <span>${profile.personalDetails && profile.personalDetails.emergencyContact ? profile.personalDetails.emergencyContact : 'Not provided'}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="profile-section">
+        <h5><i class="bi bi-car-front-fill"></i> Driving Details</h5>
+        <div class="row">
+          <div class="col-md-6 mb-2">
+            <span class="profile-label">C1 Classification:</span>
+            <span>${profile.driving && profile.driving.c1Classification ? 'Yes' : 'No'}</span>
+          </div>
+          <div class="col-md-6 mb-2">
+            <span class="profile-label">Driving License Number:</span>
+            <span>${profile.driving && profile.driving.dlNumber ? profile.driving.dlNumber : 'Not provided'}</span>
+          </div>
+          <div class="col-md-6 mb-2">
+            <span class="profile-label">National Insurance Number:</span>
+            <span>${profile.driving && profile.driving.niNumber ? profile.driving.niNumber : 'Not provided'}</span>
+          </div>
+          <div class="col-md-6 mb-2">
+            <span class="profile-label">License Points:</span>
+            <span>${profile.driving && profile.driving.points ? profile.driving.points : 'Not provided'}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="profile-section">
+        <h5><i class="bi bi-award"></i> Qualifications</h5>
+        <div class="row">
+          <div class="col-md-6 mb-2">
+            <span class="profile-label">Main Qualification:</span>
+            <span>${profile.medicalQualifications && profile.medicalQualifications.qualification ? profile.medicalQualifications.qualification : 'Not provided'}</span>
+          </div>
+    `;
+    
+    // Conditionally show appropriate registration based on qualification
+    const qualification = profile.medicalQualifications && profile.medicalQualifications.qualification ? profile.medicalQualifications.qualification : '';
+    
+    if (['Paramedic', 'Paramedic (Specialist)', 'Paramedic (HART)', 
+         'Paramedic (Critical care)', 'Paramedic (in Primary Care)', 
+         'Paramedic (CTM/OO)'].includes(qualification)) {
+      html += `
+          <div class="col-md-6 mb-2">
+            <span class="profile-label">HCPC Registration:</span>
+            <span>${profile.medicalQualifications && profile.medicalQualifications.hcpc ? profile.medicalQualifications.hcpc : 'Not provided'}</span>
+          </div>
+      `;
+    } else if (['Doctor', 'Doctor (Critical Care/BASICS/Merit)', 
+                'Doctor (with FREC/PHTLS or similar)'].includes(qualification)) {
+      html += `
+          <div class="col-md-6 mb-2">
+            <span class="profile-label">GMC Registration:</span>
+            <span>${profile.medicalQualifications && profile.medicalQualifications.gmc ? profile.medicalQualifications.gmc : 'Not provided'}</span>
+          </div>
+      `;
+    } else if (['Nurse', 'Nurse (Ambulance Nurse)', 
+                'Nurse (with FREC/PHTLS or similar)'].includes(qualification)) {
+      html += `
+          <div class="col-md-6 mb-2">
+            <span class="profile-label">NMC Registration:</span>
+            <span>${profile.medicalQualifications && profile.medicalQualifications.nmc ? profile.medicalQualifications.nmc : 'Not provided'}</span>
+          </div>
+      `;
+    }
+    
+    // Certificate Expiry if applicable
+    if (['FREC 3 (or similar level 3 certification)', 'FREC 4', 'PHTLS', 'Nurse (with FREC/PHTLS or similar)']
+         .includes(qualification)) {
+      html += `
+          <div class="col-md-6 mb-2">
+            <span class="profile-label">Certificate Expiry:</span>
+            <span>${profile.medicalQualifications && profile.medicalQualifications.certExpiry ? formatDate(profile.medicalQualifications.certExpiry) : 'Not provided'}</span>
+          </div>
+      `;
+    }
+    
+    // Complete the qualifications section
+    html += `
+          <div class="col-12">
+            <span class="profile-label">Details:</span>
+            <p class="mt-1">${profile.medicalQualifications && profile.medicalQualifications.details ? profile.medicalQualifications.details : 'Not provided'}</p>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Add qualification document section
+    html += `
+      <div class="profile-section">
+        <h5><i class="bi bi-file-earmark-text"></i> Qualification Documents</h5>
+    `;
+    
+    if (profile.qualificationDocURL) {
+      const docName = profile.qualificationDocName || 'Document';
+      const docType = profile.qualificationDocType || 'application/octet-stream';
+      const docSize = profile.qualificationDocSize || 0;
+      
+      html += `
+        <div class="doc-preview">
+          <i class="bi ${getFileIcon(docName)} doc-preview-icon"></i>
+          <div class="doc-preview-info">
+            <div class="fw-bold">${docName}</div>
+            <small class="text-muted">${formatFileSize(docSize)}</small>
+          </div>
+          <div class="doc-preview-actions">
+            <button type="button" class="btn btn-sm btn-primary view-doc-btn" 
+                    data-url="${profile.qualificationDocURL}" 
+                    data-name="${docName}"
+                    data-type="${docType}">
+              <i class="bi bi-eye"></i> View
+            </button>
+          </div>
+        </div>
+      `;
+    } else {
+      html += `
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle"></i> No qualification documents uploaded
+        </div>
+      `;
+    }
+    
+    html += `
+      </div>
+      
+      <div class="profile-section">
+        <h5><i class="bi bi-clock-history"></i> Submission Details</h5>
+        <div class="row">
+          <div class="col-md-6 mb-2">
+            <span class="profile-label">Agreed to Terms:</span>
+            <span>${profile.submission && profile.submission.agreedToTerms ? 'Yes' : 'No'}</span>
+          </div>
+          <div class="col-md-6 mb-2">
+            <span class="profile-label">Submitted Date:</span>
+            <span>${profile.submission && profile.submission.submittedAt ? formatDate(profile.submission.submittedAt) : 'Not provided'}</span>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Add review section if already reviewed
+    if (profile.adminUse && profile.adminUse.status && profile.adminUse.status !== 'pending') {
       try {
-        currentProfileId = userId;
+        let reviewerName = 'Unknown';
         
-        // Get profile data
-        const profile = await getUserProfile(userId);
-        if (!profile) {
-          showAlert('Profile not found or is empty', 'danger');
-          return;
-        }
-        
-        // Set current status
-        currentProfileStatus = profile.adminUse?.status || 'pending';
-        
-        // Get user data
-        const userDoc = await getDoc(doc(db, 'users', userId));
-        const userData = userDoc.exists() ? userDoc.data() : {
-          firstName: 'Unknown',
-          surname: 'User',
-          email: 'No email available'
-        };
-        
-        // Format modal content
-        let html = `
-          <div class="row mb-4">
-            <div class="col-md-3 text-center">
-              ${profile.profilePhotoURL ? 
-                `<img src="${profile.profilePhotoURL}" alt="Profile Photo" class="img-fluid rounded-circle" style="width: 120px; height: 120px; object-fit: cover;">` :
-                `<div class="rounded-circle bg-light text-muted d-flex align-items-center justify-content-center mx-auto" style="width: 120px; height: 120px;">
-                  <i class="bi bi-person" style="font-size: 3rem;"></i>
-                </div>`
-              }
-            </div>
-            <div class="col-md-9">
-              <h4>${userData.firstName || ''} ${userData.surname || ''}</h4>
-              <p class="text-muted"><i class="bi bi-envelope"></i> ${userData.email || 'No email available'}</p>
-              <div class="${currentProfileStatus}-badge d-inline-block px-3 py-1 mt-2">
-                <i class="bi bi-${currentProfileStatus === 'pending' ? 'hourglass-split' : (currentProfileStatus === 'approved' ? 'check-circle' : 'x-circle')}"></i> 
-                ${currentProfileStatus.charAt(0).toUpperCase() + currentProfileStatus.slice(1)}
-              </div>
-            </div>
-          </div>
-          
-          <div class="profile-section">
-            <h5><i class="bi bi-person-fill"></i> Personal Details</h5>
-            <div class="row">
-              <div class="col-md-6 mb-2">
-                <span class="profile-label">Date of Birth:</span>
-                <span>${profile.personalDetails && profile.personalDetails.DOB ? formatDate(profile.personalDetails.DOB) : 'Not provided'}</span>
-              </div>
-              <div class="col-md-6 mb-2">
-                <span class="profile-label">Emergency Contact:</span>
-                <span>${profile.personalDetails && profile.personalDetails.emergencyContact ? profile.personalDetails.emergencyContact : 'Not provided'}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div class="profile-section">
-            <h5><i class="bi bi-car-front-fill"></i> Driving Details</h5>
-            <div class="row">
-              <div class="col-md-6 mb-2">
-                <span class="profile-label">C1 Classification:</span>
-                <span>${profile.driving && profile.driving.c1Classification ? 'Yes' : 'No'}</span>
-              </div>
-              <div class="col-md-6 mb-2">
-                <span class="profile-label">Driving License Number:</span>
-                <span>${profile.driving && profile.driving.dlNumber ? profile.driving.dlNumber : 'Not provided'}</span>
-              </div>
-              <div class="col-md-6 mb-2">
-                <span class="profile-label">National Insurance Number:</span>
-                <span>${profile.driving && profile.driving.niNumber ? profile.driving.niNumber : 'Not provided'}</span>
-              </div>
-              <div class="col-md-6 mb-2">
-                <span class="profile-label">License Points:</span>
-                <span>${profile.driving && profile.driving.points ? profile.driving.points : 'Not provided'}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div class="profile-section">
-            <h5><i class="bi bi-award"></i> Qualifications</h5>
-            <div class="row">
-              <div class="col-md-6 mb-2">
-                <span class="profile-label">Main Qualification:</span>
-                <span>${profile.medicalQualifications && profile.medicalQualifications.qualification ? profile.medicalQualifications.qualification : 'Not provided'}</span>
-              </div>
-        `;
-        
-        // Conditionally show appropriate registration based on qualification
-        const qualification = profile.medicalQualifications && profile.medicalQualifications.qualification ? profile.medicalQualifications.qualification : '';
-        
-        if (['Paramedic', 'Paramedic (Specialist)', 'Paramedic (HART)', 
-             'Paramedic (Critical care)', 'Paramedic (in Primary Care)', 
-             'Paramedic (CTM/OO)'].includes(qualification)) {
-          html += `
-              <div class="col-md-6 mb-2">
-                <span class="profile-label">HCPC Registration:</span>
-                <span>${profile.medicalQualifications && profile.medicalQualifications.hcpc ? profile.medicalQualifications.hcpc : 'Not provided'}</span>
-              </div>
-          `;
-        } else if (['Doctor', 'Doctor (Critical Care/BASICS/Merit)', 
-                    'Doctor (with FREC/PHTLS or similar)'].includes(qualification)) {
-          html += `
-              <div class="col-md-6 mb-2">
-                <span class="profile-label">GMC Registration:</span>
-                <span>${profile.medicalQualifications && profile.medicalQualifications.gmc ? profile.medicalQualifications.gmc : 'Not provided'}</span>
-              </div>
-          `;
-        } else if (['Nurse', 'Nurse (Ambulance Nurse)', 
-                    'Nurse (with FREC/PHTLS or similar)'].includes(qualification)) {
-          html += `
-              <div class="col-md-6 mb-2">
-                <span class="profile-label">NMC Registration:</span>
-                <span>${profile.medicalQualifications && profile.medicalQualifications.nmc ? profile.medicalQualifications.nmc : 'Not provided'}</span>
-              </div>
-          `;
-        }
-        
-        // Certificate Expiry if applicable
-        if (['FREC 3 (or similar level 3 certification)', 'FREC 4', 'PHTLS', 'Nurse (with FREC/PHTLS or similar)']
-             .includes(qualification)) {
-          html += `
-              <div class="col-md-6 mb-2">
-                <span class="profile-label">Certificate Expiry:</span>
-                <span>${profile.medicalQualifications && profile.medicalQualifications.certExpiry ? formatDate(profile.medicalQualifications.certExpiry) : 'Not provided'}</span>
-              </div>
-          `;
-        }
-        
-        // Complete the qualifications section
-        html += `
-              <div class="col-12">
-                <span class="profile-label">Details:</span>
-                <p class="mt-1">${profile.medicalQualifications && profile.medicalQualifications.details ? profile.medicalQualifications.details : 'Not provided'}</p>
-              </div>
-            </div>
-          </div>
-        `;
-        
-        // Add qualification document section
-        html += `
-          <div class="profile-section">
-            <h5><i class="bi bi-file-earmark-text"></i> Qualification Documents</h5>
-        `;
-        
-        if (profile.qualificationDocURL) {
-          const docName = profile.qualificationDocName || 'Document';
-          const docType = profile.qualificationDocType || 'application/octet-stream';
-          const docSize = profile.qualificationDocSize || 0;
-          
-          html += `
-            <div class="d-flex align-items-center gap-3 p-3 bg-light rounded">
-              <i class="bi ${getFileIcon(docName)} fs-3 text-primary"></i>
-              <div class="flex-grow-1">
-                <div class="fw-bold">${docName}</div>
-                <small class="text-muted">${formatFileSize(docSize)}</small>
-              </div>
-              <button type="button" class="btn btn-sm btn-primary view-doc-btn" 
-                      data-url="${profile.qualificationDocURL}" 
-                      data-name="${docName}"
-                      data-type="${docType}">
-                <i class="bi bi-eye"></i> View
-              </button>
-            </div>
-          `;
-        } else {
-          html += `
-            <div class="alert alert-info">
-              <i class="bi bi-info-circle"></i> No qualification documents uploaded
-            </div>
-          `;
-        }
-        
-        html += `
-          </div>
-          
-          <div class="profile-section">
-            <h5><i class="bi bi-clock-history"></i> Submission Details</h5>
-            <div class="row">
-              <div class="col-md-6 mb-2">
-                <span class="profile-label">Agreed to Terms:</span>
-                <span>${profile.submission && profile.submission.agreedToTerms ? 'Yes' : 'No'}</span>
-              </div>
-              <div class="col-md-6 mb-2">
-                <span class="profile-label">Submitted Date:</span>
-                <span>${profile.submission && profile.submission.submittedAt ? formatDate(profile.submission.submittedAt) : 'Not provided'}</span>
-              </div>
-            </div>
-          </div>
-        `;
-        
-        // Add review section if already reviewed
-        if (profile.adminUse && profile.adminUse.status && profile.adminUse.status !== 'pending') {
-          try {
-            let reviewerName = 'Unknown';
-            
-            if (profile.adminUse.approvedBy) {
-              const reviewerDoc = await getDoc(doc(db, 'users', profile.adminUse.approvedBy));
-              if (reviewerDoc.exists()) {
-                const reviewerData = reviewerDoc.data();
-                reviewerName = `${reviewerData.firstName || ''} ${reviewerData.surname || ''}`.trim() || 'Unknown';
-              }
-            }
-            
-            html += `
-              <div class="profile-section">
-                <h5><i class="bi bi-shield-check"></i> Review Information</h5>
-                <div class="row">
-                  <div class="col-md-6 mb-2">
-                    <span class="profile-label">Status:</span>
-                    <span class="${profile.adminUse.status}-badge px-3 py-1">
-                      ${(profile.adminUse.status.charAt(0).toUpperCase() + profile.adminUse.status.slice(1)) || 'Unknown'}
-                    </span>
-                  </div>
-                  <div class="col-md-6 mb-2">
-                    <span class="profile-label">Reviewed On:</span>
-                    <span>${profile.adminUse.reviewedAt ? formatDate(profile.adminUse.reviewedAt) : 'Not recorded'}</span>
-                  </div>
-                  <div class="col-md-6 mb-2">
-                    <span class="profile-label">Reviewed By:</span>
-                    <span>${reviewerName}</span>
-                  </div>
-                </div>
-              </div>
-            `;
-          } catch (reviewerError) {
-            console.error('Error getting reviewer information:', reviewerError);
+        if (profile.adminUse.approvedBy) {
+          const reviewerDoc = await getDoc(doc(db, 'users', profile.adminUse.approvedBy));
+          if (reviewerDoc.exists()) {
+            const reviewerData = reviewerDoc.data();
+            reviewerName = `${reviewerData.firstName || ''} ${reviewerData.surname || ''}`.trim() || 'Unknown';
           }
         }
         
-        // Add admin notes section if there are notes
-        if (profile.adminUse && profile.adminUse.notes) {
-          html += `
-            <div class="profile-section">
-              <h5><i class="bi bi-journal-text"></i> Admin Notes</h5>
-              <div class="p-3 bg-light rounded" style="white-space: pre-line;">${profile.adminUse.notes}</div>
+        html += `
+          <div class="profile-section">
+            <h5><i class="bi bi-shield-check"></i> Review Information</h5>
+            <div class="row">
+              <div class="col-md-6 mb-2">
+                <span class="profile-label">Status:</span>
+                <span class="${profile.adminUse.status}-badge px-3 py-1">
+                  ${(profile.adminUse.status.charAt(0).toUpperCase() + profile.adminUse.status.slice(1)) || 'Unknown'}
+                </span>
+              </div>
+              <div class="col-md-6 mb-2">
+                <span class="profile-label">Reviewed On:</span>
+                <span>${profile.adminUse.reviewedAt ? formatDate(profile.adminUse.reviewedAt) : 'Not recorded'}</span>
+              </div>
+              <div class="col-md-6 mb-2">
+                <span class="profile-label">Reviewed By:</span>
+                <span>${reviewerName}</span>
+              </div>
             </div>
-          `;
-        }
-        
-        // Set modal content
-        profileModalBody.innerHTML = html;
-        
-        // Add event listeners for document viewers
-        document.querySelectorAll('.view-doc-btn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const url = e.currentTarget.getAttribute('data-url');
-            const name = e.currentTarget.getAttribute('data-name');
-            const type = e.currentTarget.getAttribute('data-type');
-            previewDocument(url, name, type);
-          });
-        });
-        
-        // Update buttons based on current status
-        updateButtons();
-        
-        // Show modal
-        profileModal.show();
-      } catch (error) {
-        console.error('Error opening profile modal:', error);
-        showAlert('Error loading profile details: ' + error.message, 'danger');
+          </div>
+        `;
+      } catch (reviewerError) {
+        console.error('Error getting reviewer information:', reviewerError);
       }
     }
     
-    // Update buttons based on current profile status
-    function updateButtons() {
-      // Show/hide buttons based on status
-      if (currentProfileStatus === 'approved') {
-        approveProfileBtn.classList.add('hidden');
-      } else {
-        approveProfileBtn.classList.remove('hidden');
-      }
-      
-      if (currentProfileStatus === 'rejected') {
-        rejectProfileBtn.classList.add('hidden');
-      } else {
-        rejectProfileBtn.classList.remove('hidden');
-      }
-      
-      // Add user ID to buttons
-      approveProfileBtn.setAttribute('data-user-id', currentProfileId);
-      rejectProfileBtn.setAttribute('data-user-id', currentProfileId);
-      saveNoteBtn.setAttribute('data-user-id', currentProfileId);
+    // Add admin notes section if there are notes
+    if (profile.adminUse && profile.adminUse.notes) {
+      html += `
+        <div class="profile-section">
+          <h5><i class="bi bi-journal-text"></i> Admin Notes</h5>
+          <div class="profile-notes">${profile.adminUse.notes}</div>
+        </div>
+      `;
     }
     
+    // Set modal content
+    profileModalBody.innerHTML = html;
+    
+    // Add event listeners for document viewers
+    document.querySelectorAll('.view-doc-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const url = e.currentTarget.getAttribute('data-url');
+        const name = e.currentTarget.getAttribute('data-name');
+        const type = e.currentTarget.getAttribute('data-type');
+        previewDocument(url, name, type);
+      });
+    });
+    
+    // Load previous notes if they exist
+    const notesTextarea = document.getElementById('adminNotes');
+    if (notesTextarea) {
+      notesTextarea.value = '';
+    }
+    
+    // Set modal footer with consistent buttons
+    updateModalFooter();
+    
+    // Show modal
+    profileModal.show();
+  } catch (error) {
+    console.error('Error opening profile modal:', error);
+    showAlert('Error loading profile details: ' + error.message, 'danger');
+  }
+}
+
+    
+    // Update modal footer with consistent buttons
+    function updateModalFooter() {
+      // Create footer with all the required buttons
+      let footerHtml = `
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x"></i> Close
+        </button>
+        <button type="button" class="btn btn-info" id="saveNoteBtn" data-user-id="${currentProfileId}">
+          <i class="bi bi-journal-plus"></i> Save Note Only
+        </button>
+        <button type="button" class="btn btn-warning" id="editProfileBtn" data-user-id="${currentProfileId}">
+          <i class="bi bi-pencil-square"></i> Edit Profile
+        </button>
+      `;
+      
+      // Add Approve button unless already approved
+      if (currentProfileStatus !== 'approved') {
+        footerHtml += `
+          <button type="button" class="btn btn-success" id="approveProfileBtn" data-user-id="${currentProfileId}">
+            <i class="bi bi-check-circle"></i> Approve
+          </button>
+        `;
+      }
+      
+      // Add Reject button unless already rejected
+      if (currentProfileStatus !== 'rejected') {
+        footerHtml += `
+          <button type="button" class="btn btn-danger" id="rejectProfileBtn" data-user-id="${currentProfileId}">
+            <i class="bi bi-x-circle"></i> Reject
+          </button>
+        `;
+      }
+      
+      profileModalFooter.innerHTML = footerHtml;
+      
+      // Add event listeners
+      const saveNoteBtn = document.getElementById('saveNoteBtn');
+      if (saveNoteBtn) {
+        saveNoteBtn.addEventListener('click', handleSaveNote);
+      }
+      
+      const editProfileBtn = document.getElementById('editProfileBtn');
+      if (editProfileBtn) {
+        editProfileBtn.addEventListener('click', handleEditProfile);
+      }
+      
+      const approveBtn = document.getElementById('approveProfileBtn');
+      if (approveBtn) {
+        approveBtn.addEventListener('click', () => handleProfileAction('approved'));
+      }
+      
+      const rejectBtn = document.getElementById('rejectProfileBtn');
+      if (rejectBtn) {
+        rejectBtn.addEventListener('click', () => handleProfileAction('rejected'));
+      }
+    }
+
     // Handle saving note only
     async function handleSaveNote() {
       const notesEl = document.getElementById('adminNotes');
@@ -1013,6 +1107,12 @@
       } finally {
         setButtonLoading('saveNoteBtn', false);
       }
+    }
+
+    // Handle editing profile (redirect to edit page)
+    function handleEditProfile() {
+      // Implement the edit functionality - redirect to profile edit page
+      window.location.href = `admin-edit-profile.html?id=${currentProfileId}`;
     }
 
     // Handle profile approval or rejection
@@ -1075,17 +1175,6 @@
     
     rejectedSearchInput.addEventListener('input', () => {
       filterProfiles('rejected', rejectedSearchInput.value);
-    });
-    
-    // Setup action button handlers
-    saveNoteBtn.addEventListener('click', handleSaveNote);
-    
-    approveProfileBtn.addEventListener('click', () => {
-      handleProfileAction('approved');
-    });
-    
-    rejectProfileBtn.addEventListener('click', () => {
-      handleProfileAction('rejected');
     });
 
     // Logout handler
