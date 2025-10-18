@@ -105,6 +105,20 @@
       height: 5px;
       margin-top: 5px;
     }
+    
+    /* Mobile-specific styles */
+@media (max-width: 767px) {
+  .input-group {
+    width: 100%;
+  }
+  
+  input#dob, 
+  .flatpickr-input {
+    display: block !important; /* Force display */
+    width: 100%;
+    visibility: visible !important;
+  }
+}
   </style>
 </head>
 <body>
@@ -501,16 +515,20 @@
       }
     });
 
-    // Initialize Flatpickr date pickers
-    flatpickr("#dob", {
-      dateFormat: "d/m/Y",
-      maxDate: new Date() // Can't select future dates
-    });
-    
-    flatpickr("#certExpiry", {
-      dateFormat: "d/m/Y",
-      minDate: new Date() // Can't select past dates
-    });
+   // Initialize Flatpickr date pickers with better mobile settings
+flatpickr("#dob", {
+  dateFormat: "d/m/Y",
+  maxDate: new Date(), // Can't select future dates
+  disableMobile: false, // Don't use native picker on mobile
+  allowInput: true     // Allow manual input as fallback
+});
+
+flatpickr("#certExpiry", {
+  dateFormat: "d/m/Y",
+  minDate: new Date(), // Can't select past dates
+  disableMobile: false, // Don't use native picker on mobile
+  allowInput: true     // Allow manual input as fallback
+});
 
     // DOM elements
     const profileForm = document.getElementById('profileForm');
