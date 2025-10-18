@@ -581,14 +581,30 @@ function showAlert(message, type) {
   }
 }
 
-function showInlineConfirmation(message, parentElement) {
+function showInlineConfirmation(message, parentElement, isSubmission = false) {
   // Create the inline confirmation element
   const inlineConfirmation = document.createElement('div');
   inlineConfirmation.className = 'alert alert-success mt-3 w-100';
-  inlineConfirmation.innerHTML = `
-    <i class="bi bi-check-circle-fill me-2"></i>
-    ${message}
-  `;
+  
+  // If it's a submission (not just save as draft), add dashboard button
+  if (isSubmission) {
+    inlineConfirmation.innerHTML = `
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <i class="bi bi-check-circle-fill me-2"></i>
+          ${message}
+        </div>
+        <a href="dashboard.html" class="btn btn-primary">
+          <i class="bi bi-house-fill"></i> Return to Dashboard
+        </a>
+      </div>
+    `;
+  } else {
+    inlineConfirmation.innerHTML = `
+      <i class="bi bi-check-circle-fill me-2"></i>
+      ${message}
+    `;
+  }
   
   // Add it to the DOM after the parent element
   parentElement.parentNode.insertBefore(inlineConfirmation, parentElement.nextSibling);
@@ -596,10 +612,12 @@ function showInlineConfirmation(message, parentElement) {
   // Scroll to make the inline confirmation visible
   inlineConfirmation.scrollIntoView({ behavior: 'smooth', block: 'center' });
   
-  // Remove after some time
-  setTimeout(() => {
-    inlineConfirmation.remove();
-  }, 7000);
+  // Remove after some time - but only if not a submission
+  if (!isSubmission) {
+    setTimeout(() => {
+      inlineConfirmation.remove();
+    }, 7000);
+  }
 }
 
     // File upload functions
@@ -1361,7 +1379,7 @@ saveAsDraftBtn.addEventListener('click', async () => {
         logDebug('Updated profile data:', updatedProfile);
         
         
-        if (isResubmission) {
+if (isResubmission) {
   logDebug('Resubmitting profile');
   // Use the function for updating and resubmitting
   await updateAndResubmitProfile(updatedProfile);
@@ -1369,9 +1387,9 @@ saveAsDraftBtn.addEventListener('click', async () => {
   // Show alert message
   showAlert('Profile updated and resubmitted for review!', 'success');
   
-  // Show inline confirmation
+  // Show inline confirmation with the dashboard return option
   const formActions = document.querySelector('.d-flex.justify-content-between.mb-5');
-  showInlineConfirmation('Your profile has been updated and resubmitted!', formActions);
+  showInlineConfirmation('Your profile has been updated and resubmitted!', formActions, true);
   
 } else {
   logDebug('Submitting new profile');
@@ -1386,9 +1404,9 @@ saveAsDraftBtn.addEventListener('click', async () => {
   // Show alert message
   showAlert('Profile submitted successfully! It will be reviewed by an administrator.', 'success');
   
-  // Show inline confirmation
+  // Show inline confirmation with the dashboard return option
   const formActions = document.querySelector('.d-flex.justify-content-between.mb-5');
-  showInlineConfirmation('Your profile has been submitted successfully!', formActions);
+  showInlineConfirmation('Your profile has been submitted successfully!', formActions, true);
 }
         
         
