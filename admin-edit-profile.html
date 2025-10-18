@@ -416,13 +416,32 @@
       minDate: new Date() // Can't select past dates
     });
     
-    // Check if this is a mobile device
+// Check if this is a mobile device
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
+// Initialize date fields based on device type
 if (isMobile) {
   // For mobile devices, use native date inputs
-  document.getElementById('dob').type = "date";
-  document.getElementById('certExpiry').type = "date";
+  const dobInput = document.getElementById('dob');
+  const certExpiryInput = document.getElementById('certExpiry');
+  
+  dobInput.type = "date";
+  certExpiryInput.type = "date";
+  
+  // Disable flatpickr for mobile
+  dobInput.classList.add('native-date-input');
+  certExpiryInput.classList.add('native-date-input');
+} else {
+  // For desktop, use flatpickr
+  flatpickr("#dob", {
+    dateFormat: "d/m/Y",
+    maxDate: new Date() // Can't select future dates
+  });
+  
+  flatpickr("#certExpiry", {
+    dateFormat: "d/m/Y",
+    minDate: new Date() // Can't select past dates
+  });
 }
 
     // Helper Functions
