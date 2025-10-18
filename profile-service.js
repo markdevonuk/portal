@@ -304,6 +304,12 @@ async function reviewProfile(userId, status, notes) {
  * @param {Object} updatedProfile - The updated profile data
  * @returns {Promise<void>}
  */
+
+/**
+ * Update a profile and reset it to pending status
+ * @param {Object} updatedProfile - The updated profile data
+ * @returns {Promise<void>}
+ */
 async function updateAndResubmitProfile(updatedProfile) {
   const user = auth.currentUser;
   if (!user) {
@@ -313,52 +319,37 @@ async function updateAndResubmitProfile(updatedProfile) {
   try {
     const profileRef = doc(db, 'profiles', user.uid);
     
-    // Get existing profile to preserve notes
-    const existingProfileSnap = await getDoc(profileRef);
-    let adminNotes = "";
+    // Get current profile to get existing notes
+    const profileSnap = await getDoc(profileRef);
+    let existingNotes = '';
     
-    if (existingProfileSnap.exists()) {
-      const existingProfile = existingProfileSnap.data();
-      
-      // If there are existing admin notes, preserve them
-      if (existingProfile.adminUse && existingProfile.adminUse.notes) {
-        // Format current date for the note
-        const currentDate = new Date().toLocaleDateString('en-GB', {
-          day: '2-digit', 
-          month: 'short', 
-          year: 'numeric'
-        });
-        
-        // If updatedProfile already has adminUse.notes, use that (from profile.html)
-        // Otherwise, create a standard update note
-        if (updatedProfile.adminUse && updatedProfile.adminUse.notes) {
-          adminNotes = updatedProfile.adminUse.notes;
-        } else {
-          adminNotes = `${existingProfile.adminUse.notes}\n\nProfile updated by user on ${currentDate}. Requires review.`;
-        }
-      } else {
-        // No existing notes, create a simple note about the update
-        const currentDate = new Date().toLocaleDateString('en-GB', {
-          day: '2-digit', 
-          month: 'short', 
-          year: 'numeric'
-        });
-        adminNotes = `Profile updated by user on ${currentDate}. Requires review.`;
-      }
+    if (profileSnap.exists()) {
+      const currentProfile = profileSnap.data();
+      existingNotes = currentProfile.adminUse?.notes || '';
     }
     
+    // Create the new note with today's date at the top
+    const today = new Date().toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+    
+    // Format the note to be at the beginning
+    const newNote = `Profile updated by user on ${today}. Requires review.`;
+    const updatedNotes = existingNotes ? `${newNote}\n\n${existingNotes}` : newNote;
+    
     // Update profile with new data
-    const updateData = {
+    await updateDoc(profileRef, {
       personalDetails: updatedProfile.personalDetails || {},
       driving: updatedProfile.driving || {},
       medicalQualifications: updatedProfile.medicalQualifications || {},
+      profilePhotoURL: updatedProfile.profilePhotoURL || null,
       "submission.submittedAt": serverTimestamp(),
       // Reset to pending status
       "adminUse.status": "pending",
-      "adminUse.notes": adminNotes
-    };
-    
-    await updateDoc(profileRef, updateData);
+      "adminUse.notes": updatedNotes
+    });
     
     console.log("Profile updated and resubmitted for review");
   } catch (error) {
@@ -366,6 +357,10 @@ async function updateAndResubmitProfile(updatedProfile) {
     throw error;
   }
 }
+
+
+
+
 
 // Export functions
 export {
