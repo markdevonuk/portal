@@ -716,6 +716,25 @@
         approvedCount.textContent = allProfiles.approved.length;
         rejectedCount.textContent = allProfiles.rejected.length;
         
+        // Sort all profiles alphabetically by name
+allProfiles.pending.sort((a, b) => {
+  const nameA = `${a.userInfo.firstName} ${a.userInfo.surname}`.toLowerCase();
+  const nameB = `${b.userInfo.firstName} ${b.userInfo.surname}`.toLowerCase();
+  return nameA.localeCompare(nameB);
+});
+
+allProfiles.approved.sort((a, b) => {
+  const nameA = `${a.userInfo.firstName} ${a.userInfo.surname}`.toLowerCase();
+  const nameB = `${b.userInfo.firstName} ${b.userInfo.surname}`.toLowerCase();
+  return nameA.localeCompare(nameB);
+});
+
+allProfiles.rejected.sort((a, b) => {
+  const nameA = `${a.userInfo.firstName} ${a.userInfo.surname}`.toLowerCase();
+  const nameB = `${b.userInfo.firstName} ${b.userInfo.surname}`.toLowerCase();
+  return nameA.localeCompare(nameB);
+});
+        
         // Display profiles
         displayProfiles('pending', allProfiles.pending);
         displayProfiles('approved', allProfiles.approved);
@@ -786,28 +805,36 @@
       });
     }
 
-    // Filter profiles
-    function filterProfiles(status, searchTerm) {
-      const profiles = allProfiles[status];
-      if (!searchTerm) {
-        displayProfiles(status, profiles);
-        return;
-      }
-      
-      searchTerm = searchTerm.toLowerCase();
-      
-      const filtered = profiles.filter(profile => {
-        const name = `${profile.userInfo.firstName} ${profile.userInfo.surname}`.toLowerCase();
-        const email = profile.userInfo.email.toLowerCase();
-        const qualification = (profile.medicalQualifications?.qualification || '').toLowerCase();
-        
-        return name.includes(searchTerm) || 
-               email.includes(searchTerm) || 
-               qualification.includes(searchTerm);
-      });
-      
-      displayProfiles(status, filtered);
-    }
+   
+// Filter profiles
+function filterProfiles(status, searchTerm) {
+  const profiles = allProfiles[status];
+  if (!searchTerm) {
+    displayProfiles(status, profiles);
+    return;
+  }
+  
+  searchTerm = searchTerm.toLowerCase();
+  
+  const filtered = profiles.filter(profile => {
+    const name = `${profile.userInfo.firstName} ${profile.userInfo.surname}`.toLowerCase();
+    const email = profile.userInfo.email.toLowerCase();
+    const qualification = (profile.medicalQualifications?.qualification || '').toLowerCase();
+    
+    return name.includes(searchTerm) || 
+           email.includes(searchTerm) || 
+           qualification.includes(searchTerm);
+  });
+  
+  // Sort filtered results alphabetically
+  filtered.sort((a, b) => {
+    const nameA = `${a.userInfo.firstName} ${a.userInfo.surname}`.toLowerCase();
+    const nameB = `${b.userInfo.firstName} ${b.userInfo.surname}`.toLowerCase();
+    return nameA.localeCompare(nameB);
+  });
+  
+  displayProfiles(status, filtered);
+}
 
 // Open profile modal for review
 async function openProfileModal(userId) {
