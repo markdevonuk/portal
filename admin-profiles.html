@@ -194,8 +194,7 @@
       border-radius: 50%;
       overflow: hidden;
     }
-    
-    /* Mobile-friendly tab styles */
+      /* Mobile-friendly tab styles */
   @media (max-width: 767px) {
     #profileTabs {
       display: flex;
@@ -213,52 +212,63 @@
     #profileTabs .nav-link {
       padding: 10px 5px;
       border-radius: 10px 10px 0 0;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       white-space: nowrap;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     
     #profileTabs .badge {
-      display: block;
-      width: 24px;
-      height: 24px;
-      line-height: 17px;
-      margin: 5px auto 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 36px;
+      height: 36px;
+      margin: 8px auto 0;
       border-radius: 50%;
-      font-size: 0.8rem;
-      padding: 3px;
+      font-size: 1rem;
+      font-weight: 700;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
     
     #profileTabs .nav-link.active .badge {
       background-color: #fff !important;
       color: #00a896 !important;
+      transform: scale(1.1);
     }
     
     /* Make the text and icon better organized */
     #profileTabs .nav-link i {
       display: block;
       margin-bottom: 5px;
-      font-size: 1.1rem;
+      font-size: 1.3rem;
     }
     
     /* Hide "Review" text on mobile to save space */
     #profileTabs .tab-label-suffix {
       display: none;
     }
+    
+    /* Add some space between sections */
+    .tab-content {
+      padding-top: 25px;
+    }
   }
   
   /* Ensure badge consistency across all screen sizes */
   #profileTabs .badge {
-    font-weight: 600;
-    min-width: 24px;
+    font-weight: 700;
+    min-width: 28px;
     text-align: center;
+    transition: all 0.2s ease;
   }
   
   /* Add transition effects for smoother experience */
   #profileTabs .nav-link {
     transition: all 0.3s ease;
   }
-    
-    
+   
     
   </style>
 </head>
@@ -300,7 +310,7 @@
     <div id="alertContainer"></div>
 
     <div class="admin-card">
-     <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+<ul class="nav nav-tabs" id="profileTabs" role="tablist">
   <li class="nav-item" role="presentation">
     <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending-profiles" type="button" role="tab" aria-controls="pending-profiles" aria-selected="true">
       <i class="bi bi-hourglass-split"></i> 
