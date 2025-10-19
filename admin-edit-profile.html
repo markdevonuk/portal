@@ -325,28 +325,32 @@
         </div>
       </div>
       
-      <!-- Form Actions -->
-      <div class="d-flex justify-content-between">
-        <button type="button" class="btn btn-secondary" id="cancelBtn">
-          <i class="bi bi-arrow-left"></i> Cancel
-        </button>
-        <div>
-          <button type="button" class="btn btn-info me-2" id="saveNoteBtn">
-            <i class="bi bi-journal-plus"></i> Save Note Only
-          </button>
-          <button type="button" class="btn btn-primary me-2" id="saveChangesBtn">
-            <i class="bi bi-save"></i> Save Changes
-          </button>
-          <button type="button" class="btn btn-success me-2" id="approveProfileBtn">
-            <i class="bi bi-check-circle"></i> Save & Approve
-          </button>
-          <button type="button" class="btn btn-danger" id="rejectProfileBtn">
-            <i class="bi bi-x-circle"></i> Save & Reject
-          </button>
-        </div>
-      </div>
+
+<!-- Form Actions -->
+<div class="d-flex justify-content-between">
+  <button type="button" class="btn btn-secondary" id="cancelBtn">
+    <i class="bi bi-arrow-left"></i> Cancel
+  </button>
+  <div>
+    <div id="profileModalFooter" class="d-flex justify-content-end gap-2">
+      <button type="button" class="btn btn-info" id="saveNoteBtn">
+        <i class="bi bi-journal-plus"></i> Save Note Only
+      </button>
+      <button type="button" class="btn btn-primary" id="saveChangesBtn">
+        <i class="bi bi-save"></i> Save Changes
+      </button>
+      <button type="button" class="btn btn-success" id="approveProfileBtn">
+        <i class="bi bi-check-circle"></i> Approve
+      </button>
+      <button type="button" class="btn btn-danger" id="rejectProfileBtn">
+        <i class="bi bi-x-circle"></i> Reject
+      </button>
     </div>
   </div>
+</div>
+
+
+
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
