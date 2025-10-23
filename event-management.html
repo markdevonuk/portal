@@ -337,6 +337,8 @@
             <div id="noVolunteersMessage" class="alert alert-info hidden">
               <i class="bi bi-info-circle"></i> No volunteers found for this event.
             </div>
+            
+            <!-- Volunteer list will be dynamically inserted here -->
           </div>
         </div>
         <div class="modal-footer">
@@ -566,6 +568,14 @@ prehospital@festival-medical.org</textarea>
         alert.classList.remove('show');
         setTimeout(() => alert.remove(), 150);
       }, 5000);
+    }
+
+    // Safe DOM element update helper function
+    function safeUpdateElement(elementId, updateFn) {
+      const element = document.getElementById(elementId);
+      if (element) {
+        updateFn(element);
+      }
     }
 
     function formatDate(dateObj) {
@@ -921,21 +931,47 @@ prehospital@festival-medical.org</textarea>
           return;
         }
         
-        document.getElementById('manageEventName').textContent = event.name;
-        document.getElementById('loadingVolunteers').classList.remove('hidden');
-        document.getElementById('noVolunteersMessage').classList.add('hidden');
-        document.getElementById('volunteersManageList').innerHTML = '';
+        // Initialize the modal
+        safeUpdateElement('manageEventName', element => {
+          element.textContent = event.name;
+        });
+        
+        // Reset volunteers list
+        safeUpdateElement('volunteersManageList', element => {
+          const loadingElement = element.querySelector('#loadingVolunteers');
+          const noVolunteersElement = element.querySelector('#noVolunteersMessage');
+          
+          if (loadingElement) loadingElement.classList.remove('hidden');
+          if (noVolunteersElement) noVolunteersElement.classList.add('hidden');
+          
+          // Clear out any previous volunteer items but keep loading and no volunteers message
+          Array.from(element.children).forEach(child => {
+            if (!child.id || (child.id !== 'loadingVolunteers' && child.id !== 'noVolunteersMessage')) {
+              element.removeChild(child);
+            }
+          });
+        });
+        
+        // Reset stats
+        safeUpdateElement('totalVolunteers', element => { element.textContent = '0'; });
+        safeUpdateElement('selectedVolunteers', element => { element.textContent = '0'; });
+        safeUpdateElement('pendingVolunteers', element => { element.textContent = '0'; });
+        
+        // Show modal before loading volunteers
+        const modal = new bootstrap.Modal(document.getElementById('volunteerManageModal'));
+        modal.show();
         
         // Load volunteers for this event
         await loadEventVolunteers(eventId);
         
-        // Show modal
-        const modal = new bootstrap.Modal(document.getElementById('volunteerManageModal'));
-        modal.show();
-        
       } catch (error) {
         console.error('Error opening manage volunteers modal:', error);
         showAlert('Error loading volunteers: ' + error.message, 'danger');
+        
+        // Hide loading spinner in case of error
+        safeUpdateElement('loadingVolunteers', element => {
+          element.classList.add('hidden');
+        });
       }
     }
 
@@ -950,13 +986,20 @@ prehospital@festival-medical.org</textarea>
         
         const volunteersSnapshot = await getDocs(volunteersQuery);
         
+        // Get DOM elements
+        const loadingElement = document.getElementById('loadingVolunteers');
+        const noVolunteersElement = document.getElementById('noVolunteersMessage');
+        const volunteersListContainer = document.getElementById('volunteersManageList');
+        
         // If no volunteers, show message
         if (volunteersSnapshot.empty) {
-          document.getElementById('loadingVolunteers').classList.add('hidden');
-          document.getElementById('noVolunteersMessage').classList.remove('hidden');
-          document.getElementById('totalVolunteers').textContent = '0';
-          document.getElementById('selectedVolunteers').textContent = '0';
-          document.getElementById('pendingVolunteers').textContent = '0';
+          if (loadingElement) loadingElement.classList.add('hidden');
+          if (noVolunteersElement) noVolunteersElement.classList.remove('hidden');
+          
+          safeUpdateElement('totalVolunteers', element => { element.textContent = '0'; });
+          safeUpdateElement('selectedVolunteers', element => { element.textContent = '0'; });
+          safeUpdateElement('pendingVolunteers', element => { element.textContent = '0'; });
+          
           currentEventVolunteers = [];
           return;
         }
@@ -1009,9 +1052,9 @@ prehospital@festival-medical.org</textarea>
         currentEventVolunteers = volunteers;
         
         // Update stats
-        document.getElementById('totalVolunteers').textContent = volunteers.length.toString();
-        document.getElementById('selectedVolunteers').textContent = selectedCount.toString();
-        document.getElementById('pendingVolunteers').textContent = (volunteers.length - selectedCount).toString();
+        safeUpdateElement('totalVolunteers', element => { element.textContent = volunteers.length.toString(); });
+        safeUpdateElement('selectedVolunteers', element => { element.textContent = selectedCount.toString(); });
+        safeUpdateElement('pendingVolunteers', element => { element.textContent = (volunteers.length - selectedCount).toString(); });
         
         // Sort volunteers (selected first, then alphabetically by name)
         volunteers.sort((a, b) => {
@@ -1022,69 +1065,80 @@ prehospital@festival-medical.org</textarea>
         });
         
         // Display volunteers
-        const volunteersListContainer = document.getElementById('volunteersManageList');
-        volunteersListContainer.innerHTML = '';
-        
-        volunteers.forEach(volunteer => {
-          const volunteerItem = document.createElement('div');
-          volunteerItem.className = `volunteer-item ${volunteer.selected ? 'selected' : ''}`;
-          volunteerItem.dataset.id = volunteer.id;
-          volunteerItem.dataset.name = volunteer.name || '';
-          volunteerItem.dataset.grade = volunteer.grade || '';
-          volunteerItem.dataset.email = volunteer.email || '';
-          volunteerItem.dataset.selected = volunteer.selected ? 'true' : 'false';
-          
-          volunteerItem.innerHTML = `
-            <div class="row align-items-center">
-              <div class="col-md-8">
-                <h5 class="mb-1">${volunteer.name || 'Unknown'}</h5>
-                <div class="mb-1">
-                  <span class="badge bg-secondary">${volunteer.grade || 'Unknown'}</span>
-                  ${volunteer.selected ? '<span class="volunteer-badge">Selected</span>' : ''}
-                </div>
-                <div class="small text-muted">
-                  <i class="bi bi-envelope"></i> ${volunteer.email || 'No email'}
-                </div>
-                ${volunteer.notes ? `<div class="volunteer-notes">"${volunteer.notes}"</div>` : ''}
-              </div>
-              <div class="col-md-4">
-                <div>
-                  ${volunteer.selected ? `
-                    <button class="btn btn-sm btn-outline-danger unselect-volunteer-btn" data-id="${volunteer.id}">
-                      <i class="bi bi-x-circle"></i> Remove Selection
-                    </button>
-                  ` : `
-                    <button class="btn btn-sm btn-outline-success select-volunteer-btn" data-id="${volunteer.id}">
-                      <i class="bi bi-check-circle"></i> Select Volunteer
-                    </button>
-                  `}
-                </div>
-              </div>
-            </div>
-          `;
-          
-          volunteersListContainer.appendChild(volunteerItem);
-        });
-        
-        // Add event listeners
-        document.querySelectorAll('.select-volunteer-btn').forEach(button => {
-          button.addEventListener('click', () => {
-            toggleVolunteerSelection(button.dataset.id, true);
+        if (volunteersListContainer) {
+          // Clear existing volunteer items (keeping loading and no volunteers elements)
+          Array.from(volunteersListContainer.children).forEach(child => {
+            if (!child.id || (child.id !== 'loadingVolunteers' && child.id !== 'noVolunteersMessage')) {
+              volunteersListContainer.removeChild(child);
+            }
           });
-        });
-        
-        document.querySelectorAll('.unselect-volunteer-btn').forEach(button => {
-          button.addEventListener('click', () => {
-            toggleVolunteerSelection(button.dataset.id, false);
+          
+          volunteers.forEach(volunteer => {
+            const volunteerItem = document.createElement('div');
+            volunteerItem.className = `volunteer-item ${volunteer.selected ? 'selected' : ''}`;
+            volunteerItem.dataset.id = volunteer.id;
+            volunteerItem.dataset.name = volunteer.name || '';
+            volunteerItem.dataset.grade = volunteer.grade || '';
+            volunteerItem.dataset.email = volunteer.email || '';
+            volunteerItem.dataset.selected = volunteer.selected ? 'true' : 'false';
+            
+            volunteerItem.innerHTML = `
+              <div class="row align-items-center">
+                <div class="col-md-8">
+                  <h5 class="mb-1">${volunteer.name || 'Unknown'}</h5>
+                  <div class="mb-1">
+                    <span class="badge bg-secondary">${volunteer.grade || 'Unknown'}</span>
+                    ${volunteer.selected ? '<span class="volunteer-badge">Selected</span>' : ''}
+                  </div>
+                  <div class="small text-muted">
+                    <i class="bi bi-envelope"></i> ${volunteer.email || 'No email'}
+                  </div>
+                  ${volunteer.notes ? `<div class="volunteer-notes">"${volunteer.notes}"</div>` : ''}
+                </div>
+                <div class="col-md-4">
+                  <div>
+                    ${volunteer.selected ? `
+                      <button class="btn btn-sm btn-outline-danger unselect-volunteer-btn" data-id="${volunteer.id}">
+                        <i class="bi bi-x-circle"></i> Remove Selection
+                      </button>
+                    ` : `
+                      <button class="btn btn-sm btn-outline-success select-volunteer-btn" data-id="${volunteer.id}">
+                        <i class="bi bi-check-circle"></i> Select Volunteer
+                      </button>
+                    `}
+                  </div>
+                </div>
+              </div>
+            `;
+            
+            volunteersListContainer.appendChild(volunteerItem);
           });
-        });
+          
+          // Add event listeners
+          document.querySelectorAll('.select-volunteer-btn').forEach(button => {
+            button.addEventListener('click', () => {
+              toggleVolunteerSelection(button.dataset.id, true);
+            });
+          });
+          
+          document.querySelectorAll('.unselect-volunteer-btn').forEach(button => {
+            button.addEventListener('click', () => {
+              toggleVolunteerSelection(button.dataset.id, false);
+            });
+          });
+        }
         
-        document.getElementById('loadingVolunteers').classList.add('hidden');
+        // Hide loading spinner
+        if (loadingElement) loadingElement.classList.add('hidden');
         
       } catch (error) {
         console.error('Error loading event volunteers:', error);
         showAlert('Error loading volunteers: ' + error.message, 'danger');
-        document.getElementById('loadingVolunteers').classList.add('hidden');
+        
+        // Hide loading spinner in case of error
+        safeUpdateElement('loadingVolunteers', element => {
+          element.classList.add('hidden');
+        });
       }
     }
 
@@ -1114,7 +1168,9 @@ prehospital@festival-medical.org</textarea>
         return;
       }
       
-      document.getElementById('selectEventName').textContent = event.name;
+      safeUpdateElement('selectEventName', element => {
+        element.textContent = event.name;
+      });
       
       // Set up grade selection buttons
       const gradesSet = new Set();
@@ -1125,64 +1181,69 @@ prehospital@festival-medical.org</textarea>
       });
       
       const gradeButtons = document.getElementById('gradeSelectionButtons');
-      gradeButtons.innerHTML = '';
-      
-      gradesSet.forEach(grade => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'btn btn-sm btn-outline-primary me-2 mb-2';
-        button.innerHTML = `<i class="bi bi-people"></i> Select All ${grade}`;
-        button.onclick = () => selectByGrade(grade);
-        gradeButtons.appendChild(button);
-      });
+      if (gradeButtons) {
+        gradeButtons.innerHTML = '';
+        
+        gradesSet.forEach(grade => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'btn btn-sm btn-outline-primary me-2 mb-2';
+          button.innerHTML = `<i class="bi bi-people"></i> Select All ${grade}`;
+          button.onclick = () => selectByGrade(grade);
+          gradeButtons.appendChild(button);
+        });
+      }
       
       // Set up volunteer selection list
       const volunteersSelectionList = document.getElementById('volunteersSelectionList');
-      volunteersSelectionList.innerHTML = '';
-      
-      // Sort volunteers by name
-      const sortedVolunteers = [...currentEventVolunteers].sort((a, b) => 
-        (a.name || '').localeCompare(b.name || '')
-      );
-      
-      sortedVolunteers.forEach(volunteer => {
-        const isSelected = volunteer.selected;
-        const volunteerDiv = document.createElement('div');
-        volunteerDiv.className = `volunteer-selection-item p-3 mb-2 border rounded ${isSelected ? 'bg-success bg-opacity-10 border-success' : 'bg-light'}`;
+      if (volunteersSelectionList) {
+        volunteersSelectionList.innerHTML = '';
         
-        volunteerDiv.innerHTML = `
-          <div class="form-check">
-            <input class="form-check-input volunteer-checkbox" type="checkbox" 
-                  id="volunteer-${volunteer.id}" 
-                  data-id="${volunteer.id}" 
-                  data-grade="${volunteer.grade || ''}"
-                  ${isSelected ? 'checked' : ''}>
-            <label class="form-check-label" for="volunteer-${volunteer.id}">
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <strong>${volunteer.name || 'Unknown'}</strong>
-                  <span class="badge bg-secondary ms-2">${volunteer.grade || 'Unknown'}</span>
-                  ${isSelected ? '<span class="badge bg-success ms-2">Currently Selected</span>' : ''}
+        // Sort volunteers by name
+        const sortedVolunteers = [...currentEventVolunteers].sort((a, b) => 
+          (a.name || '').localeCompare(b.name || '')
+        );
+        
+        sortedVolunteers.forEach(volunteer => {
+          const isSelected = volunteer.selected;
+          const volunteerDiv = document.createElement('div');
+          volunteerDiv.className = `volunteer-selection-item p-3 mb-2 border rounded ${isSelected ? 'bg-success bg-opacity-10 border-success' : 'bg-light'}`;
+          
+          volunteerDiv.innerHTML = `
+            <div class="form-check">
+              <input class="form-check-input volunteer-checkbox" type="checkbox" 
+                    id="volunteer-${volunteer.id}" 
+                    data-id="${volunteer.id}" 
+                    data-grade="${volunteer.grade || ''}"
+                    ${isSelected ? 'checked' : ''}>
+              <label class="form-check-label" for="volunteer-${volunteer.id}">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <strong>${volunteer.name || 'Unknown'}</strong>
+                    <span class="badge bg-secondary ms-2">${volunteer.grade || 'Unknown'}</span>
+                    ${isSelected ? '<span class="badge bg-success ms-2">Currently Selected</span>' : ''}
+                  </div>
                 </div>
-              </div>
-              <div class="small text-muted mt-1">
-                <i class="bi bi-envelope"></i> ${volunteer.email || 'No email'}
-              </div>
-              ${volunteer.notes ? `<div class="volunteer-notes mt-2">"${volunteer.notes}"</div>` : ''}
-            </label>
-          </div>
-        `;
+                <div class="small text-muted mt-1">
+                  <i class="bi bi-envelope"></i> ${volunteer.email || 'No email'}
+                </div>
+                ${volunteer.notes ? `<div class="volunteer-notes mt-2">"${volunteer.notes}"</div>` : ''}
+              </label>
+            </div>
+          `;
+          
+          volunteersSelectionList.appendChild(volunteerDiv);
+        });
         
-        volunteersSelectionList.appendChild(volunteerDiv);
-      });
+        // Set up checkboxes event listeners
+        document.querySelectorAll('.volunteer-checkbox').forEach(checkbox => {
+          checkbox.addEventListener('change', () => updateVolunteerItemStyle(checkbox));
+        });
+      }
       
-      // Set up event listeners
-      document.getElementById('selectAllVolunteers').onclick = selectAllVolunteers;
-      document.getElementById('unselectAllVolunteers').onclick = unselectAllVolunteers;
-      
-      document.querySelectorAll('.volunteer-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', () => updateVolunteerItemStyle(checkbox));
-      });
+      // Set up event listeners for bulk buttons
+      document.getElementById('selectAllVolunteers')?.addEventListener('click', selectAllVolunteers);
+      document.getElementById('unselectAllVolunteers')?.addEventListener('click', unselectAllVolunteers);
       
       // Show modal
       const modal = new bootstrap.Modal(document.getElementById('selectVolunteersModal'));
@@ -1217,11 +1278,15 @@ prehospital@festival-medical.org</textarea>
 
     // Update volunteer item styling based on selection
     function updateVolunteerItemStyle(checkbox) {
+      if (!checkbox) return;
+      
       const volunteerItem = checkbox.closest('.volunteer-selection-item');
-      if (checkbox.checked) {
-        volunteerItem.className = 'volunteer-selection-item p-3 mb-2 border rounded bg-success bg-opacity-10 border-success';
-      } else {
-        volunteerItem.className = 'volunteer-selection-item p-3 mb-2 border rounded bg-light';
+      if (volunteerItem) {
+        if (checkbox.checked) {
+          volunteerItem.className = 'volunteer-selection-item p-3 mb-2 border rounded bg-success bg-opacity-10 border-success';
+        } else {
+          volunteerItem.className = 'volunteer-selection-item p-3 mb-2 border rounded bg-light';
+        }
       }
     }
 
@@ -1332,22 +1397,42 @@ prehospital@festival-medical.org</textarea>
         return;
       }
       
-      document.getElementById('messageEventName').textContent = event.name;
+      safeUpdateElement('messageEventName', element => {
+        element.textContent = event.name;
+      });
       
       // Reset modal
-      document.getElementById('emailPreviewSection').classList.add('d-none');
-      document.getElementById('prepareMessageBtn').classList.remove('d-none');
-      document.getElementById('messageSubject').value = `Festival Medical Services - ${event.name} Update`;
-      document.getElementById('messageContent').value = 
-        `IMPORTANT: DO NOT REPLY TO THIS MESSAGE AS IT IS NOT A MONITORED EMAIL ADDRESS\n\nDear Member,\n\n[Your message here...]\n\nPrehospital Team Leaders\nprehospital@festival-medical.org`;
+      safeUpdateElement('emailPreviewSection', element => {
+        element.classList.add('d-none');
+      });
+      
+      safeUpdateElement('prepareMessageBtn', element => {
+        element.classList.remove('d-none');
+      });
+      
+      safeUpdateElement('messageSubject', element => {
+        element.value = `Festival Medical Services - ${event.name} Update`;
+      });
+      
+      safeUpdateElement('messageContent', element => {
+        element.value = `IMPORTANT: DO NOT REPLY TO THIS MESSAGE AS IT IS NOT A MONITORED EMAIL ADDRESS\n\nDear Member,\n\n[Your message here...]\n\nPrehospital Team Leaders\nprehospital@festival-medical.org`;
+      });
       
       // Set volunteer counts
       const selectedVolunteers = currentEventVolunteers.filter(v => v.selected);
       const notSelectedVolunteers = currentEventVolunteers.filter(v => !v.selected);
       
-      document.getElementById('selectedCount').textContent = selectedVolunteers.length;
-      document.getElementById('notSelectedCount').textContent = notSelectedVolunteers.length;
-      document.getElementById('allVolunteersCount').textContent = currentEventVolunteers.length;
+      safeUpdateElement('selectedCount', element => {
+        element.textContent = selectedVolunteers.length;
+      });
+      
+      safeUpdateElement('notSelectedCount', element => {
+        element.textContent = notSelectedVolunteers.length;
+      });
+      
+      safeUpdateElement('allVolunteersCount', element => {
+        element.textContent = currentEventVolunteers.length;
+      });
       
       // Show modal
       const modal = new bootstrap.Modal(document.getElementById('messageVolunteersModal'));
@@ -1356,9 +1441,9 @@ prehospital@festival-medical.org</textarea>
 
     // Prepare email details
     function prepareEmailDetails() {
-      const messageTarget = document.querySelector('input[name="messageTarget"]:checked').value;
-      const subject = document.getElementById('messageSubject').value.trim();
-      const content = document.getElementById('messageContent').value.trim();
+      const messageTarget = document.querySelector('input[name="messageTarget"]:checked')?.value || 'selected';
+      const subject = document.getElementById('messageSubject')?.value?.trim() || '';
+      const content = document.getElementById('messageContent')?.value?.trim() || '';
       
       if (!subject) {
         showAlert('Please enter a subject', 'warning');
@@ -1393,18 +1478,36 @@ prehospital@festival-medical.org</textarea>
       const emailAddresses = targetVolunteers.map(v => v.email).join(', ');
       
       // Show the preview section
-      document.getElementById('emailPreviewSection').classList.remove('d-none');
-      document.getElementById('recipientCount').textContent = targetVolunteers.length;
-      document.getElementById('emailAddressList').value = emailAddresses;
-      document.getElementById('emailSubjectCopy').value = subject;
-      document.getElementById('emailBodyCopy').value = content;
+      safeUpdateElement('emailPreviewSection', element => {
+        element.classList.remove('d-none');
+      });
+      
+      safeUpdateElement('recipientCount', element => {
+        element.textContent = targetVolunteers.length;
+      });
+      
+      safeUpdateElement('emailAddressList', element => {
+        element.value = emailAddresses;
+      });
+      
+      safeUpdateElement('emailSubjectCopy', element => {
+        element.value = subject;
+      });
+      
+      safeUpdateElement('emailBodyCopy', element => {
+        element.value = content;
+      });
       
       // Hide the prepare button
-      document.getElementById('prepareMessageBtn').classList.add('d-none');
+      safeUpdateElement('prepareMessageBtn', element => {
+        element.classList.add('d-none');
+      });
     }
 
     // Copy text to clipboard
     function copyToClipboard(element) {
+      if (!element) return;
+      
       element.select();
       element.setSelectionRange(0, 99999); // For mobile devices
       
@@ -1480,7 +1583,7 @@ prehospital@festival-medical.org</textarea>
     });
     
     // Search volunteers
-    document.getElementById('volunteerSearchInput').addEventListener('input', e => {
+    document.getElementById('volunteerSearchInput')?.addEventListener('input', e => {
       const searchTerm = e.target.value.toLowerCase();
       
       document.querySelectorAll('.volunteer-item').forEach(item => {
