@@ -609,7 +609,7 @@
             <div class="row">
               <div class="col-md-6 profile-info-item">
                 <div class="profile-info-label">Phone</div>
-                <div>${profile?.personalDetails?.phone || 'Not provided'}</div>
+                <div>${profile?.personalDetails?.phone || profile?.phone || user?.phone || 'Not provided'}</div>
               </div>
               <div class="col-md-6 profile-info-item">
                 <div class="profile-info-label">Emergency Contact</div>
