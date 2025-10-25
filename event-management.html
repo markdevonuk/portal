@@ -146,6 +146,33 @@
       font-size: 0.9rem;
       margin-top: 5px;
     }
+    /* Style for volunteer count pills */
+.volunteer-badge, .selected-badge {
+  display: inline-block;
+  padding: 0.25em 0.6em;
+  font-size: 75%;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.25rem;
+  margin-left: 0.3em;
+}
+
+/* Volunteer pill styling - light teal background with dark text */
+.volunteer-badge {
+  background-color: rgba(0, 168, 150, 0.2);
+  color: #006d65;
+  border: 1px solid rgba(0, 168, 150, 0.4);
+}
+
+/* Selected pill styling - light teal with darker text */
+.selected-badge {
+  background-color: rgba(0, 168, 150, 0.1);
+  color: #006d65;
+  border: 1px solid rgba(0, 168, 150, 0.3);
+}
   </style>
 </head>
 <body>
@@ -682,14 +709,14 @@ prehospital@festival-medical.org</textarea>
                 <div class="event-date mb-3">
                   <i class="bi bi-calendar-date"></i> ${dateDisplay}
                 </div>
-                <div class="mt-2">
-                  <span class="badge bg-primary volunteer-count">
-                    <i class="bi bi-people-fill"></i> ${event.volunteerCount} Volunteers
-                  </span>
-                  <span class="badge bg-success volunteer-count">
-                    <i class="bi bi-check-circle-fill"></i> ${event.selectedCount} Selected
-                  </span>
-                </div>
+               <div class="mt-2">
+  <span class="volunteer-badge">
+    <i class="bi bi-people-fill"></i> ${event.volunteerCount} Volunteers
+  </span>
+  <span class="selected-badge">
+    <i class="bi bi-check-circle-fill"></i> ${event.selectedCount} Selected
+  </span>
+</div>
               </div>
               <div class="col-md-4">
                 <div class="d-grid gap-2">
