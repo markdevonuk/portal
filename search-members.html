@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Member Search - FMS Prehospital Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background:#f8f9fa; min-height:100vh; }
+    .navbar { 
+      background: linear-gradient(135deg, #00a896 0%, #028090 100%); 
+      box-shadow:0 2px 10px rgba(0,0,0,0.1); 
+    }
+    .nav-link { color: rgba(255,255,255,.85) !important; font-weight: 500; }
+    .nav-link:hover { color: #fff !important; }
+    .admin-card { 
+      background:#fff; 
+      border-radius:15px; 
+      box-shadow:0 5px 20px rgba(0,0,0,.08); 
+      padding:30px; 
+      margin:20px 0; 
+    }
+    .page-header { 
+      background:linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      color:#fff; 
+      border-radius:15px; 
+      padding:30px; 
+      margin:30px 0 20px 0; 
+    }
+    .btn-primary { 
+      background: linear-gradient(135deg, #00a896 0%, #028090 100%); 
+      border: none; 
+      font-weight: 600; 
+    }
+    .btn-primary:hover { 
+      transform: translateY(-2px); 
+      box-shadow: 0 5px 15px rgba(0,168,150,.4); 
+    }
+    .form-control:focus { 
+      border-color: #00a896; 
+      box-shadow: 0 0 0 0.2rem rgba(0,168,150,.25); 
+    }
+    .hidden { display: none; }
+    
+    /* Member search specific styles */
+    .search-container {
+      position: relative;
+    }
+    
+    .search-results {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: #fff;
+      border-radius: 0 0 15px 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      max-height: 300px;
+      overflow-y: auto;
+      display: none;
+    }
+    
+    .search-results.show {
+      display: block;
+    }
+    
+    .search-item {
+      padding: 10px 15px;
+      border-bottom: 1px solid #e9ecef;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .search-item:hover {
+      background-color: #f8f9fa;
+    }
+    
+    .search-item:last-child {
+      border-bottom: none;
+    }
+    
+    .member-profile {
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+      margin-top: 20px;
+      padding: 30px;
+    }
+    
+    .profile-header {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+    
+    .profile-photo {
+      width: 150px;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 3px solid #00a896;
+      margin-right: 20px;
+    }
+    
+    .profile-photo-placeholder {
+      width: 150px;
+      height: 150px;
+      border-radius: 10px;
+      border: 3px solid #e9ecef;
+      margin-right: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8f9fa;
+      color: #adb5bd;
+      font-size: 2.5rem;
+    }
+    
+    .profile-details h4 {
+      margin-bottom: 5px;
+    }
+    
+    .profile-section {
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #e9ecef;
+    }
+    
+    .profile-section:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    
+    .pending-badge {
+      background: #fff3cd;
+      color: #856404;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    
+    .approved-badge {
+      background: #d1e7dd;
+      color: #155724;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    
+    .rejected-badge {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    
+    .event-card {
+      margin-bottom: 15px;
+      border-radius: 10px;
+      padding: 15px;
+      background: #f8f9fa;
+    }
+    
+    .event-card.selected {
+      border-left: 4px solid #00a896;
+      background: #d1e7dd;
+    }
+    
+    .event-card.not-selected {
+      border-left: 4px solid #adb5bd;
+      background: #f8f9fa;
+    }
+    
+    .profile-info-item {
+      margin-bottom: 10px;
+    }
+    
+    .profile-info-label {
+      font-weight: 600;
+      color: #495057;
+    }
+    
+    .no-results-message {
+      padding: 20px;
+      text-align: center;
+      color: #6c757d;
+    }
+
+    .loading-indicator {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    #profileContainer {
+      transition: opacity 0.3s;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="dashboard.html"><i class="bi bi-shield-lock"></i> FMS Prehospital Portal</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="admin.html">
+              <i class="bi bi-arrow-left"></i> Admin Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="dashboard.html">
+              <i class="bi bi-house-fill"></i> Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="logoutLink">
+              <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="page-header">
+      <h1 class="mb-2"><i class="bi bi-search"></i> Member Search</h1>
+      <p class="mb-0">Find and view detailed information about members</p>
+    </div>
+
+    <div id="alertContainer"></div>
+
+    <div class="admin-card">
+      <div class="mb-4">
+        <label for="searchInput" class="form-label">Search members by name or email</label>
+        <div class="search-container">
+          <input type="text" class="form-control form-control-lg" id="searchInput" 
+                placeholder="Enter first name, surname or email address..." 
+                autocomplete="off">
+          <div class="search-results" id="searchResults"></div>
+        </div>
+        <div class="form-text">Type at least 3 characters to start searching</div>
+      </div>
+      
+      <!-- Member Profile Container (initially hidden) -->
+      <div id="profileContainer" class="hidden">
+        <!-- Profile content will be loaded here dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { getFirestore, doc, getDoc, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { getStorage, ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+    import { firebaseConfig } from './firebase-config.js';
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    // DOM Elements
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+    const profileContainer = document.getElementById('profileContainer');
+    const alertContainer = document.getElementById('alertContainer');
+    const logoutLink = document.getElementById('logoutLink');
+    
+    // Store users and profiles data
+    let users = [];
+    let profiles = [];
+    let events = [];
+
+    // Show an alert message
+    function showAlert(message, type) {
+      const html = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>`;
+      alertContainer.innerHTML = html;
+      
+      if (type === 'success') {
+        setTimeout(() => {
+          const alert = document.querySelector('.alert');
+          if (alert) {
+            alert.classList.remove('show');
+            setTimeout(() => alert.remove(), 150);
+          }
+        }, 5000);
+      }
+    }
+
+    // Format date from timestamp
+    function formatDate(timestamp) {
+      if (!timestamp) return 'N/A';
+      
+      let date;
+      if (timestamp.seconds) {
+        // Firestore timestamp
+        date = new Date(timestamp.seconds * 1000);
+      } else if (timestamp.toDate) {
+        // Firestore timestamp object with toDate method
+        date = timestamp.toDate();
+      } else if (timestamp instanceof Date) {
+        // JavaScript Date object
+        date = timestamp;
+      } else {
+        // Try to parse as string or number
+        try {
+          date = new Date(timestamp);
+        } catch (e) {
+          return 'N/A';
+        }
+      }
+      
+      if (isNaN(date.getTime())) {
+        return 'N/A';
+      }
+      
+      return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+    }
+
+    // Load all users and profiles
+    async function loadUsersAndProfiles() {
+      try {
+        // Get all users
+        const usersQuery = query(collection(db, 'users'));
+        const usersSnapshot = await getDocs(usersQuery);
+        users = [];
+        usersSnapshot.forEach(doc => {
+          users.push({
+            id: doc.id,
+            ...doc.data()
+          });
+        });
+        
+        // Get all profiles
+        const profilesQuery = query(collection(db, 'profiles'));
+        const profilesSnapshot = await getDocs(profilesQuery);
+        profiles = [];
+        profilesSnapshot.forEach(doc => {
+          profiles.push({
+            userId: doc.id,
+            ...doc.data()
+          });
+        });
+
+        console.log(`Loaded ${users.length} users and ${profiles.length} profiles`);
+        
+        // Get all events (for showing event participation)
+        const eventsQuery = query(collection(db, 'events'));
+        const eventsSnapshot = await getDocs(eventsQuery);
+        events = [];
+        eventsSnapshot.forEach(doc => {
+          events.push({
+            id: doc.id,
+            ...doc.data()
+          });
+        });
+        
+      } catch (error) {
+        console.error('Error loading data:', error);
+        showAlert('Error loading member data: ' + error.message, 'danger');
+      }
+    }
+
+    // Handle search input
+    function handleSearch() {
+      const searchTerm = searchInput.value.trim().toLowerCase();
+      
+      // Clear search results if search term is less than 3 characters
+      if (searchTerm.length < 3) {
+        searchResults.innerHTML = '';
+        searchResults.classList.remove('show');
+        return;
+      }
+      
+      // Filter users based on search term
+      const filteredUsers = users.filter(user => {
+        const firstName = (user.firstName || '').toLowerCase();
+        const surname = (user.surname || '').toLowerCase();
+        const email = (user.email || '').toLowerCase();
+        
+        return firstName.includes(searchTerm) || 
+               surname.includes(searchTerm) || 
+               email.includes(searchTerm) || 
+               `${firstName} ${surname}`.includes(searchTerm);
+      });
+      
+      // Show loading indicator
+      searchResults.innerHTML = `
+        <div class="loading-indicator">
+          <div class="spinner-border spinner-border-sm text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <span class="ms-2">Searching...</span>
+        </div>
+      `;
+      searchResults.classList.add('show');
+      
+      // Add slight delay for better UX
+      setTimeout(() => {
+        displaySearchResults(filteredUsers);
+      }, 300);
+    }
+
+    // Display search results
+    function displaySearchResults(filteredUsers) {
+      if (filteredUsers.length === 0) {
+        searchResults.innerHTML = `
+          <div class="no-results-message">
+            <i class="bi bi-exclamation-circle"></i> No members found matching your search
+          </div>
+        `;
+        searchResults.classList.add('show');
+        return;
+      }
+      
+      // Sort users by name
+      filteredUsers.sort((a, b) => {
+        const nameA = `${a.firstName || ''} ${a.surname || ''}`.trim().toLowerCase();
+        const nameB = `${b.firstName || ''} ${b.surname || ''}`.trim().toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+      
+      // Limit to first 20 results to avoid performance issues
+      const limitedResults = filteredUsers.slice(0, 20);
+      
+      let html = '';
+      limitedResults.forEach(user => {
+        const fullName = `${user.firstName || ''} ${user.surname || ''}`.trim();
+        const email = user.email || '';
+        
+        html += `
+          <div class="search-item" data-user-id="${user.id}">
+            <div class="fw-bold">${fullName}</div>
+            <div class="small text-muted">${email}</div>
+          </div>
+        `;
+      });
+      
+      if (filteredUsers.length > 20) {
+        html += `
+          <div class="search-item text-muted">
+            <small><i class="bi bi-info-circle"></i> Showing top 20 results. Refine your search for more specific results.</small>
+          </div>
+        `;
+      }
+      
+      searchResults.innerHTML = html;
+      searchResults.classList.add('show');
+      
+      // Add click event listeners
+      document.querySelectorAll('.search-item[data-user-id]').forEach(item => {
+        item.addEventListener('click', () => {
+          const userId = item.getAttribute('data-user-id');
+          loadMemberProfile(userId);
+          searchResults.classList.remove('show');
+        });
+      });
+    }
+
+    // Load and display member profile
+    async function loadMemberProfile(userId) {
+      try {
+        // Show loading in profile container
+        profileContainer.innerHTML = `
+          <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-3 text-muted">Loading member profile...</p>
+          </div>
+        `;
+        profileContainer.classList.remove('hidden');
+        
+        // Get user and profile data
+        const user = users.find(u => u.id === userId);
+        const profile = profiles.find(p => p.userId === userId);
+        
+        if (!user) {
+          showAlert('Member not found.', 'danger');
+          profileContainer.classList.add('hidden');
+          return;
+        }
+        
+        // Get event participation data
+        let participations = [];
+        try {
+          const participationsQuery = query(collection(db, 'eventParticipants'), where('userId', '==', userId));
+          const participationsSnapshot = await getDocs(participationsQuery);
+          participationsSnapshot.forEach(doc => {
+            participations.push(doc.data());
+          });
+        } catch (error) {
+          console.error('Error loading event participations:', error);
+          // Continue with the rest of the profile
+        }
+        
+        // Build profile HTML
+        const fullName = `${user.firstName || ''} ${user.surname || ''}`.trim();
+        const status = profile?.adminUse?.status || 'pending';
+        
+        let profileHtml = `
+          <div class="profile-header">
+        `;
+        
+        // Profile photo
+        if (profile && profile.profilePhotoURL) {
+          profileHtml += `<img src="${profile.profilePhotoURL}" alt="${fullName}" class="profile-photo">`;
+        } else {
+          profileHtml += `
+            <div class="profile-photo-placeholder">
+              <i class="bi bi-person"></i>
+            </div>
+          `;
+        }
+        
+        // Basic profile details
+        profileHtml += `
+            <div class="profile-details">
+              <h3>${fullName}</h3>
+              <p class="text-muted mb-2"><i class="bi bi-envelope"></i> ${user.email || 'No email'}</p>
+              <div class="${status}-badge">
+                <i class="bi bi-${status === 'pending' ? 'hourglass-split' : (status === 'approved' ? 'check-circle' : 'x-circle')}"></i> 
+                ${status.charAt(0).toUpperCase() + status.slice(1)}
+              </div>
+            </div>
+          </div>
+        `;
+        
+        // Contact Information
+        profileHtml += `
+          <div class="profile-section">
+            <h5><i class="bi bi-person-lines-fill"></i> Contact Information</h5>
+            <div class="row">
+              <div class="col-md-6 profile-info-item">
+                <div class="profile-info-label">Email</div>
+                <div>${user.email || 'Not provided'}</div>
+              </div>
+              <div class="col-md-6 profile-info-item">
+                <div class="profile-info-label">Phone</div>
+                <div>${profile?.personalDetails?.phone || 'Not provided'}</div>
+              </div>
+              <div class="col-md-6 profile-info-item">
+                <div class="profile-info-label">Emergency Contact</div>
+                <div>${profile?.personalDetails?.emergencyContact || 'Not provided'}</div>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        // Medical Qualifications
+        profileHtml += `
+          <div class="profile-section">
+            <h5><i class="bi bi-award"></i> Medical Qualifications</h5>
+            <div class="row">
+              <div class="col-md-6 profile-info-item">
+                <div class="profile-info-label">Grade</div>
+                <div>${profile?.medicalQualifications?.qualification || 'Not provided'}</div>
+              </div>
+        `;
+        
+        // Conditionally show appropriate registration based on qualification
+        const qualification = profile?.medicalQualifications?.qualification || '';
+        
+        if (['Paramedic', 'Paramedic (Specialist)', 'Paramedic (HART)', 
+             'Paramedic (Critical care)', 'Paramedic (in Primary Care)', 
+             'Paramedic (CTM/OO)'].includes(qualification)) {
+          profileHtml += `
+              <div class="col-md-6 profile-info-item">
+                <div class="profile-info-label">HCPC Registration</div>
+                <div>${profile?.medicalQualifications?.hcpc || 'Not provided'}</div>
+              </div>
+          `;
+        } else if (['Doctor', 'Doctor (Critical Care/BASICS/Merit)', 
+                    'Doctor (with FREC/PHTLS or similar)'].includes(qualification)) {
+          profileHtml += `
+              <div class="col-md-6 profile-info-item">
+                <div class="profile-info-label">GMC Registration</div>
+                <div>${profile?.medicalQualifications?.gmc || 'Not provided'}</div>
+              </div>
+          `;
+        } else if (['Nurse', 'Nurse (Ambulance Nurse)', 
+                    'Nurse (with FREC/PHTLS or similar)'].includes(qualification)) {
+          profileHtml += `
+              <div class="col-md-6 profile-info-item">
+                <div class="profile-info-label">NMC Registration</div>
+                <div>${profile?.medicalQualifications?.nmc || 'Not provided'}</div>
+              </div>
+          `;
+        }
+        
+        // Complete Medical Qualifications section
+        profileHtml += `
+            </div>
+          </div>
+        `;
+        
+        // Event Participation
+        profileHtml += `
+          <div class="profile-section">
+            <h5><i class="bi bi-calendar-event"></i> Event Participation</h5>
+        `;
+        
+        if (participations.length === 0) {
+          profileHtml += `
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle"></i> This member has not volunteered for any events
+            </div>
+          `;
+        } else {
+          // Sort participations by event date (most recent first)
+          participations.sort((a, b) => {
+            const eventA = events.find(e => e.id === a.eventId);
+            const eventB = events.find(e => e.id === b.eventId);
+            
+            if (!eventA || !eventA.startDate) return 1;
+            if (!eventB || !eventB.startDate) return -1;
+            
+            const dateA = eventA.startDate.seconds ? new Date(eventA.startDate.seconds * 1000) : new Date(eventA.startDate);
+            const dateB = eventB.startDate.seconds ? new Date(eventB.startDate.seconds * 1000) : new Date(eventB.startDate);
+            
+            return dateB - dateA; // Most recent first
+          });
+          
+          profileHtml += `<div class="row">`;
+          
+          participations.forEach(participation => {
+            const event = events.find(e => e.id === participation.eventId);
+            
+            if (!event) return; // Skip if event not found
+            
+            const eventName = event.name || 'Unknown Event';
+            const eventDate = formatDate(event.startDate);
+            const selected = participation.selected ? true : false;
+            
+            profileHtml += `
+              <div class="col-md-6 mb-3">
+                <div class="event-card ${selected ? 'selected' : 'not-selected'}">
+                  <div class="d-flex justify-content-between">
+                    <div>
+                      <h6 class="mb-1">${eventName}</h6>
+                      <div class="small text-muted">${eventDate}</div>
+                      <div class="small">${event.location || 'No location specified'}</div>
+                    </div>
+                    <div>
+                      ${selected ? 
+                        '<span class="badge bg-success">Selected</span>' : 
+                        '<span class="badge bg-secondary">Not selected</span>'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+          
+          profileHtml += `</div>`;
+        }
+        
+        profileHtml += `</div>`; // Close Event Participation section
+        
+        // Display the profile
+        profileContainer.innerHTML = profileHtml;
+        
+        // Scroll to profile
+        setTimeout(() => {
+          profileContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+        
+      } catch (error) {
+        console.error('Error loading member profile:', error);
+        showAlert('Error loading member profile: ' + error.message, 'danger');
+        profileContainer.classList.add('hidden');
+      }
+    }
+
+    // Document click handler to close search results
+    document.addEventListener('click', (e) => {
+      if (!searchResults.contains(e.target) && e.target !== searchInput) {
+        searchResults.classList.remove('show');
+      }
+    });
+
+    // Setup event listeners
+    function setupEventListeners() {
+      // Search input handler with debounce
+      let searchTimeout;
+      searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(handleSearch, 300); // 300ms debounce
+      });
+      
+      // Focus handler for search input
+      searchInput.addEventListener('focus', () => {
+        if (searchInput.value.trim().length >= 3) {
+          searchResults.classList.add('show');
+        }
+      });
+      
+      // Logout handler
+      logoutLink.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+          await signOut(auth);
+          window.location.href = 'index.html';
+        } catch (error) {
+          showAlert('Logout failed: ' + error.message, 'danger');
+        }
+      });
+    }
+
+    // Check authentication and admin status
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      try {
+        // Check if user is admin
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (!userDoc.exists() || userDoc.data().isAdmin !== true) {
+          window.location.href = 'dashboard.html';
+          return;
+        }
+        
+        // Load data and setup UI
+        await loadUsersAndProfiles();
+        setupEventListeners();
+        
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        window.location.href = 'dashboard.html';
+      }
+    });
+  </script>
+</body>
+</html>
