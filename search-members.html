@@ -608,10 +608,6 @@
             <h5><i class="bi bi-person-lines-fill"></i> Contact Information</h5>
             <div class="row">
               <div class="col-md-6 profile-info-item">
-                <div class="profile-info-label">Email</div>
-                <div>${user.email || 'Not provided'}</div>
-              </div>
-              <div class="col-md-6 profile-info-item">
                 <div class="profile-info-label">Phone</div>
                 <div>${profile?.personalDetails?.phone || 'Not provided'}</div>
               </div>
@@ -623,7 +619,7 @@
           </div>
         `;
         
-        // Medical Qualifications
+        // Medical Qualifications - simplified to show only Grade
         profileHtml += `
           <div class="profile-section">
             <h5><i class="bi bi-award"></i> Medical Qualifications</h5>
@@ -632,40 +628,6 @@
                 <div class="profile-info-label">Grade</div>
                 <div>${profile?.medicalQualifications?.qualification || 'Not provided'}</div>
               </div>
-        `;
-        
-        // Conditionally show appropriate registration based on qualification
-        const qualification = profile?.medicalQualifications?.qualification || '';
-        
-        if (['Paramedic', 'Paramedic (Specialist)', 'Paramedic (HART)', 
-             'Paramedic (Critical care)', 'Paramedic (in Primary Care)', 
-             'Paramedic (CTM/OO)'].includes(qualification)) {
-          profileHtml += `
-              <div class="col-md-6 profile-info-item">
-                <div class="profile-info-label">HCPC Registration</div>
-                <div>${profile?.medicalQualifications?.hcpc || 'Not provided'}</div>
-              </div>
-          `;
-        } else if (['Doctor', 'Doctor (Critical Care/BASICS/Merit)', 
-                    'Doctor (with FREC/PHTLS or similar)'].includes(qualification)) {
-          profileHtml += `
-              <div class="col-md-6 profile-info-item">
-                <div class="profile-info-label">GMC Registration</div>
-                <div>${profile?.medicalQualifications?.gmc || 'Not provided'}</div>
-              </div>
-          `;
-        } else if (['Nurse', 'Nurse (Ambulance Nurse)', 
-                    'Nurse (with FREC/PHTLS or similar)'].includes(qualification)) {
-          profileHtml += `
-              <div class="col-md-6 profile-info-item">
-                <div class="profile-info-label">NMC Registration</div>
-                <div>${profile?.medicalQualifications?.nmc || 'Not provided'}</div>
-              </div>
-          `;
-        }
-        
-        // Complete Medical Qualifications section
-        profileHtml += `
             </div>
           </div>
         `;
@@ -683,17 +645,17 @@
             </div>
           `;
         } else {
-          // Sort participations by volunteered date (most recent first)
+          // Sort participations by volunteered date (oldest to newest)
           participations.sort((a, b) => {
             // Try to parse dates from volunteeredAt field
             const dateA = a.volunteeredAt ? new Date(a.volunteeredAt) : null;
             const dateB = b.volunteeredAt ? new Date(b.volunteeredAt) : null;
             
             if (!dateA && !dateB) return 0;
-            if (!dateA) return 1;
-            if (!dateB) return -1;
+            if (!dateA) return -1;
+            if (!dateB) return 1;
             
-            return dateB - dateA; // Most recent first
+            return dateA - dateB; // Oldest first
           });
           
           profileHtml += `<div class="row">`;
