@@ -1061,15 +1061,15 @@ prehospital@festival-medical.org</textarea>
           }
           
           // Get profile data (for grade)
-          const profileDoc = await getDoc(doc(db, 'profiles', volunteerData.userId));
-          let grade = 'Unknown';
-          
-          if (profileDoc.exists() && profileDoc.data().submission) {
-            const profileData = profileDoc.data().submission;
-            if (profileData.medicalQualifications && profileData.medicalQualifications.qualification) {
-              grade = profileData.medicalQualifications.qualification;
-            }
-          }
+const profileDoc = await getDoc(doc(db, 'profiles', volunteerData.userId));
+let grade = 'Unknown';
+
+if (profileDoc.exists()) {
+  const profileData = profileDoc.data();
+  if (profileData.medicalQualifications && profileData.medicalQualifications.qualification) {
+    grade = profileData.medicalQualifications.qualification;
+  }
+}
           
           // Combine data
           volunteers.push({
