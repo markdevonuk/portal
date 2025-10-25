@@ -654,7 +654,7 @@ prehospital@festival-medical.org</textarea>
         // Get all events
         const eventsQuery = query(
           collection(db, 'events'),
-          orderBy('startDate', 'desc')
+          orderBy('startDate', 'asc')
         );
         
         const eventsSnapshot = await getDocs(eventsQuery);
