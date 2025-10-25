@@ -504,13 +504,64 @@
         }
         
         // Get event participation data
+        // The system appears to store volunteer data in a different collection
+        // Let's query the events collection and check volunteers
         let participations = [];
         try {
+          // First, try to check if there's a specific eventParticipants collection
           const participationsQuery = query(collection(db, 'eventParticipants'), where('userId', '==', userId));
           const participationsSnapshot = await getDocs(participationsQuery);
-          participationsSnapshot.forEach(doc => {
-            participations.push(doc.data());
-          });
+          
+          if (!participationsSnapshot.empty) {
+            participationsSnapshot.forEach(doc => {
+              participations.push(doc.data());
+            });
+          } else {
+            // Alternatively, check volunteers in each event
+            console.log("Checking events for volunteer data...");
+            const eventsQuery = query(collection(db, 'events'));
+            const eventsSnapshot = await getDocs(eventsQuery);
+            
+            eventsSnapshot.forEach(eventDoc => {
+              const eventData = eventDoc.data();
+              
+              // Check if this event has volunteers and if the user is in the volunteer list
+              if (eventData.volunteers) {
+                const userVolunteers = eventData.volunteers.filter(volunteer => 
+                  volunteer.userId === userId || volunteer.email === user.email
+                );
+                
+                if (userVolunteers.length > 0) {
+                  userVolunteers.forEach(volunteer => {
+                    participations.push({
+                      eventId: eventDoc.id,
+                      selected: volunteer.selected || false,
+                      // Add any other relevant data
+                      volunteer: volunteer
+                    });
+                  });
+                }
+              }
+            });
+            
+            // If still no events found, try a more direct approach - check the volunteers collection
+            if (participations.length === 0) {
+              const volunteersQuery = query(collection(db, 'volunteers'), where('email', '==', user.email));
+              const volunteersSnapshot = await getDocs(volunteersQuery);
+              
+              volunteersSnapshot.forEach(doc => {
+                const volunteerData = doc.data();
+                participations.push({
+                  eventId: volunteerData.eventId,
+                  selected: volunteerData.selected || false,
+                  // Add any other relevant data
+                  volunteer: volunteerData
+                });
+              });
+            }
+          }
+          
+          console.log(`Found ${participations.length} participations for user ${userId}`);
         } catch (error) {
           console.error('Error loading event participations:', error);
           // Continue with the rest of the profile
@@ -629,10 +680,25 @@
             </div>
           `;
         } else {
+          // Get all events to match IDs with names
+          const allEvents = [];
+          try {
+            const eventsQuery = query(collection(db, 'events'));
+            const eventsSnapshot = await getDocs(eventsQuery);
+            eventsSnapshot.forEach(doc => {
+              allEvents.push({
+                id: doc.id,
+                ...doc.data()
+              });
+            });
+          } catch (error) {
+            console.error('Error loading events:', error);
+          }
+          
           // Sort participations by event date (most recent first)
           participations.sort((a, b) => {
-            const eventA = events.find(e => e.id === a.eventId);
-            const eventB = events.find(e => e.id === b.eventId);
+            const eventA = allEvents.find(e => e.id === a.eventId);
+            const eventB = allEvents.find(e => e.id === b.eventId);
             
             if (!eventA || !eventA.startDate) return 1;
             if (!eventB || !eventB.startDate) return -1;
@@ -646,13 +712,21 @@
           profileHtml += `<div class="row">`;
           
           participations.forEach(participation => {
-            const event = events.find(e => e.id === participation.eventId);
+            // Get event details
+            const event = allEvents.find(e => e.id === participation.eventId);
+            if (!event) {
+              console.log(`Event not found for ID: ${participation.eventId}`);
+              return; // Skip if event not found
+            }
             
-            if (!event) return; // Skip if event not found
+            const eventName = event.name || event.title || event.Event || 'Unknown Event';
+            const eventDate = formatDate(event.startDate || event.date || event.StartDate);
+            const eventLocation = event.location || event.Location || 'No location specified';
             
-            const eventName = event.name || 'Unknown Event';
-            const eventDate = formatDate(event.startDate);
-            const selected = participation.selected ? true : false;
+            // Determine if selected
+            const selected = participation.selected === true || 
+                             participation.selected === 'Yes' ||
+                             (participation.volunteer && (participation.volunteer.selected === true || participation.volunteer.selected === 'Yes'));
             
             profileHtml += `
               <div class="col-md-6 mb-3">
@@ -661,7 +735,7 @@
                     <div>
                       <h6 class="mb-1">${eventName}</h6>
                       <div class="small text-muted">${eventDate}</div>
-                      <div class="small">${event.location || 'No location specified'}</div>
+                      <div class="small">${eventLocation}</div>
                     </div>
                     <div>
                       ${selected ? 
