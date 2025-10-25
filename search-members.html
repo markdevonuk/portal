@@ -645,27 +645,20 @@
             </div>
           `;
         } else {
-          // Sort participations by volunteered date (oldest to newest)
-          participations.sort((a, b) => {
-            // Try to parse dates from volunteeredAt field
-            const dateA = a.volunteeredAt ? new Date(a.volunteeredAt) : null;
-            const dateB = b.volunteeredAt ? new Date(b.volunteeredAt) : null;
-            
-            if (!dateA && !dateB) return 0;
-            if (!dateA) return -1;
-            if (!dateB) return 1;
-            
-            return dateA - dateB; // Oldest first
-          });
+          // Create a more detailed participations array with event data
+          const detailedParticipations = [];
           
-          profileHtml += `<div class="row">`;
-          
-          // Fetch event details for each participation
+          // Get all event details first
           for (const participation of participations) {
-            // Get event details
-            let eventName = "Unknown Event";
-            let eventDate = "Unknown Date";
-            let eventLocation = "Unknown Location";
+            // Create an object with participation and event details
+            const detailedParticipation = {
+              ...participation,
+              eventDetails: {
+                name: "Unknown Event",
+                date: null,
+                location: "Unknown Location"
+              }
+            };
             
             // Try to get event details from the eventId
             try {
@@ -675,15 +668,53 @@
                 
                 if (eventSnap.exists()) {
                   const eventData = eventSnap.data();
-                  eventName = eventData.name || eventData.title || "Unknown Event";
-                  eventDate = formatDate(eventData.startDate || eventData.date);
-                  eventLocation = eventData.location || "No location specified";
+                  detailedParticipation.eventDetails.name = eventData.name || eventData.title || "Unknown Event";
+                  
+                  // Store the raw date object/string for sorting
+                  detailedParticipation.eventDetails.rawDate = eventData.startDate || eventData.date;
+                  
+                  // Format date for display
+                  detailedParticipation.eventDetails.date = formatDate(eventData.startDate || eventData.date);
+                  detailedParticipation.eventDetails.location = eventData.location || "No location specified";
                 }
               }
             } catch (error) {
               console.error('Error fetching event details:', error);
             }
             
+            detailedParticipations.push(detailedParticipation);
+          }
+          
+          // Sort by event date (oldest to newest)
+          detailedParticipations.sort((a, b) => {
+            const dateA = a.eventDetails.rawDate;
+            const dateB = b.eventDetails.rawDate;
+            
+            // Handle different date formats
+            const getTimestamp = (date) => {
+              if (!date) return 0;
+              
+              if (date.seconds) {
+                return date.seconds * 1000;
+              } else if (date instanceof Date) {
+                return date.getTime();
+              } else if (typeof date === 'string') {
+                return new Date(date).getTime();
+              }
+              
+              return 0;
+            };
+            
+            const timeA = getTimestamp(dateA);
+            const timeB = getTimestamp(dateB);
+            
+            return timeA - timeB; // Oldest first
+          });
+          
+          profileHtml += `<div class="row">`;
+          
+          // Display events in sorted order
+          for (const participation of detailedParticipations) {
             // Determine if selected
             const selected = participation.selected === true || participation.selected === 'Yes';
             
@@ -692,9 +723,9 @@
                 <div class="event-card ${selected ? 'selected' : 'not-selected'}">
                   <div class="d-flex justify-content-between">
                     <div>
-                      <h6 class="mb-1">${eventName}</h6>
-                      <div class="small text-muted">${eventDate}</div>
-                      <div class="small">${eventLocation}</div>
+                      <h6 class="mb-1">${participation.eventDetails.name}</h6>
+                      <div class="small text-muted">${participation.eventDetails.date}</div>
+                      <div class="small">${participation.eventDetails.location}</div>
                     </div>
                     <div>
                       ${selected ? 
