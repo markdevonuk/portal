@@ -173,6 +173,18 @@
   color: #006d65;
   border: 1px solid rgba(0, 168, 150, 0.3);
 }
+    .event-badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 767.98px) {
+  .event-badges {
+    margin-bottom: 1.5rem; /* Increase bottom margin on small screens */
+  }
+}
   </style>
 </head>
 <body>
@@ -709,7 +721,7 @@ prehospital@festival-medical.org</textarea>
                 <div class="event-date mb-3">
                   <i class="bi bi-calendar-date"></i> ${dateDisplay}
                 </div>
-               <div class="mt-2">
+              <div class="mt-2 event-badges">
   <span class="volunteer-badge">
     <i class="bi bi-people-fill"></i> ${event.volunteerCount} Volunteers
   </span>
