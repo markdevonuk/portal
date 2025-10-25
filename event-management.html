@@ -476,59 +476,14 @@ Dear Member,
 Prehospital Team Leaders
 prehospital@festival-medical.org</textarea>
           </div>
-          
-          <!-- Email Preview Section (hidden initially) -->
-          <div id="emailPreviewSection" class="d-none">
-            <hr>
-            <h6>Ready to Send:</h6>
-            <div class="alert alert-success">
-              <strong>Recipients:</strong> <span id="recipientCount">0</span> volunteers<br>
-              <strong>Next Step:</strong> Copy the details below and send from your email client
-            </div>
-            
-            <div class="mb-3">
-              <label for="emailAddressList" class="form-label">Email Addresses (copy these to BCC field):</label>
-              <textarea class="form-control" id="emailAddressList" rows="4" readonly></textarea>
-              <button type="button" class="btn btn-sm btn-outline-primary mt-1" id="copyEmailAddressesBtn">
-                <i class="bi bi-clipboard"></i> Copy Email Addresses
-              </button>
-            </div>
-            
-            <div class="mb-3">
-              <label for="emailSubjectCopy" class="form-label">Subject (copy this):</label>
-              <input type="text" class="form-control" id="emailSubjectCopy" readonly>
-              <button type="button" class="btn btn-sm btn-outline-primary mt-1" id="copySubjectBtn">
-                <i class="bi bi-clipboard"></i> Copy Subject
-              </button>
-            </div>
-            
-            <div class="mb-3">
-              <label for="emailBodyCopy" class="form-label">Message Body (copy this):</label>
-              <textarea class="form-control" id="emailBodyCopy" rows="10" readonly></textarea>
-              <button type="button" class="btn btn-sm btn-outline-primary mt-1" id="copyMessageBtn">
-                <i class="bi bi-clipboard"></i> Copy Message
-              </button>
-            </div>
-            
-            <div class="alert alert-info">
-              <i class="bi bi-info-circle"></i>
-              <strong>Instructions:</strong>
-              <ol class="mb-0 mt-2">
-                <li>Copy the email addresses above</li>
-                <li>Open your FMS email and create a new message</li>
-                <li>Paste the addresses in the <strong>BCC</strong> field</li>
-                <li>Copy and paste the subject and message</li>
-                <li>Send the email from your own account</li>
-              </ol>
-            </div>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" id="prepareMessageBtn">
-            <i class="bi bi-envelope"></i> Prepare Email Details
-          </button>
-        </div>
+  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+  <button type="button" class="btn btn-primary" id="sendEmailsBtn">
+    <i class="bi bi-send"></i> Send Emails
+  </button>
+</div>
       </div>
     </div>
   </div>
@@ -571,9 +526,6 @@ prehospital@festival-medical.org</textarea>
     const selectVolunteersBtn = document.getElementById('selectVolunteersBtn');
     const confirmVolunteerSelection = document.getElementById('confirmVolunteerSelection');
     const prepareMessageBtn = document.getElementById('prepareMessageBtn');
-    const copyEmailAddressesBtn = document.getElementById('copyEmailAddressesBtn');
-    const copySubjectBtn = document.getElementById('copySubjectBtn');
-    const copyMessageBtn = document.getElementById('copyMessageBtn');
     
     // Current user and data
     let currentUser = null;
@@ -1479,90 +1431,108 @@ if (profileDoc.exists()) {
       modal.show();
     }
 
-    // Prepare email details
-    function prepareEmailDetails() {
-      const messageTarget = document.querySelector('input[name="messageTarget"]:checked')?.value || 'selected';
-      const subject = document.getElementById('messageSubject')?.value?.trim() || '';
-      const content = document.getElementById('messageContent')?.value?.trim() || '';
-      
-      if (!subject) {
-        showAlert('Please enter a subject', 'warning');
-        return;
-      }
-      
-      if (!content) {
-        showAlert('Please enter a message', 'warning');
-        return;
-      }
-      
-      let targetVolunteers = [];
-      
-      switch (messageTarget) {
-        case 'selected':
-          targetVolunteers = currentEventVolunteers.filter(v => v.selected);
-          break;
-        case 'notSelected':
-          targetVolunteers = currentEventVolunteers.filter(v => !v.selected);
-          break;
-        case 'all':
-          targetVolunteers = currentEventVolunteers;
-          break;
-      }
-      
-      if (targetVolunteers.length === 0) {
-        showAlert('No volunteers found for the selected target group', 'warning');
-        return;
-      }
-      
-      // Generate email addresses list (comma-separated for BCC)
-      const emailAddresses = targetVolunteers.map(v => v.email).join(', ');
-      
-      // Show the preview section
-      safeUpdateElement('emailPreviewSection', element => {
-        element.classList.remove('d-none');
-      });
-      
-      safeUpdateElement('recipientCount', element => {
-        element.textContent = targetVolunteers.length;
-      });
-      
-      safeUpdateElement('emailAddressList', element => {
-        element.value = emailAddresses;
-      });
-      
-      safeUpdateElement('emailSubjectCopy', element => {
-        element.value = subject;
-      });
-      
-      safeUpdateElement('emailBodyCopy', element => {
-        element.value = content;
-      });
-      
-      // Hide the prepare button
-      safeUpdateElement('prepareMessageBtn', element => {
-        element.classList.add('d-none');
-      });
-    }
-
-    // Copy text to clipboard
-    function copyToClipboard(element) {
-      if (!element) return;
-      
-      element.select();
-      element.setSelectionRange(0, 99999); // For mobile devices
-      
+// Send emails directly via Firebase
+async function sendEmails() {
+  const messageTarget = document.querySelector('input[name="messageTarget"]:checked')?.value || 'selected';
+  const subject = document.getElementById('messageSubject')?.value?.trim() || '';
+  const content = document.getElementById('messageContent')?.value?.trim() || '';
+  
+  if (!subject) {
+    showAlert('Please enter a subject', 'warning');
+    return;
+  }
+  
+  if (!content) {
+    showAlert('Please enter a message', 'warning');
+    return;
+  }
+  
+  let targetVolunteers = [];
+  
+  switch (messageTarget) {
+    case 'selected':
+      targetVolunteers = currentEventVolunteers.filter(v => v.selected);
+      break;
+    case 'notSelected':
+      targetVolunteers = currentEventVolunteers.filter(v => !v.selected);
+      break;
+    case 'all':
+      targetVolunteers = currentEventVolunteers;
+      break;
+  }
+  
+  if (targetVolunteers.length === 0) {
+    showAlert('No volunteers found for the selected target group', 'warning');
+    return;
+  }
+  
+  // Show loading state
+  const sendBtn = document.getElementById('sendEmailsBtn');
+  sendBtn.disabled = true;
+  sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...';
+  
+  try {
+    let successCount = 0;
+    let errorCount = 0;
+    
+    // Process each volunteer individually
+    for (const volunteer of targetVolunteers) {
       try {
-        document.execCommand('copy');
-        showAlert('Copied to clipboard!', 'success');
-      } catch (err) {
-        // Fallback for modern browsers
-        navigator.clipboard.writeText(element.value).then(() => {
-          showAlert('Copied to clipboard!', 'success');
-        }).catch(() => {
-          showAlert('Please manually copy the text', 'warning');
+        // Skip if no email address
+        if (!volunteer.email) {
+          errorCount++;
+          continue;
+        }
+        
+        // Get first name (first word of name or "Member" if not available)
+        const firstName = volunteer.name ? volunteer.name.split(' ')[0] : 'Member';
+        
+        // Personalize content with first name
+        const personalizedContent = content.replace('Dear Member,', `Dear ${firstName},`);
+        
+        // Send email to volunteer and a copy to prehospital
+        await addDoc(collection(db, 'mail'), {
+          to: [
+            volunteer.email,
+            { email: 'prehospital@festival-medical.org', name: 'COPY EMAIL' }
+          ],
+          message: {
+            subject: subject,
+            text: personalizedContent,
+            html: personalizedContent.replace(/\n/g, '<br>')
+          }
         });
+        
+        successCount++;
+      } catch (err) {
+        console.error(`Error sending email to ${volunteer.email}:`, err);
+        errorCount++;
       }
     }
+    
+    // Show appropriate alert
+    if (errorCount === 0) {
+      showAlert(`Successfully sent emails to ${successCount} volunteers!`, 'success');
+      
+      // Close the modal after success
+      const modalEl = document.getElementById('messageVolunteersModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) modal.hide();
+    } else if (successCount > 0) {
+      showAlert(`Sent ${successCount} emails with ${errorCount} errors. Check console for details.`, 'warning');
+    } else {
+      showAlert('Failed to send emails. Check console for details.', 'danger');
+    }
+    
+  } catch (error) {
+    console.error('Error in email sending process:', error);
+    showAlert(`Error sending emails: ${error.message}`, 'danger');
+  } finally {
+    // Reset button state
+    sendBtn.disabled = false;
+    sendBtn.innerHTML = '<i class="bi bi-send"></i> Send Emails';
+  }
+}
 
     // Check user admin status
     async function checkAdminStatus() {
@@ -1608,19 +1578,8 @@ if (profileDoc.exists()) {
     confirmVolunteerSelection.addEventListener('click', confirmVolunteerSelections);
     exportVolunteersBtn.addEventListener('click', exportVolunteersList);
     
-    prepareMessageBtn.addEventListener('click', prepareEmailDetails);
+    document.getElementById('sendEmailsBtn').addEventListener('click', sendEmails);
     
-    copyEmailAddressesBtn.addEventListener('click', () => {
-      copyToClipboard(document.getElementById('emailAddressList'));
-    });
-    
-    copySubjectBtn.addEventListener('click', () => {
-      copyToClipboard(document.getElementById('emailSubjectCopy'));
-    });
-    
-    copyMessageBtn.addEventListener('click', () => {
-      copyToClipboard(document.getElementById('emailBodyCopy'));
-    });
     
     // Search volunteers
     document.getElementById('volunteerSearchInput')?.addEventListener('input', e => {
@@ -1700,6 +1659,6 @@ if (profileDoc.exists()) {
       }
     });
   </script>
-  <script src="event-management-email.js"></script>
+  
 </body>
 </html>
