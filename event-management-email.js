@@ -76,17 +76,17 @@ async function sendEmails() {
         const personalizedContent = content.replace('Dear Member,', `Dear ${firstName},`);
         
         // Send email to volunteer and a copy to prehospital
-        await addDoc(collection(db, 'mail'), {
-          to: [
-            volunteer.email,
-            { email: 'prehospital@festival-medical.org', name: 'COPY EMAIL' }
-          ],
-          message: {
-            subject: subject,
-            text: personalizedContent,
-            html: personalizedContent.replace(/\n/g, '<br>')
-          }
-        });
+     await addDoc(collection(db, 'mail'), {
+  to: [
+    volunteer.email,
+    'prehospital@festival-medical.org'  // Changed to string format
+  ],
+  message: {
+    subject: subject,
+    text: personalizedContent,
+    html: personalizedContent.replace(/\n/g, '<br>')
+  }
+});
         
         successCount++;
       } catch (err) {
