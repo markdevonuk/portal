@@ -437,37 +437,37 @@
         <h5 class="modal-title">Message Volunteers: <span id="messageEventName"></span></h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-        <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label">Send message to:</label>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="messageTarget" id="messageSelected" value="selected" checked>
-              <label class="form-check-label" for="messageSelected">
-                Selected volunteers only (<span id="selectedCount">0</span>)
-              </label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="messageTarget" id="messageNotSelected" value="notSelected">
-              <label class="form-check-label" for="messageNotSelected">
-                Non-selected volunteers only (<span id="notSelectedCount">0</span>)
-              </label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="messageTarget" id="messageAll" value="all">
-              <label class="form-check-label" for="messageAll">
-                All volunteers (<span id="allVolunteersCount">0</span>)
-              </label>
-            </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Send message to:</label>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="messageTarget" id="messageSelected" value="selected" checked>
+            <label class="form-check-label" for="messageSelected">
+              Selected volunteers only (<span id="selectedCount">0</span>)
+            </label>
           </div>
-          
-          <div class="mb-3">
-            <label for="messageSubject" class="form-label">Subject:</label>
-            <input type="text" class="form-control" id="messageSubject" value="Festival Medical Services - Event Update">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="messageTarget" id="messageNotSelected" value="notSelected">
+            <label class="form-check-label" for="messageNotSelected">
+              Non-selected volunteers only (<span id="notSelectedCount">0</span>)
+            </label>
           </div>
-          
-          <div class="mb-3">
-            <label for="messageContent" class="form-label">Message:</label>
-            <textarea class="form-control" id="messageContent" rows="12" placeholder="Type your message here...">IMPORTANT: DO NOT REPLY TO THIS MESSAGE AS IT IS NOT A MONITORED EMAIL ADDRESS
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="messageTarget" id="messageAll" value="all">
+            <label class="form-check-label" for="messageAll">
+              All volunteers (<span id="allVolunteersCount">0</span>)
+            </label>
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label for="messageSubject" class="form-label">Subject:</label>
+          <input type="text" class="form-control" id="messageSubject" value="Festival Medical Services - Event Update">
+        </div>
+        
+        <div class="mb-3">
+          <label for="messageContent" class="form-label">Message:</label>
+          <textarea class="form-control" id="messageContent" rows="12" placeholder="Type your message here...">IMPORTANT: DO NOT REPLY TO THIS MESSAGE AS IT IS NOT A MONITORED EMAIL ADDRESS
 
 Dear Member,
 
@@ -475,9 +475,8 @@ Dear Member,
 
 Prehospital Team Leaders
 prehospital@festival-medical.org</textarea>
-          </div>
-          </div>
         </div>
+      </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-primary" id="sendEmailsBtn">
