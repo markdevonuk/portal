@@ -1542,16 +1542,23 @@ async function sendEmails() {
     
     // Show appropriate alert
     if (errorCount === 0) {
+      // Show success message first
       showAlert(`Successfully sent ${successCount} emails!`, 'success');
       
-      // Close the modal after success
-      const modalEl = document.getElementById('messageVolunteersModal');
-      const modal = bootstrap.Modal.getInstance(modalEl);
-      if (modal) modal.hide();
+      // Close the modal after a short delay
+      setTimeout(() => {
+        const modalEl = document.getElementById('messageVolunteersModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+      }, 1500); // 1.5 second delay to ensure the message is seen
     } else if (successCount > 0) {
       showAlert(`Sent ${successCount} emails with ${errorCount} errors. Check console for details.`, 'warning');
+      
+      // Don't close modal automatically on partial success
     } else {
       showAlert('Failed to send emails. Check console for details.', 'danger');
+      
+      // Don't close modal on failure
     }
     
   } catch (error) {
@@ -1563,7 +1570,6 @@ async function sendEmails() {
     sendBtn.innerHTML = '<i class="bi bi-send"></i> Send Emails';
   }
 }
-
 
 
 
