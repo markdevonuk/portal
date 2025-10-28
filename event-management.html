@@ -1432,103 +1432,248 @@ if (profileDoc.exists()) {
     }
 
 // Send emails directly via Firebase
+// Debug version of the sendEmails function
 async function sendEmails() {
-  const messageTarget = document.querySelector('input[name="messageTarget"]:checked')?.value || 'selected';
-  const subject = document.getElementById('messageSubject')?.value?.trim() || '';
-  const content = document.getElementById('messageContent')?.value?.trim() || '';
+  // Create debug container
+  const debugInfo = {
+    steps: [],
+    errors: [],
+    userData: {},
+    eventData: {},
+    volunteersData: []
+  };
   
-  if (!subject) {
-    showAlert('Please enter a subject', 'warning');
-    return;
+  // Add debug step
+  function addStep(message) {
+    debugInfo.steps.push(`${new Date().toISOString().split('T')[1].slice(0, -1)}: ${message}`);
+    console.log(`DEBUG: ${message}`);
   }
-  
-  if (!content) {
-    showAlert('Please enter a message', 'warning');
-    return;
-  }
-  
-  let targetVolunteers = [];
-  
-  switch (messageTarget) {
-    case 'selected':
-      targetVolunteers = currentEventVolunteers.filter(v => v.selected);
-      break;
-    case 'notSelected':
-      targetVolunteers = currentEventVolunteers.filter(v => !v.selected);
-      break;
-    case 'all':
-      targetVolunteers = currentEventVolunteers;
-      break;
-  }
-  
-  if (targetVolunteers.length === 0) {
-    showAlert('No volunteers found for the selected target group', 'warning');
-    return;
-  }
-  
-  // Show loading state
-  const sendBtn = document.getElementById('sendEmailsBtn');
-  sendBtn.disabled = true;
-  sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...';
   
   try {
+    addStep("Starting sendEmails function");
+    
+    // Check if user is admin
+    addStep("Checking admin status");
+    const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+    debugInfo.userData = {
+      uid: auth.currentUser.uid,
+      email: auth.currentUser.email,
+      isAdmin: userDoc.exists() ? (userDoc.data().isAdmin === true) : false
+    };
+    addStep(`User admin status: ${debugInfo.userData.isAdmin}`);
+    
+    // Get inputs
+    const messageTarget = document.querySelector('input[name="messageTarget"]:checked')?.value || 'selected';
+    addStep(`Message target: ${messageTarget}`);
+    
+    const subject = document.getElementById('messageSubject')?.value?.trim() || '';
+    addStep(`Subject: "${subject}"`);
+    
+    const content = document.getElementById('messageContent')?.value?.trim() || '';
+    addStep(`Content length: ${content.length} characters`);
+    
+    // Get event info
+    const event = currentEvents.find(e => e.id === currentEventId);
+    if (event) {
+      debugInfo.eventData = {
+        id: event.id,
+        name: event.name,
+        volunteers: currentEventVolunteers.length
+      };
+      addStep(`Event found: ${event.name}`);
+    } else {
+      addStep("WARNING: Event not found!");
+    }
+    
+    // Get target volunteers
+    let targetVolunteers = [];
+    
+    switch (messageTarget) {
+      case 'selected':
+        targetVolunteers = currentEventVolunteers.filter(v => v.selected);
+        break;
+      case 'notSelected':
+        targetVolunteers = currentEventVolunteers.filter(v => !v.selected);
+        break;
+      case 'all':
+        targetVolunteers = currentEventVolunteers;
+        break;
+    }
+    
+    addStep(`Target volunteers count: ${targetVolunteers.length}`);
+    
+    // Validate inputs
+    if (!subject) {
+      addStep("ERROR: Subject is empty");
+      showAlert('Please enter a subject', 'warning');
+      return;
+    }
+    
+    if (!content) {
+      addStep("ERROR: Content is empty");
+      showAlert('Please enter a message', 'warning');
+      return;
+    }
+    
+    if (targetVolunteers.length === 0) {
+      addStep("ERROR: No volunteers found");
+      showAlert('No volunteers found for the selected target group', 'warning');
+      return;
+    }
+    
+    // Sample the first 5 volunteers for debugging
+    debugInfo.volunteersData = targetVolunteers.slice(0, 5).map(v => ({
+      email: v.email || 'No email',
+      name: v.name || 'Unknown',
+      selected: v.selected || false
+    }));
+    
+    // Show loading state
+    const sendBtn = document.getElementById('sendEmailsBtn');
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...';
+    
+    // Process volunteers
+    addStep("About to start sending emails to volunteers");
+    
     let successCount = 0;
     let errorCount = 0;
     
-    // Process each volunteer individually
-    for (const volunteer of targetVolunteers) {
+    // Send to first volunteer only for testing
+    if (targetVolunteers.length > 0) {
+      const volunteer = targetVolunteers[0];
       try {
-        // Skip if no email address
+        addStep(`Attempting to send email to: ${volunteer.email}`);
+        
         if (!volunteer.email) {
+          addStep("No email address for this volunteer, skipping");
           errorCount++;
-          continue;
-        }
-        
-        // Get first name (first word of name or "Member" if not available)
-        const firstName = volunteer.name ? volunteer.name.split(' ')[0] : 'Member';
-        
-        // Personalize content with first name
-        const personalizedContent = content.replace('Dear Member,', `Dear ${firstName},`);
-        
-        // Send email to volunteer and a copy to prehospital
-        await addDoc(collection(db, 'mail'), {
-          to: [
-            volunteer.email,
-            { email: 'prehospital@festival-medical.org', name: 'COPY EMAIL' }
-          ],
-          message: {
-            subject: subject,
-            text: personalizedContent,
-            html: personalizedContent.replace(/\n/g, '<br>')
+        } else {
+          const firstName = volunteer.name ? volunteer.name.split(' ')[0] : 'Member';
+          addStep(`First name: ${firstName}`);
+          
+          // Personalize content
+          const personalizedContent = content.replace('Dear Member,', `Dear ${firstName},`);
+          
+          // Create email data
+          const emailData = {
+            to: [
+              volunteer.email,
+              { email: 'prehospital@festival-medical.org', name: 'COPY EMAIL' }
+            ],
+            message: {
+              subject: subject,
+              text: personalizedContent,
+              html: personalizedContent.replace(/\n/g, '<br>')
+            }
+          };
+          addStep("Email data prepared");
+          debugInfo.emailData = emailData;
+          
+          // Try adding document to mail collection
+          addStep("Adding document to 'mail' collection...");
+          try {
+            const docRef = await addDoc(collection(db, 'mail'), emailData);
+            addStep(`Document written with ID: ${docRef.id}`);
+            successCount++;
+          } catch (firestoreErr) {
+            addStep(`FIRESTORE ERROR: ${firestoreErr.code} - ${firestoreErr.message}`);
+            debugInfo.errors.push(`Firestore: ${firestoreErr.code} - ${firestoreErr.message}`);
+            throw firestoreErr;
           }
-        });
-        
-        successCount++;
+        }
       } catch (err) {
-        console.error(`Error sending email to ${volunteer.email}:`, err);
+        addStep(`ERROR sending email: ${err.message}`);
+        debugInfo.errors.push(err.message);
         errorCount++;
       }
     }
     
+    // Show results
+    addStep(`Completed with ${successCount} successes and ${errorCount} errors`);
+    
+    // Show debug popup
+    const debugHtml = `
+      <div style="max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+        <h5>Debug Information</h5>
+        <div style="margin-bottom: 10px;">
+          <strong>User:</strong> ${debugInfo.userData.email} (Admin: ${debugInfo.userData.isAdmin})
+        </div>
+        <div style="margin-bottom: 10px;">
+          <strong>Event:</strong> ${debugInfo.eventData.name || 'Unknown'} (Volunteers: ${debugInfo.eventData.volunteers || 0})
+        </div>
+        <h6>Steps:</h6>
+        <ol>
+          ${debugInfo.steps.map(step => `<li>${step}</li>`).join('')}
+        </ol>
+        ${debugInfo.errors.length > 0 ? `
+          <h6 style="color: red;">Errors:</h6>
+          <ul>
+            ${debugInfo.errors.map(err => `<li style="color: red;">${err}</li>`).join('')}
+          </ul>
+        ` : ''}
+        <h6>Sample Volunteers (${debugInfo.volunteersData.length}):</h6>
+        <ul>
+          ${debugInfo.volunteersData.map(v => `<li>${v.name} - ${v.email} (Selected: ${v.selected})</li>`).join('')}
+        </ul>
+        ${debugInfo.emailData ? `
+          <h6>Email Data:</h6>
+          <pre>${JSON.stringify(debugInfo.emailData, null, 2)}</pre>
+        ` : ''}
+      </div>
+    `;
+    
+    // Create modal for debug info
+    const debugModal = document.createElement('div');
+    debugModal.innerHTML = `
+      <div class="modal fade" id="debugModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+              <h5 class="modal-title">Email Debugging Information</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              ${debugHtml}
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary" id="copyDebugBtn">
+                Copy Debug Info
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(debugModal);
+    
+    // Initialize and show the modal
+    const modal = new bootstrap.Modal(document.getElementById('debugModal'));
+    modal.show();
+    
+    // Add copy functionality
+    document.getElementById('copyDebugBtn').addEventListener('click', function() {
+      const debugText = JSON.stringify(debugInfo, null, 2);
+      navigator.clipboard.writeText(debugText).then(function() {
+        alert('Debug info copied to clipboard!');
+      });
+    });
+    
     // Show appropriate alert
-    if (errorCount === 0) {
-      showAlert(`Successfully sent emails to ${successCount} volunteers!`, 'success');
-      
-      // Close the modal after success
-      const modalEl = document.getElementById('messageVolunteersModal');
-      const modal = bootstrap.Modal.getInstance(modalEl);
-      if (modal) modal.hide();
-    } else if (successCount > 0) {
-      showAlert(`Sent ${successCount} emails with ${errorCount} errors. Check console for details.`, 'warning');
+    if (errorCount === 0 && successCount > 0) {
+      showAlert(`Successfully sent test email! Check debug info for details.`, 'success');
     } else {
-      showAlert('Failed to send emails. Check console for details.', 'danger');
+      showAlert('Error sending email. Check debug info for details.', 'danger');
     }
     
   } catch (error) {
     console.error('Error in email sending process:', error);
+    debugInfo.errors.push(`General: ${error.message}`);
     showAlert(`Error sending emails: ${error.message}`, 'danger');
   } finally {
     // Reset button state
+    const sendBtn = document.getElementById('sendEmailsBtn');
     sendBtn.disabled = false;
     sendBtn.innerHTML = '<i class="bi bi-send"></i> Send Emails';
   }
