@@ -8,191 +8,63 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <link rel="stylesheet" href="css/styles.css">
   <style>
- /* Complete CSS for team-management.html */
-
-body { 
-  background: #f8f9fa; 
-  min-height: 100vh; 
-}
-
-/* Navbar styling */
-.navbar { 
-  background: linear-gradient(135deg, #00a896 0%, #028090 100%) !important; 
-  box-shadow: 0 2px 10px rgba(0,0,0,.1); 
-}
-
-.nav-link { 
-  color: #fff !important; 
-  font-weight: 500; 
-}
-
-.nav-link:hover { 
-  color: #fff !important; 
-  opacity: 0.85; 
-}
-
-/* Page header */
-.page-header {
-  margin-top: 30px;
-  margin-bottom: 20px;
-}
-
-/* Main content card */
-.admin-card { 
-  background: #fff; 
-  border-radius: 15px; 
-  box-shadow: 0 5px 20px rgba(0,0,0,.08); 
-  padding: 30px; 
-  margin: 20px 0; 
-}
-
-/* Team cards */
-.team-card {
-  border-radius: 10px;
-  padding: 20px;
-  background-color: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  transition: all 0.2s ease;
-  margin-bottom: 20px;
-}
-
-.team-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.team-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  margin-top: 15px;
-}
-
-.team-members {
-  font-size: 14px;
-  color: #6c757d;
-  margin-top: 5px;
-}
-
-.no-teams-message {
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  padding: 30px;
-  text-align: center;
-}
-
-/* Loading animations and states */
-.btn-loading {
-  position: relative;
-  color: transparent !important;
-}
-
-.btn-loading:after {
-  content: '';
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  top: calc(50% - 8px);
-  left: calc(50% - 8px);
-  border: 2px solid rgba(255,255,255,0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spinner 0.6s linear infinite;
-}
-
-@keyframes spinner { 
-  to { transform: rotate(360deg); } 
-}
-
-/* Utility classes */
-.hidden {
-  display: none !important;
-}
-
-/* Button colors */
-.btn-primary {
-  background-color: #00a896;
-  border-color: #00a896;
-}
-
-.btn-primary:hover, 
-.btn-primary:focus, 
-.btn-primary:active {
-  background-color: #008f7e !important;
-  border-color: #008f7e !important;
-}
-
-.btn-outline-primary {
-  color: #00a896;
-  border-color: #00a896;
-}
-
-.btn-outline-primary:hover, 
-.btn-outline-primary:focus, 
-.btn-outline-primary:active {
-  background-color: #00a896 !important;
-  border-color: #00a896 !important;
-  color: white !important;
-}
-
-/* Modal styling */
-.modal-header {
-  border-bottom: 1px solid #e9ecef;
-}
-
-.modal-footer {
-  border-top: 1px solid #e9ecef;
-}
-
-/* Form elements */
-.form-control:focus {
-  border-color: #00a896;
-  box-shadow: 0 0 0 0.25rem rgba(0, 168, 150, 0.25);
-}
-
-.form-select:focus {
-  border-color: #00a896;
-  box-shadow: 0 0 0 0.25rem rgba(0, 168, 150, 0.25);
-}
-
-/* Alerts styling */
-.alert {
-  border-radius: 8px;
-}
-
-.alert-info {
-  background-color: #cff4fc;
-  border-color: #b6effb;
-  color: #055160;
-}
-
-.alert-success {
-  background-color: #d1e7dd;
-  border-color: #badbcc;
-  color: #0f5132;
-}
-
-.alert-warning {
-  background-color: #fff3cd;
-  border-color: #ffecb5;
-  color: #664d03;
-}
-
-.alert-danger {
-  background-color: #f8d7da;
-  border-color: #f5c2c7;
-  color: #842029;
-}
-
-/* Page loader (optional) */
-.page-content {
-  opacity: 0;
-  transition: opacity 0.3s ease-in-out;
-}
-
-.page-content.loaded {
-  opacity: 1;
-}
+    .team-card {
+      border-radius: 10px;
+      padding: 20px;
+      background-color: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: all 0.2s ease;
+      margin-bottom: 20px;
+    }
+    
+    .team-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .team-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 15px;
+    }
+    
+    .team-members {
+      font-size: 14px;
+      color: #6c757d;
+      margin-top: 5px;
+    }
+    
+    .no-teams-message {
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 30px;
+      text-align: center;
+    }
+    
+    .btn-loading {
+      position: relative;
+      color: transparent !important;
+    }
+    
+    .btn-loading:after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      top: calc(50% - 8px);
+      left: calc(50% - 8px);
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spinner 0.6s linear infinite;
+    }
+    
+    @keyframes spinner { to { transform: rotate(360deg); } }
+    
+    .hidden {
+      display: none !important;
+    }
   </style>
 </head>
 <body>
@@ -205,6 +77,7 @@ body {
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto">
+          
           <li class="nav-item">
             <a class="nav-link" href="admin.html">
               <i class="bi bi-arrow-left"></i> Admin Dashboard
@@ -229,12 +102,15 @@ body {
       </div>
     </div>
   </nav>
+
   <div class="container">
     <div class="page-header">
       <h1 class="mb-2"><i class="bi bi-people-fill"></i> Team Management</h1>
       <p class="mb-0">Create and manage teams for organization members</p>
     </div>
+
     <div id="alertContainer"></div>
+
     <div class="admin-card">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h3><i class="bi bi-people"></i> Teams</h3>
@@ -242,6 +118,7 @@ body {
           <i class="bi bi-plus-circle"></i> Create New Team
         </button>
       </div>
+
       <div id="teamsContainer">
         <div id="loadingTeams" class="text-center py-4">
           <div class="spinner-border text-primary" role="status">
@@ -249,15 +126,18 @@ body {
           </div>
           <p class="mt-2 text-muted">Loading teams...</p>
         </div>
+        
         <div id="noTeamsMessage" class="alert alert-info hidden">
           <i class="bi bi-info-circle"></i> No teams found. Create a new team to get started.
         </div>
+        
         <div id="teamsList" class="hidden">
           <!-- Teams will be loaded here dynamically -->
         </div>
       </div>
     </div>
   </div>
+
   <!-- Team Modal -->
   <div class="modal fade" id="teamModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
@@ -287,6 +167,7 @@ body {
       </div>
     </div>
   </div>
+
   <!-- Delete Confirmation Modal -->
   <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
@@ -310,7 +191,9 @@ body {
       </div>
     </div>
   </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
     import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
@@ -329,10 +212,12 @@ body {
       updateTeam,
       deleteTeam
     } from './teams-service.js';
+
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+
     // DOM Elements
     const teamsList = document.getElementById('teamsList');
     const loadingTeams = document.getElementById('loadingTeams');
@@ -349,9 +234,11 @@ body {
     const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
     const alertContainer = document.getElementById('alertContainer');
     const logoutLink = document.getElementById('logoutLink');
+
     // Store current teams data
     let currentTeams = [];
     let currentTeamId = null;
+
     // Set button loading state
     function setButtonLoading(button, isLoading) {
       if (isLoading) {
@@ -362,14 +249,16 @@ body {
         button.disabled = false;
       }
     }
+
     // Show alert message
     function showAlert(message, type) {
-      const html = 
+      const html = `
         <div class="alert alert-${type} alert-dismissible fade show" role="alert">
           ${message}
           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>;
+        </div>`;
       alertContainer.innerHTML = html;
+      
       if (type === 'success') {
         setTimeout(() => {
           const alert = document.querySelector('.alert');
@@ -380,26 +269,32 @@ body {
         }, 5000);
       }
     }
+
     // Load all teams
     async function loadTeams() {
       try {
         teamsList.classList.add('hidden');
         loadingTeams.classList.remove('hidden');
         noTeamsMessage.classList.add('hidden');
+        
         currentTeams = await getAllTeams();
+        
         if (currentTeams.length === 0) {
           loadingTeams.classList.add('hidden');
           noTeamsMessage.classList.remove('hidden');
           return;
         }
+        
         // Render teams
         teamsList.innerHTML = '';
+        
         for (const team of currentTeams) {
           // Get users in this team
           const users = await getUsersInTeam(team.id);
+          
           const teamCard = document.createElement('div');
           teamCard.className = 'team-card';
-          teamCard.innerHTML = 
+          teamCard.innerHTML = `
             <div class="d-flex justify-content-between align-items-start">
               <div>
                 <h4 class="mb-1">${team.name}</h4>
@@ -417,24 +312,30 @@ body {
                 <i class="bi bi-trash"></i> Delete
               </button>
             </div>
-          ;
+          `;
+          
           teamsList.appendChild(teamCard);
         }
+        
         // Add event listeners
         document.querySelectorAll('.edit-team-btn').forEach(btn => {
           btn.addEventListener('click', () => openEditTeamModal(btn.dataset.teamId));
         });
+        
         document.querySelectorAll('.delete-team-btn').forEach(btn => {
           btn.addEventListener('click', () => openDeleteTeamModal(btn.dataset.teamId));
         });
+        
         loadingTeams.classList.add('hidden');
         teamsList.classList.remove('hidden');
+        
       } catch (error) {
         console.error('Error loading teams:', error);
         showAlert('Error loading teams: ' + error.message, 'danger');
         loadingTeams.classList.add('hidden');
       }
     }
+
     // Open create team modal
     function openCreateTeamModal() {
       currentTeamId = null;
@@ -442,56 +343,71 @@ body {
       teamForm.reset();
       teamModal.show();
     }
+
     // Open edit team modal
     function openEditTeamModal(teamId) {
       const team = currentTeams.find(t => t.id === teamId);
+      
       if (!team) {
         showAlert('Team not found.', 'danger');
         return;
       }
+      
       currentTeamId = teamId;
       teamModalTitle.textContent = 'Edit Team';
       teamName.value = team.name;
       teamDescription.value = team.description || '';
+      
       teamModal.show();
     }
+
     // Open delete team modal
     function openDeleteTeamModal(teamId) {
       const team = currentTeams.find(t => t.id === teamId);
+      
       if (!team) {
         showAlert('Team not found.', 'danger');
         return;
       }
+      
       currentTeamId = teamId;
       deleteTeamName.textContent = team.name;
+      
       deleteConfirmModal.show();
     }
+
     // Save team (create or update)
     async function saveTeam() {
       try {
         setButtonLoading(saveTeamBtn, true);
+        
         const name = teamName.value.trim();
         const description = teamDescription.value.trim();
+        
         if (!name) {
           showAlert('Team name is required.', 'danger');
           setButtonLoading(saveTeamBtn, false);
           return;
         }
+        
         const teamData = {
           name,
           description
         };
+        
         if (currentTeamId) {
           // Update existing team
           await updateTeam(currentTeamId, teamData);
-          showAlert(Team "${name}" updated successfully., 'success');
+          showAlert(`Team "${name}" updated successfully.`, 'success');
         } else {
           // Create new team
           await createTeam(teamData);
-          showAlert(Team "${name}" created successfully., 'success');
+          showAlert(`Team "${name}" created successfully.`, 'success');
         }
+        
         teamModal.hide();
         await loadTeams();
+        
       } catch (error) {
         console.error('Error saving team:', error);
         showAlert('Error saving team: ' + error.message, 'danger');
@@ -499,21 +415,27 @@ body {
         setButtonLoading(saveTeamBtn, false);
       }
     }
+
     // Delete team
     async function deleteTeamHandler() {
       try {
         setButtonLoading(confirmDeleteBtn, true);
+        
         const team = currentTeams.find(t => t.id === currentTeamId);
+        
         if (!team) {
           showAlert('Team not found.', 'danger');
           setButtonLoading(confirmDeleteBtn, false);
           deleteConfirmModal.hide();
           return;
         }
+        
         await deleteTeam(currentTeamId);
-        showAlert(Team "${team.name}" deleted successfully., 'success');
+        showAlert(`Team "${team.name}" deleted successfully.`, 'success');
+        
         deleteConfirmModal.hide();
         await loadTeams();
+        
       } catch (error) {
         console.error('Error deleting team:', error);
         showAlert('Error deleting team: ' + error.message, 'danger');
@@ -521,10 +443,12 @@ body {
         setButtonLoading(confirmDeleteBtn, false);
       }
     }
+
     // Event Listeners
     createTeamBtn.addEventListener('click', openCreateTeamModal);
     saveTeamBtn.addEventListener('click', saveTeam);
     confirmDeleteBtn.addEventListener('click', deleteTeamHandler);
+    
     logoutLink.addEventListener('click', async (e) => {
       e.preventDefault();
       try {
@@ -535,22 +459,27 @@ body {
         alert('Logout failed: ' + error.message);
       }
     });
+
     // Check authentication and admin status
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         window.location.href = 'index.html';
         return;
       }
+      
       try {
         const userDocRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userDocRef);
+        
         if (!userDoc.exists() || userDoc.data().isAdmin !== true) {
           alert('You do not have permission to access this page.');
           window.location.href = 'dashboard.html';
           return;
         }
+        
         // Load teams
         await loadTeams();
+        
       } catch (error) {
         console.error('Error checking admin status:', error);
         showAlert('Error checking permissions: ' + error.message, 'danger');
