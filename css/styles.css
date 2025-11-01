@@ -433,7 +433,7 @@ body {
   height: 60px;
   position: relative;
 }
-
+ 
 .fms-loader-spinner:before,
 .fms-loader-spinner:after {
   content: "";
