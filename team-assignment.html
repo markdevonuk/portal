@@ -10,11 +10,14 @@
   <style>
     .member-card {
       border-radius: 10px;
-      padding: 20px;
+      padding: 15px;
       background-color: #fff;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       transition: all 0.2s ease;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     
     .member-card:hover {
@@ -29,18 +32,18 @@
     .member-info {
       display: flex;
       gap: 15px;
-      align-items: flex-start;
+      align-items: center;
     }
     
     .profile-pic-container {
-      width: 60px;
-      height: 60px;
+      width: 50px;
+      height: 50px;
       flex-shrink: 0;
     }
     
     .profile-pic {
-      width: 60px;
-      height: 60px;
+      width: 50px;
+      height: 50px;
       border-radius: 50%;
       object-fit: cover;
       background-color: #e9ecef;
@@ -48,7 +51,7 @@
       justify-content: center;
       align-items: center;
       color: #adb5bd;
-      font-size: 24px;
+      font-size: 20px;
     }
     
     .team-badge {
@@ -63,7 +66,7 @@
     }
     
     .member-teams {
-      margin-top: 10px;
+      margin-top: 8px;
     }
     
     .search-container {
@@ -104,144 +107,93 @@
     
     @keyframes spinner { to { transform: rotate(360deg); } }
     
-    .hidden {
-      display: none !important;
-    }
-    
-    /* Team matrix styles */
-    .team-matrix {
-      overflow-x: auto;
-      margin-top: 20px;
-    }
-    
-    .matrix-table {
-      border-collapse: separate;
-      border-spacing: 0;
-    }
-    
-    .matrix-table th {
-      position: sticky;
-      top: 0;
-      background-color: #f8f9fa;
-      z-index: 10;
-      font-weight: 600;
-      text-align: center;
-      padding: 10px 5px;
-    }
-    
-    .matrix-table th.rotated {
-      height: 140px;
-      white-space: nowrap;
-      border-bottom: 1px solid #dee2e6;
-      position: relative;
-    }
-    
-    .matrix-table th.rotated > div {
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%) rotate(-90deg);
-      transform-origin: bottom center;
-      width: 30px;
-      padding-bottom: 5px;
-    }
-    
-    .matrix-table td {
-      text-align: center;
-      padding: 10px 5px;
-      border-bottom: 1px solid #dee2e6;
-    }
-    
-    .matrix-table td:first-child {
-      text-align: left;
+    .nav-pills .nav-link {
+      border-radius: 0.5rem;
+      padding: 0.75rem 1.25rem;
       font-weight: 500;
-      position: sticky;
-      left: 0;
-      background-color: #fff;
-      z-index: 5;
-      min-width: 200px;
-      padding-left: 10px;
     }
     
-    .matrix-table tbody tr:hover {
-      background-color: #f8f9fa;
+    .nav-pills .nav-link.active {
+      background-color: #00a896;
     }
     
-    .matrix-table tbody tr:hover td:first-child {
-      background-color: #f8f9fa;
+    .option-content {
+      padding: 20px 0;
     }
     
-    .matrix-table .team-checkbox {
+    .member-checkbox {
       width: 18px;
       height: 18px;
     }
     
-    .grade-select {
-      width: 100%;
-      font-size: 14px;
-    }
-    
-    /* Status badges */
-    .status-badge {
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 10px;
-      font-size: 11px;
-      font-weight: 500;
-      margin-left: 8px;
-    }
-    
-    .status-badge-success {
-      background-color: #d1e7dd;
-      color: #0a3622;
-    }
-    
-    .status-badge-warning {
-      background-color: #fff3cd;
-      color: #664d03;
-    }
-    
-    .status-badge-info {
-      background-color: #cff4fc;
-      color: #055160;
-    }
-    
-    /* Filter controls */
-    .filter-controls {
-      display: flex;
-      gap: 10px;
+    .select-all-container {
       margin-bottom: 15px;
-      flex-wrap: wrap;
-      align-items: center;
     }
     
-    .filter-label {
-      font-weight: 500;
-      margin-bottom: 0;
-      white-space: nowrap;
+    .status-pill {
+      padding: 0.25rem 0.75rem;
+      border-radius: 50px;
+      font-size: 0.75rem;
+      font-weight: 600;
     }
     
-    .filter-select {
-      min-width: 180px;
+    .status-pending {
+      background-color: #fff3cd;
+      color: #856404;
     }
     
-    /* Save indicator */
-    .save-indicator {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background-color: rgba(255,255,255,0.9);
-      border-radius: 8px;
-      padding: 10px 15px;
-      box-shadow: 0 2px 15px rgba(0,0,0,0.2);
-      z-index: 1000;
-      display: none;
+    .status-approved {
+      background-color: #d4edda;
+      color: #155724;
     }
     
-    .save-indicator.active {
+    .status-rejected {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    
+    .team-select-container {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .team-select-item {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
       display: flex;
       align-items: center;
-      gap: 10px;
+    }
+    
+    .team-select-item:last-child {
+      border-bottom: none;
+    }
+    
+    .team-select-item .form-check {
+      margin-bottom: 0;
+    }
+    
+    .team-select-item label {
+      margin-bottom: 0;
+      width: 100%;
+      cursor: pointer;
+    }
+    
+    .bulk-action-bar {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .bulk-action-label {
+      font-weight: 500;
+    }
+    
+    .hidden {
+      display: none !important;
     }
   </style>
 </head>
@@ -281,7 +233,7 @@
     </div>
   </nav>
 
-  <div class="container-fluid">
+  <div class="container">
     <div class="page-header">
       <h1 class="mb-2"><i class="bi bi-person-plus-fill"></i> Team Assignment</h1>
       <p class="mb-0">Assign members to clinical or operational teams</p>
@@ -290,73 +242,156 @@
     <div id="alertContainer"></div>
 
     <div class="admin-card">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3><i class="bi bi-people"></i> Member Team Assignment</h3>
-        <button class="btn btn-primary" id="saveAllChangesBtn">
-          <i class="bi bi-save"></i> Save All Changes
-        </button>
-      </div>
+      <!-- Navigation Tabs -->
+      <ul class="nav nav-pills mb-4" id="teamAssignmentTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="search-member-tab" data-bs-toggle="pill" data-bs-target="#search-member" type="button" role="tab">
+            <i class="bi bi-search"></i> Search Member
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="by-grade-tab" data-bs-toggle="pill" data-bs-target="#by-grade" type="button" role="tab">
+            <i class="bi bi-award"></i> By Clinical Grade
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="by-team-tab" data-bs-toggle="pill" data-bs-target="#by-team" type="button" role="tab">
+            <i class="bi bi-people"></i> By Team
+          </button>
+        </li>
+      </ul>
       
-      <div class="row">
-        <div class="col-md-6 col-lg-4">
-          <div class="search-container">
-            <i class="bi bi-search search-icon"></i>
-            <input type="text" id="searchInput" class="form-control" placeholder="Search members by name or email...">
+      <!-- Tab Content -->
+      <div class="tab-content" id="teamAssignmentTabContent">
+        <!-- Search Member Tab -->
+        <div class="tab-pane fade show active" id="search-member" role="tabpanel">
+          <div class="option-content">
+            <div class="search-container">
+              <i class="bi bi-search search-icon"></i>
+              <input type="text" id="memberSearchInput" class="form-control" placeholder="Search by name or email (min. 3 characters)">
+              <div class="form-text">Type at least 3 characters to search for members</div>
+            </div>
+            
+            <div id="memberSearchResults"></div>
+            
+            <div id="memberSearchNoResults" class="alert alert-info hidden">
+              <i class="bi bi-info-circle"></i> No members found matching your search.
+            </div>
+            
+            <div id="memberSearchLoading" class="text-center py-3 hidden">
+              <div class="spinner-border text-primary" role="status"></div>
+              <p class="mt-2 text-muted">Searching members...</p>
+            </div>
           </div>
-        </div>
-        <div class="col-md-6 col-lg-8">
-          <div class="filter-controls">
-            <span class="filter-label">Filter by:</span>
-            <select class="form-select form-select-sm filter-select" id="teamFilter">
-              <option value="all">All Teams</option>
-              <!-- Team options will be populated dynamically -->
-            </select>
-            <select class="form-select form-select-sm filter-select" id="gradeFilter">
-              <option value="all">All Grades</option>
-              <!-- Grade options will be populated dynamically -->
-            </select>
-            <button class="btn btn-sm btn-outline-secondary" id="clearFiltersBtn">
-              <i class="bi bi-x-circle"></i> Clear Filters
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div id="membersContainer">
-        <div id="loadingMembers" class="text-center py-4">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-          <p class="mt-2 text-muted">Loading members...</p>
         </div>
         
-        <div id="noMembersMessage" class="alert alert-info hidden">
-          <i class="bi bi-info-circle"></i> No members found. Add users to the portal first.
+        <!-- By Grade Tab -->
+        <div class="tab-pane fade" id="by-grade" role="tabpanel">
+          <div class="option-content">
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <label class="form-label">Select Clinical Grade</label>
+                <select class="form-select" id="gradeSelect">
+                  <option value="">-- Select a grade --</option>
+                  <!-- Grade options will be populated dynamically -->
+                </select>
+              </div>
+            </div>
+            
+            <div id="gradeMembers" class="hidden">
+              <div class="bulk-action-bar">
+                <div>
+                  <span class="bulk-action-label" id="selectedMembersCount">0 members selected</span>
+                </div>
+                <button class="btn btn-primary" id="assignSelectedBtn" disabled>
+                  <i class="bi bi-people"></i> Assign to Team(s)
+                </button>
+              </div>
+              
+              <div class="select-all-container">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="selectAllMembers">
+                  <label class="form-check-label" for="selectAllMembers">
+                    Select All
+                  </label>
+                </div>
+              </div>
+              
+              <div id="gradeMembersList">
+                <!-- Member cards will be populated dynamically -->
+              </div>
+            </div>
+            
+            <div id="noGradeMembers" class="alert alert-info hidden">
+              <i class="bi bi-info-circle"></i> No members found with the selected grade.
+            </div>
+            
+            <div id="gradeMembersLoading" class="text-center py-3 hidden">
+              <div class="spinner-border text-primary" role="status"></div>
+              <p class="mt-2 text-muted">Loading members...</p>
+            </div>
+          </div>
         </div>
         
-        <!-- Team Matrix View -->
-        <div id="teamMatrix" class="team-matrix hidden">
-          <table class="table matrix-table" id="matrixTable">
-            <thead>
-              <tr id="tableHeader">
-                <th>Member</th>
-                <th>Clinical Grade</th>
-                <!-- Team headers will be added dynamically -->
-              </tr>
-            </thead>
-            <tbody id="matrixBody">
-              <!-- Members and their team assignments will be added dynamically -->
-            </tbody>
-          </table>
+        <!-- By Team Tab -->
+        <div class="tab-pane fade" id="by-team" role="tabpanel">
+          <div class="option-content">
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <label class="form-label">Select Team</label>
+                <select class="form-select" id="teamSelect">
+                  <option value="">-- Select a team --</option>
+                  <!-- Team options will be populated dynamically -->
+                </select>
+              </div>
+            </div>
+            
+            <div id="teamMembers" class="hidden">
+              <div id="teamMembersList">
+                <!-- Member cards will be populated dynamically -->
+              </div>
+            </div>
+            
+            <div id="noTeamMembers" class="alert alert-info hidden">
+              <i class="bi bi-info-circle"></i> No members found in the selected team.
+            </div>
+            
+            <div id="teamMembersLoading" class="text-center py-3 hidden">
+              <div class="spinner-border text-primary" role="status"></div>
+              <p class="mt-2 text-muted">Loading team members...</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Save Indicator -->
-  <div class="save-indicator" id="saveIndicator">
-    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-    <span>Saving changes...</span>
+  <!-- Team Selection Modal -->
+  <div class="modal fade" id="teamSelectionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-people"></i> Assign Teams</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p id="teamSelectionDescription">Select teams for <strong id="memberName"></strong></p>
+          
+          <div class="team-select-container" id="teamSelectContainer">
+            <div class="text-center py-3">
+              <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+              <span class="ms-2">Loading teams...</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="saveTeamsBtn">
+            <i class="bi bi-save"></i> Save Teams
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -369,14 +404,16 @@
       doc, 
       getDoc, 
       collection, 
-      getDocs, 
+      getDocs,
+      query,
+      where, 
       updateDoc,
       arrayUnion,
       arrayRemove
     } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
     import { getStorage, ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
     import { firebaseConfig } from './firebase-config.js';
-    import { getAllTeams } from './teams-service.js';
+    import { getAllTeams, getUsersInTeam } from './teams-service.js';
 
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
@@ -384,20 +421,37 @@
     const db = getFirestore(app);
     const storage = getStorage(app);
 
-    // DOM Elements
-    const searchInput = document.getElementById('searchInput');
-    const teamFilter = document.getElementById('teamFilter');
-    const gradeFilter = document.getElementById('gradeFilter');
-    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
-    const saveAllChangesBtn = document.getElementById('saveAllChangesBtn');
-    const loadingMembers = document.getElementById('loadingMembers');
-    const noMembersMessage = document.getElementById('noMembersMessage');
-    const teamMatrix = document.getElementById('teamMatrix');
-    const tableHeader = document.getElementById('tableHeader');
-    const matrixBody = document.getElementById('matrixBody');
+    // DOM Elements - Search Tab
+    const memberSearchInput = document.getElementById('memberSearchInput');
+    const memberSearchResults = document.getElementById('memberSearchResults');
+    const memberSearchNoResults = document.getElementById('memberSearchNoResults');
+    const memberSearchLoading = document.getElementById('memberSearchLoading');
+    
+    // DOM Elements - By Grade Tab
+    const gradeSelect = document.getElementById('gradeSelect');
+    const gradeMembers = document.getElementById('gradeMembers');
+    const gradeMembersList = document.getElementById('gradeMembersList');
+    const noGradeMembers = document.getElementById('noGradeMembers');
+    const gradeMembersLoading = document.getElementById('gradeMembersLoading');
+    const selectAllMembers = document.getElementById('selectAllMembers');
+    const selectedMembersCount = document.getElementById('selectedMembersCount');
+    const assignSelectedBtn = document.getElementById('assignSelectedBtn');
+    
+    // DOM Elements - By Team Tab
+    const teamSelect = document.getElementById('teamSelect');
+    const teamMembers = document.getElementById('teamMembers');
+    const teamMembersList = document.getElementById('teamMembersList');
+    const noTeamMembers = document.getElementById('noTeamMembers');
+    const teamMembersLoading = document.getElementById('teamMembersLoading');
+    
+    // DOM Elements - Modals and General
+    const teamSelectionModal = new bootstrap.Modal(document.getElementById('teamSelectionModal'));
+    const teamSelectionDescription = document.getElementById('teamSelectionDescription');
+    const memberName = document.getElementById('memberName');
+    const teamSelectContainer = document.getElementById('teamSelectContainer');
+    const saveTeamsBtn = document.getElementById('saveTeamsBtn');
     const alertContainer = document.getElementById('alertContainer');
     const logoutLink = document.getElementById('logoutLink');
-    const saveIndicator = document.getElementById('saveIndicator');
 
     // Clinical grades list
     const clinicalGrades = [
@@ -426,11 +480,13 @@
       "Other"
     ];
 
-    // Store all members and teams
+    // Store data
     let allMembers = [];
-    let filteredMembers = [];
     let allTeams = [];
-    let pendingUpdates = new Map(); // Map to store pending updates before saving
+    let selectedMemberIds = []; // For bulk assignment
+    let currentMemberId = null; // For single member assignment
+    let currentMemberTeams = [];
+    let bulkAssignmentMode = false;
 
     // Set button loading state
     function setButtonLoading(button, isLoading) {
@@ -463,48 +519,43 @@
       }
     }
 
-    // Show/hide save indicator
-    function toggleSaveIndicator(show) {
-      if (show) {
-        saveIndicator.classList.add('active');
-      } else {
-        saveIndicator.classList.remove('active');
-      }
-    }
-
-    // Load all members and teams
-    async function loadData() {
+    // Load initial data
+    async function loadInitialData() {
       try {
-        teamMatrix.classList.add('hidden');
-        loadingMembers.classList.remove('hidden');
-        noMembersMessage.classList.add('hidden');
-        
-        // Load all teams first
+        // Load teams
         allTeams = await getAllTeams();
         
-        // Populate team filter dropdown
-        teamFilter.innerHTML = '<option value="all">All Teams</option>';
+        // Populate team select
+        teamSelect.innerHTML = '<option value="">-- Select a team --</option>';
         for (const team of allTeams) {
-          teamFilter.innerHTML += `<option value="${team.id}">${team.name}</option>`;
+          teamSelect.innerHTML += `<option value="${team.id}">${team.name}</option>`;
         }
         
-        // Populate grade filter dropdown
-        gradeFilter.innerHTML = '<option value="all">All Grades</option>';
-        for (const grade of clinicalGrades) {
-          gradeFilter.innerHTML += `<option value="${grade}">${grade}</option>`;
-        }
-        
-        // Load all users
+        // Load all users and profiles to get their clinical grades
         const usersSnapshot = await getDocs(collection(db, 'users'));
         
+        // Get all profiles
+        const profilesSnapshot = await getDocs(collection(db, 'profiles'));
+        const profiles = new Map();
+        
+        profilesSnapshot.forEach(doc => {
+          profiles.set(doc.id, doc.data());
+        });
+        
+        // Process users and their grades
         allMembers = [];
         usersSnapshot.forEach(doc => {
-          // Initialize the clinical grade field if it doesn't exist
           const userData = doc.data();
+          
+          // Get profile data if available
+          const profile = profiles.get(doc.id);
+          const status = profile?.adminReview?.status || 'pending';
+          
           allMembers.push({
             id: doc.id,
             ...userData,
-            clinicalGrade: userData.clinicalGrade || "None (Non-clinical)" // Default grade
+            clinicalGrade: profile?.medicalQualifications?.qualification || 'None (Non-clinical)', // Get grade from profile
+            profileStatus: status
           });
         });
         
@@ -515,267 +566,528 @@
           return nameA.localeCompare(nameB);
         });
         
-        // Apply any filters and create the matrix
-        filterMembers();
+        // Get unique grades from members
+        const uniqueGrades = new Set();
+        allMembers.forEach(member => {
+          if (member.clinicalGrade) {
+            uniqueGrades.add(member.clinicalGrade);
+          }
+        });
+        
+        // Populate grade select
+        gradeSelect.innerHTML = '<option value="">-- Select a grade --</option>';
+        [...uniqueGrades].sort().forEach(grade => {
+          gradeSelect.innerHTML += `<option value="${grade}">${grade}</option>`;
+        });
         
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('Error loading initial data:', error);
         showAlert('Error loading data: ' + error.message, 'danger');
-        loadingMembers.classList.add('hidden');
       }
     }
 
-    // Filter members based on search input and filters
-    function filterMembers() {
-      const searchTerm = searchInput.value.toLowerCase().trim();
-      const selectedTeam = teamFilter.value;
-      const selectedGrade = gradeFilter.value;
+    // Search members
+    async function searchMembers() {
+      const searchTerm = memberSearchInput.value.trim().toLowerCase();
       
-      filteredMembers = allMembers.filter(member => {
-        // Apply search filter
+      // Require at least 3 characters
+      if (searchTerm.length < 3) {
+        memberSearchResults.innerHTML = '';
+        memberSearchNoResults.classList.add('hidden');
+        return;
+      }
+      
+      memberSearchLoading.classList.remove('hidden');
+      memberSearchResults.innerHTML = '';
+      memberSearchNoResults.classList.add('hidden');
+      
+      // Filter members based on search term
+      const filteredMembers = allMembers.filter(member => {
         const fullName = `${member.firstName} ${member.surname}`.toLowerCase();
         const email = member.email.toLowerCase();
-        const matchesSearch = searchTerm === '' || fullName.includes(searchTerm) || email.includes(searchTerm);
         
-        // Apply team filter
-        const matchesTeam = selectedTeam === 'all' || 
-          (member.teams && member.teams.includes(selectedTeam));
-        
-        // Apply grade filter
-        const matchesGrade = selectedGrade === 'all' || 
-          member.clinicalGrade === selectedGrade;
-        
-        return matchesSearch && matchesTeam && matchesGrade;
+        return fullName.includes(searchTerm) || email.includes(searchTerm);
       });
       
-      // Create the matrix view
-      createMatrix();
-    }
-
-    // Create the team matrix
-    function createMatrix() {
+      // Display results
       if (filteredMembers.length === 0) {
-        loadingMembers.classList.add('hidden');
-        noMembersMessage.classList.remove('hidden');
-        teamMatrix.classList.add('hidden');
+        memberSearchLoading.classList.add('hidden');
+        memberSearchNoResults.classList.remove('hidden');
         return;
       }
       
-      // Clear existing header and add member and grade columns
-      tableHeader.innerHTML = `
-        <th style="min-width: 200px;">Member</th>
-        <th style="min-width: 180px;">Clinical Grade</th>
-      `;
-      
-      // Add team headers
-      for (const team of allTeams) {
-        tableHeader.innerHTML += `
-          <th class="rotated">
-            <div>${team.name}</div>
-          </th>
-        `;
-      }
-      
-      // Clear existing body
-      matrixBody.innerHTML = '';
-      
-      // Add member rows
+      // Show results
       for (const member of filteredMembers) {
-        const memberTeams = member.teams || [];
-        const row = document.createElement('tr');
-        row.dataset.memberId = member.id;
-        
-        // Member name and email
-        row.innerHTML = `
-          <td>
-            <div class="fw-bold">${member.firstName} ${member.surname}</div>
-            <div class="text-muted small">${member.email}</div>
-          </td>
-          <td>
-            <select class="form-select form-select-sm grade-select" data-member-id="${member.id}">
-              ${clinicalGrades.map(grade => 
-                `<option value="${grade}" ${member.clinicalGrade === grade ? 'selected' : ''}>${grade}</option>`
-              ).join('')}
-            </select>
-          </td>
-        `;
-        
-        // Team checkboxes
-        for (const team of allTeams) {
-          const isInTeam = memberTeams.includes(team.id);
-          row.innerHTML += `
-            <td>
-              <input type="checkbox" class="team-checkbox" 
-                     data-member-id="${member.id}" 
-                     data-team-id="${team.id}" 
-                     ${isInTeam ? 'checked' : ''}>
-            </td>
-          `;
+        // Get member's teams
+        let memberTeams = [];
+        if (member.teams && member.teams.length > 0) {
+          memberTeams = member.teams.map(teamId => {
+            const team = allTeams.find(t => t.id === teamId);
+            return team ? team.name : null;
+          }).filter(teamName => teamName !== null);
         }
         
-        matrixBody.appendChild(row);
+        // Create member card
+        const memberCard = document.createElement('div');
+        memberCard.className = 'member-card';
+        memberCard.innerHTML = `
+          <div class="member-info">
+            <div class="member-details">
+              <h5 class="mb-1">${member.firstName} ${member.surname}</h5>
+              <p class="text-muted mb-1">${member.email}</p>
+              <div class="small">Grade: ${member.clinicalGrade || 'Not specified'}</div>
+              <div class="member-teams">
+                ${memberTeams.length > 0 
+                  ? memberTeams.map(team => `<span class="team-badge">${team}</span>`).join('') 
+                  : '<small class="text-muted">No teams assigned</small>'
+                }
+              </div>
+            </div>
+          </div>
+          <div>
+            <button class="btn btn-outline-primary btn-sm assign-teams-btn" data-member-id="${member.id}" data-member-name="${member.firstName} ${member.surname}">
+              <i class="bi bi-people"></i> Assign Teams
+            </button>
+          </div>
+        `;
+        
+        memberSearchResults.appendChild(memberCard);
       }
       
-      // Add event listeners to checkboxes and grade selects
-      document.querySelectorAll('.team-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', handleTeamCheckboxChange);
+      // Add event listeners to assign buttons
+      document.querySelectorAll('.assign-teams-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const memberId = btn.dataset.memberId;
+          const memberFullName = btn.dataset.memberName;
+          openTeamSelectionModal(memberId, memberFullName);
+        });
       });
       
-      document.querySelectorAll('.grade-select').forEach(select => {
-        select.addEventListener('change', handleGradeSelectChange);
-      });
-      
-      loadingMembers.classList.add('hidden');
-      teamMatrix.classList.remove('hidden');
+      memberSearchLoading.classList.add('hidden');
     }
 
-    // Handle team checkbox change
-    function handleTeamCheckboxChange(e) {
-      const checkbox = e.target;
-      const memberId = checkbox.dataset.memberId;
-      const teamId = checkbox.dataset.teamId;
-      const isChecked = checkbox.checked;
+    // Load members by grade
+    async function loadMembersByGrade() {
+      const selectedGrade = gradeSelect.value;
       
-      // Update pending updates map
-      if (!pendingUpdates.has(memberId)) {
-        pendingUpdates.set(memberId, {
-          teamChanges: new Map(),
-          gradeChange: null
-        });
-      }
-      
-      pendingUpdates.get(memberId).teamChanges.set(teamId, isChecked);
-      
-      // Update the save button to show there are changes
-      saveAllChangesBtn.innerHTML = '<i class="bi bi-save"></i> Save All Changes*';
-      saveAllChangesBtn.classList.add('btn-warning');
-    }
-
-    // Handle grade select change
-    function handleGradeSelectChange(e) {
-      const select = e.target;
-      const memberId = select.dataset.memberId;
-      const selectedGrade = select.value;
-      
-      // Update pending updates map
-      if (!pendingUpdates.has(memberId)) {
-        pendingUpdates.set(memberId, {
-          teamChanges: new Map(),
-          gradeChange: null
-        });
-      }
-      
-      pendingUpdates.get(memberId).gradeChange = selectedGrade;
-      
-      // Update the save button to show there are changes
-      saveAllChangesBtn.innerHTML = '<i class="bi bi-save"></i> Save All Changes*';
-      saveAllChangesBtn.classList.add('btn-warning');
-    }
-
-    // Save all pending changes
-    async function saveAllChanges() {
-      if (pendingUpdates.size === 0) {
-        showAlert('No changes to save.', 'info');
+      if (!selectedGrade) {
+        gradeMembers.classList.add('hidden');
+        noGradeMembers.classList.add('hidden');
         return;
       }
       
+      gradeMembersLoading.classList.remove('hidden');
+      gradeMembers.classList.add('hidden');
+      noGradeMembers.classList.add('hidden');
+      selectedMemberIds = [];
+      updateSelectedCount();
+      
+      // Filter members by grade
+      const filteredMembers = allMembers.filter(member => 
+        member.clinicalGrade === selectedGrade
+      );
+      
+      // Display results
+      if (filteredMembers.length === 0) {
+        gradeMembersLoading.classList.add('hidden');
+        noGradeMembers.classList.remove('hidden');
+        return;
+      }
+      
+      // Clear previous list
+      gradeMembersList.innerHTML = '';
+      
+      // Show members
+      for (const member of filteredMembers) {
+        // Create member card
+        const memberCard = document.createElement('div');
+        memberCard.className = 'member-card';
+        memberCard.innerHTML = `
+          <div class="form-check">
+            <input class="form-check-input member-checkbox" type="checkbox" 
+                  value="${member.id}" id="member-${member.id}">
+            <label class="form-check-label" for="member-${member.id}">
+              <div class="member-details">
+                <h5 class="mb-1">${member.firstName} ${member.surname}</h5>
+                <p class="text-muted mb-0">${member.email}</p>
+              </div>
+            </label>
+          </div>
+          <div>
+            <span class="status-pill status-${member.profileStatus}">
+              ${member.profileStatus.charAt(0).toUpperCase() + member.profileStatus.slice(1)}
+            </span>
+          </div>
+        `;
+        
+        gradeMembersList.appendChild(memberCard);
+      }
+      
+      // Add event listeners to checkboxes
+      document.querySelectorAll('.member-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+          if (checkbox.checked) {
+            selectedMemberIds.push(checkbox.value);
+          } else {
+            selectedMemberIds = selectedMemberIds.filter(id => id !== checkbox.value);
+          }
+          updateSelectedCount();
+        });
+      });
+      
+      gradeMembersLoading.classList.add('hidden');
+      gradeMembers.classList.remove('hidden');
+    }
+
+    // Update selected members count
+    function updateSelectedCount() {
+      selectedMembersCount.textContent = `${selectedMemberIds.length} member${selectedMemberIds.length !== 1 ? 's' : ''} selected`;
+      
+      // Enable/disable assign button
+      assignSelectedBtn.disabled = selectedMemberIds.length === 0;
+    }
+
+    // Handle select all checkbox
+    function handleSelectAll() {
+      const isChecked = selectAllMembers.checked;
+      
+      document.querySelectorAll('.member-checkbox').forEach(checkbox => {
+        checkbox.checked = isChecked;
+        
+        if (isChecked && !selectedMemberIds.includes(checkbox.value)) {
+          selectedMemberIds.push(checkbox.value);
+        } else if (!isChecked) {
+          selectedMemberIds = selectedMemberIds.filter(id => id !== checkbox.value);
+        }
+      });
+      
+      updateSelectedCount();
+    }
+
+    // Load members by team
+    async function loadMembersByTeam() {
+      const selectedTeamId = teamSelect.value;
+      
+      if (!selectedTeamId) {
+        teamMembers.classList.add('hidden');
+        noTeamMembers.classList.add('hidden');
+        return;
+      }
+      
+      teamMembersLoading.classList.remove('hidden');
+      teamMembers.classList.add('hidden');
+      noTeamMembers.classList.add('hidden');
+      
+      // Get team
+      const team = allTeams.find(t => t.id === selectedTeamId);
+      if (!team) {
+        teamMembersLoading.classList.add('hidden');
+        noTeamMembers.classList.remove('hidden');
+        return;
+      }
+      
+      // Get members in team
       try {
-        setButtonLoading(saveAllChangesBtn, true);
-        toggleSaveIndicator(true);
+        // Get users in this team using the team-service function
+        const teamMembersList = await getUsersInTeam(selectedTeamId);
         
-        const updatePromises = [];
+        // Merge with profiles to get grades and status
+        const membersWithDetails = [];
         
-        for (const [memberId, changes] of pendingUpdates.entries()) {
-          const memberRef = doc(db, 'users', memberId);
-          const memberDoc = await getDoc(memberRef);
+        for (const member of teamMembersList) {
+          // Get member's clinical grade from allMembers
+          const fullMemberData = allMembers.find(m => m.id === member.id);
           
-          if (!memberDoc.exists()) {
-            console.error(`Member document ${memberId} does not exist`);
-            continue;
+          if (fullMemberData) {
+            membersWithDetails.push({
+              ...member,
+              clinicalGrade: fullMemberData.clinicalGrade || 'Not specified',
+              profileStatus: fullMemberData.profileStatus || 'pending'
+            });
+          } else {
+            membersWithDetails.push({
+              ...member,
+              clinicalGrade: 'Not specified',
+              profileStatus: 'pending'
+            });
           }
+        }
+        
+        // Sort by name
+        membersWithDetails.sort((a, b) => {
+          const nameA = `${a.firstName} ${a.surname}`.toLowerCase();
+          const nameB = `${b.firstName} ${b.surname}`.toLowerCase();
+          return nameA.localeCompare(nameB);
+        });
+        
+        // Display results
+        if (membersWithDetails.length === 0) {
+          teamMembersLoading.classList.add('hidden');
+          noTeamMembers.classList.remove('hidden');
+          return;
+        }
+        
+        // Clear previous list
+        teamMembersList.innerHTML = '';
+        
+        // Show members
+        for (const member of membersWithDetails) {
+          // Create member card
+          const memberCard = document.createElement('div');
+          memberCard.className = 'member-card';
+          memberCard.innerHTML = `
+            <div class="member-details">
+              <h5 class="mb-1">${member.firstName} ${member.surname}</h5>
+              <p class="text-muted mb-1">${member.email}</p>
+              <div class="small">Grade: ${member.clinicalGrade}</div>
+            </div>
+            <div class="d-flex align-items-center">
+              <span class="status-pill status-${member.profileStatus} me-3">
+                ${member.profileStatus.charAt(0).toUpperCase() + member.profileStatus.slice(1)}
+              </span>
+              <button class="btn btn-outline-danger btn-sm remove-from-team-btn" data-member-id="${member.id}">
+                <i class="bi bi-x-circle"></i> Remove
+              </button>
+            </div>
+          `;
           
-          const memberData = memberDoc.data();
-          const currentTeams = memberData.teams || [];
-          let updatedTeams = [...currentTeams];
-          
-          // Process team changes
-          if (changes.teamChanges.size > 0) {
-            for (const [teamId, isChecked] of changes.teamChanges.entries()) {
-              if (isChecked && !updatedTeams.includes(teamId)) {
-                // Add team
-                updatedTeams.push(teamId);
-              } else if (!isChecked && updatedTeams.includes(teamId)) {
-                // Remove team
-                updatedTeams = updatedTeams.filter(id => id !== teamId);
-              }
+          teamMembersList.appendChild(memberCard);
+        }
+        
+        // Add event listeners to remove buttons
+        document.querySelectorAll('.remove-from-team-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const memberId = btn.dataset.memberId;
+            
+            if (confirm(`Remove this member from the team "${team.name}"?`)) {
+              await removeFromTeam(memberId, selectedTeamId);
+              await loadMembersByTeam(); // Reload the list
             }
-          }
+          });
+        });
+        
+        teamMembersLoading.classList.add('hidden');
+        teamMembers.classList.remove('hidden');
+        
+      } catch (error) {
+        console.error('Error loading team members:', error);
+        showAlert('Error loading team members: ' + error.message, 'danger');
+        teamMembersLoading.classList.add('hidden');
+      }
+    }
+
+    // Remove a member from a team
+    async function removeFromTeam(memberId, teamId) {
+      try {
+        const memberRef = doc(db, 'users', memberId);
+        const memberDoc = await getDoc(memberRef);
+        
+        if (!memberDoc.exists()) {
+          throw new Error('Member not found');
+        }
+        
+        const memberData = memberDoc.data();
+        const currentTeams = memberData.teams || [];
+        
+        // Remove team if present
+        if (currentTeams.includes(teamId)) {
+          await updateDoc(memberRef, {
+            teams: arrayRemove(teamId)
+          });
           
-          // Create update object
-          const updateData = {
-            teams: updatedTeams
-          };
-          
-          // Add grade change if any
-          if (changes.gradeChange !== null) {
-            updateData.clinicalGrade = changes.gradeChange;
-          }
-          
-          // Update member document
-          updatePromises.push(updateDoc(memberRef, updateData));
-          
-          // Update local member data
+          // Update local data
           const memberIndex = allMembers.findIndex(m => m.id === memberId);
           if (memberIndex !== -1) {
-            allMembers[memberIndex].teams = updatedTeams;
-            if (changes.gradeChange !== null) {
-              allMembers[memberIndex].clinicalGrade = changes.gradeChange;
-            }
+            allMembers[memberIndex].teams = allMembers[memberIndex].teams.filter(id => id !== teamId);
+          }
+          
+          showAlert('Member removed from team successfully.', 'success');
+        }
+      } catch (error) {
+        console.error('Error removing member from team:', error);
+        showAlert('Error removing member from team: ' + error.message, 'danger');
+      }
+    }
+
+    // Open team selection modal for a single member or multiple members
+    async function openTeamSelectionModal(memberId, memberFullName) {
+      try {
+        // Set up modal for single member or bulk assignment
+        if (memberId) {
+          // Single member mode
+          bulkAssignmentMode = false;
+          currentMemberId = memberId;
+          memberName.textContent = memberFullName;
+          teamSelectionDescription.innerHTML = `Select teams for <strong>${memberFullName}</strong>`;
+          
+          // Get member's current teams
+          const memberDoc = await getDoc(doc(db, 'users', memberId));
+          currentMemberTeams = memberDoc.exists() ? (memberDoc.data().teams || []) : [];
+        } else {
+          // Bulk assignment mode
+          bulkAssignmentMode = true;
+          teamSelectionDescription.innerHTML = `Assign teams to <strong>${selectedMemberIds.length} selected members</strong>`;
+          memberName.textContent = `${selectedMemberIds.length} members`;
+          currentMemberTeams = []; // No preselected teams for bulk assignment
+        }
+        
+        // Display loading
+        teamSelectContainer.innerHTML = `
+          <div class="text-center py-3">
+            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+            <span class="ms-2">Loading teams...</span>
+          </div>
+        `;
+        
+        teamSelectionModal.show();
+        
+        // Create team checkboxes
+        let html = '';
+        
+        if (allTeams.length === 0) {
+          html = `
+            <div class="alert alert-info mb-0">
+              <i class="bi bi-info-circle"></i> No teams available. Please create teams first.
+            </div>
+          `;
+        } else {
+          for (const team of allTeams) {
+            const isChecked = bulkAssignmentMode ? false : currentMemberTeams.includes(team.id);
+            
+            html += `
+              <div class="team-select-item">
+                <div class="form-check">
+                  <input class="form-check-input team-checkbox" type="checkbox" 
+                         id="team-${team.id}" value="${team.id}" 
+                         ${isChecked ? 'checked' : ''}>
+                  <label class="form-check-label" for="team-${team.id}">
+                    ${team.name}
+                    ${team.description ? `<div class="text-muted small">${team.description}</div>` : ''}
+                  </label>
+                </div>
+              </div>
+            `;
           }
         }
         
-        await Promise.all(updatePromises);
+        teamSelectContainer.innerHTML = html;
         
-        // Clear pending updates
-        pendingUpdates.clear();
-        
-        // Reset save button
-        saveAllChangesBtn.innerHTML = '<i class="bi bi-save"></i> Save All Changes';
-        saveAllChangesBtn.classList.remove('btn-warning');
-        
-        showAlert('All changes saved successfully!', 'success');
       } catch (error) {
-        console.error('Error saving changes:', error);
-        showAlert('Error saving changes: ' + error.message, 'danger');
+        console.error('Error opening team selection modal:', error);
+        showAlert('Error loading teams: ' + error.message, 'danger');
+      }
+    }
+
+    // Save team assignments
+    async function saveTeamAssignments() {
+      try {
+        setButtonLoading(saveTeamsBtn, true);
+        
+        // Get selected teams
+        const selectedTeamIds = Array.from(document.querySelectorAll('.team-checkbox:checked')).map(checkbox => checkbox.value);
+        
+        if (bulkAssignmentMode) {
+          // Bulk assignment - add selected teams to all selected members
+          const updatePromises = [];
+          
+          for (const memberId of selectedMemberIds) {
+            // Get current teams for this member
+            const memberRef = doc(db, 'users', memberId);
+            const memberDoc = await getDoc(memberRef);
+            
+            if (!memberDoc.exists()) {
+              console.warn(`Member ${memberId} not found, skipping...`);
+              continue;
+            }
+            
+            const memberData = memberDoc.data();
+            const currentTeams = memberData.teams || [];
+            
+            // Add new teams (only if they're not already assigned)
+            const teamsToAdd = selectedTeamIds.filter(teamId => !currentTeams.includes(teamId));
+            
+            if (teamsToAdd.length > 0) {
+              // Update with arrayUnion to avoid duplicates
+              updatePromises.push(
+                updateDoc(memberRef, {
+                  teams: [...currentTeams, ...teamsToAdd]
+                })
+              );
+            }
+          }
+          
+          if (updatePromises.length > 0) {
+            await Promise.all(updatePromises);
+            showAlert(`Teams assigned to ${updatePromises.length} members successfully.`, 'success');
+          } else {
+            showAlert('No team changes needed.', 'info');
+          }
+          
+          // Reset selection
+          selectedMemberIds = [];
+          updateSelectedCount();
+          selectAllMembers.checked = false;
+          document.querySelectorAll('.member-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+          });
+          
+        } else {
+          // Single member assignment - replace teams
+          const memberRef = doc(db, 'users', currentMemberId);
+          
+          // Update with the new set of teams
+          await updateDoc(memberRef, {
+            teams: selectedTeamIds
+          });
+          
+          // Update local data
+          const memberIndex = allMembers.findIndex(m => m.id === currentMemberId);
+          if (memberIndex !== -1) {
+            allMembers[memberIndex].teams = selectedTeamIds;
+          }
+          
+          showAlert('Teams updated successfully.', 'success');
+          
+          // Refresh the search results if on search tab
+          if (!document.getElementById('search-member-tab').classList.contains('active')) {
+            await searchMembers();
+          }
+        }
+        
+        teamSelectionModal.hide();
+        
+      } catch (error) {
+        console.error('Error saving team assignments:', error);
+        showAlert('Error saving team assignments: ' + error.message, 'danger');
       } finally {
-        setButtonLoading(saveAllChangesBtn, false);
-        toggleSaveIndicator(false);
+        setButtonLoading(saveTeamsBtn, false);
       }
     }
 
     // Event Listeners
-    searchInput.addEventListener('input', filterMembers);
-    teamFilter.addEventListener('change', filterMembers);
-    gradeFilter.addEventListener('change', filterMembers);
-    clearFiltersBtn.addEventListener('click', () => {
-      searchInput.value = '';
-      teamFilter.value = 'all';
-      gradeFilter.value = 'all';
-      filterMembers();
+    memberSearchInput.addEventListener('input', searchMembers);
+    
+    gradeSelect.addEventListener('change', loadMembersByGrade);
+    selectAllMembers.addEventListener('change', handleSelectAll);
+    
+    teamSelect.addEventListener('change', loadMembersByTeam);
+    
+    assignSelectedBtn.addEventListener('click', () => {
+      if (selectedMemberIds.length > 0) {
+        openTeamSelectionModal(null, null);
+      }
     });
     
-    saveAllChangesBtn.addEventListener('click', saveAllChanges);
+    saveTeamsBtn.addEventListener('click', saveTeamAssignments);
     
     logoutLink.addEventListener('click', async (e) => {
       e.preventDefault();
-      if (pendingUpdates.size > 0) {
-        if (confirm('You have unsaved changes. Are you sure you want to logout without saving?')) {
-          await signOut(auth);
-          window.location.href = 'index.html';
-        }
-      } else {
+      try {
         await signOut(auth);
         window.location.href = 'index.html';
+      } catch (error) {
+        console.error('Logout failed:', error);
+        alert('Logout failed: ' + error.message);
       }
     });
 
@@ -796,21 +1108,12 @@
           return;
         }
         
-        // Load data
-        await loadData();
+        // Load initial data
+        await loadInitialData();
         
       } catch (error) {
         console.error('Error checking admin status:', error);
         showAlert('Error checking permissions: ' + error.message, 'danger');
-      }
-    });
-    
-    // Warn user before leaving with unsaved changes
-    window.addEventListener('beforeunload', (e) => {
-      if (pendingUpdates.size > 0) {
-        e.preventDefault();
-        e.returnValue = '';
-        return '';
       }
     });
   </script>
