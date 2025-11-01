@@ -204,13 +204,21 @@
   color: #721c24;
 }
 
+/* Make team selection modal scroll properly on mobile */
 .team-select-container {
-  max-height: 300px;
+  max-height: 50vh; /* Use viewport height instead of fixed pixels */
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* For smoother scrolling on iOS */
+}
+
+/* Ensure modal body has proper mobile styling */
+.modal-body {
+  overflow-y: auto;
+  max-height: calc(100vh - 200px); /* Adjust based on header/footer height */
 }
 
 .team-select-item {
-  padding: 10px;
+  padding: 12px 8px;
   border-bottom: 1px solid #eee;
   display: flex;
   align-items: center;
