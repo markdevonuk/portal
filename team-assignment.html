@@ -227,11 +227,11 @@
     .hidden {
       display: none !important;
     }
-
-    /* Debug panel for troubleshooting */
+    
+    /* Debug panel */
     #debugPanel {
       position: fixed;
-      bottom: 80px;
+      top: 70px;
       right: 20px;
       background-color: rgba(0,0,0,0.8);
       color: white;
@@ -239,11 +239,75 @@
       border-radius: 5px;
       font-family: monospace;
       font-size: 12px;
-      z-index: 1001;
-      max-width: 400px;
-      max-height: 300px;
+      max-width: 500px;
+      max-height: 80vh;
       overflow-y: auto;
-      display: none;
+      z-index: 9999;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+    
+    #debugOutput {
+      margin: 0;
+      padding: 0;
+      white-space: pre-wrap;
+    }
+    
+    .debug-controls {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    
+    .debug-controls button {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      padding: 5px;
+    }
+    
+    .debug-section {
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .debug-section h3 {
+      font-size: 14px;
+      color: #00a896;
+      margin: 0 0 5px;
+    }
+    
+    .debug-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .debug-table th,
+    .debug-table td {
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 3px 5px;
+      font-size: 11px;
+      text-align: left;
+    }
+    
+    .debug-table th {
+      background-color: rgba(255,255,255,0.1);
+    }
+    
+    .debug-actions {
+      margin-top: 10px;
+    }
+    
+    .debug-actions button {
+      background-color: #00a896;
+      border: none;
+      color: white;
+      padding: 5px 10px;
+      font-size: 12px;
+      border-radius: 3px;
+      cursor: pointer;
+      margin-right: 5px;
     }
   </style>
 </head>
@@ -444,16 +508,39 @@
     </div>
   </div>
 
+  <!-- Debug Panel -->
+  <div id="debugPanel">
+    <div class="debug-controls">
+      <h2 style="margin: 0; font-size: 14px;">Debug Panel</h2>
+      <button id="closeDebugBtn"><i class="bi bi-x"></i></button>
+    </div>
+    
+    <div class="debug-section">
+      <h3>Profile Structure</h3>
+      <div id="profileStructure">Loading profile structure...</div>
+    </div>
+    
+    <div class="debug-section">
+      <h3>Profile Status Summary</h3>
+      <div id="statusSummary">Calculating status summary...</div>
+    </div>
+    
+    <div class="debug-section">
+      <h3>Status Fields Inspection</h3>
+      <div id="statusFields">Inspecting status fields...</div>
+    </div>
+    
+    <div class="debug-actions">
+      <button id="inspectProfilesBtn">Inspect Profiles</button>
+      <button id="debugForceStatus">Force Status (Test)</button>
+      <button id="exportProfilesBtn">Export Profiles Data</button>
+    </div>
+  </div>
+
   <!-- Refresh Button -->
   <button class="refresh-btn" id="refreshDataBtn" title="Refresh data">
     <i class="bi bi-arrow-repeat"></i>
   </button>
-
-  <!-- Debug Panel -->
-  <div id="debugPanel">
-    <h5>Debug Information</h5>
-    <pre id="debugOutput"></pre>
-  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   
@@ -514,41 +601,27 @@
     const alertContainer = document.getElementById('alertContainer');
     const logoutLink = document.getElementById('logoutLink');
     const refreshDataBtn = document.getElementById('refreshDataBtn');
+    
+    // Debug Panel Elements
     const debugPanel = document.getElementById('debugPanel');
-    const debugOutput = document.getElementById('debugOutput');
+    const closeDebugBtn = document.getElementById('closeDebugBtn');
+    const inspectProfilesBtn = document.getElementById('inspectProfilesBtn');
+    const debugForceStatus = document.getElementById('debugForceStatus');
+    const exportProfilesBtn = document.getElementById('exportProfilesBtn');
+    const profileStructure = document.getElementById('profileStructure');
+    const statusSummary = document.getElementById('statusSummary');
+    const statusFields = document.getElementById('statusFields');
     
     // Tab elements for reference
     const searchTab = document.getElementById('search-member-tab');
     const gradeTab = document.getElementById('by-grade-tab');
     const teamTab = document.getElementById('by-team-tab');
 
-    // Show debug info - helpful for troubleshooting
-    const DEBUG_MODE = true; // Set to true to enable debug output
-    
-    function debug(message, data = null) {
-      if (!DEBUG_MODE) return;
-      
-      let logMsg = `${new Date().toLocaleTimeString()}: ${message}`;
-      if (data) {
-        logMsg += '\n' + JSON.stringify(data, null, 2);
-      }
-      
-      console.log(logMsg);
-      
-      if (debugOutput) {
-        debugOutput.innerHTML += logMsg + '\n\n';
-        debugOutput.scrollTop = debugOutput.scrollHeight;
-      }
-      
-      if (debugPanel) {
-        debugPanel.style.display = 'block';
-      }
-    }
-
     // Store data
     let allMembers = [];
     let allTeams = [];
     let profilesMap = new Map(); // Store profiles by user ID for quick lookup
+    let profilesDataForDebug = []; // Store profiles data for debug
     let selectedMemberIds = []; // For bulk assignment
     let currentMemberId = null; // For single member assignment
     let currentMemberTeams = [];
@@ -556,6 +629,7 @@
     let lastSearchTerm = '';
     let lastGradeSelection = '';
     let lastTeamSelection = '';
+    let forceStatusMode = false; // For debug - force all statuses to a value
 
     // Set button loading state
     function setButtonLoading(button, isLoading) {
@@ -588,23 +662,76 @@
       }
     }
 
-    // Get member's profile status safely
+    // Recursive function to find status field in a nested object
+    function findStatusField(obj, path = '') {
+      if (!obj || typeof obj !== 'object') return [];
+      
+      const results = [];
+      
+      for (const key in obj) {
+        const newPath = path ? `${path}.${key}` : key;
+        
+        // If this is a key that could be a status
+        if (/status/i.test(key)) {
+          results.push({
+            path: newPath,
+            value: obj[key]
+          });
+        }
+        
+        // If this is an object, recursively search it
+        if (obj[key] && typeof obj[key] === 'object' && !Array.isArray(obj[key])) {
+          results.push(...findStatusField(obj[key], newPath));
+        }
+      }
+      
+      return results;
+    }
+
+    // Helper to pretty print object
+    function prettyPrint(obj) {
+      return JSON.stringify(obj, null, 2);
+    }
+
+    // Get member's profile status
     function getMemberProfileStatus(memberId) {
       try {
         // Get profile data
         const profile = profilesMap.get(memberId);
         
-        // If we have a profile with an adminReview field that has a status
-        if (profile && profile.adminReview && profile.adminReview.status) {
-          debug(`Found status for ${memberId}:`, profile.adminReview.status);
+        if (!profile) return 'pending';
+        
+        // If we're in debug force status mode, return the test value
+        if (forceStatusMode) return 'approved';
+        
+        // Try multiple status field paths - this is debug mode so we check everything
+        
+        // Check for status in adminUse.status
+        if (profile.adminUse && profile.adminUse.status) {
+          return profile.adminUse.status;
+        }
+        
+        // Check for status in adminReview.status
+        if (profile.adminReview && profile.adminReview.status) {
           return profile.adminReview.status;
         }
         
+        // Check for direct status field
+        if (profile.status) {
+          return profile.status;
+        }
+        
+        // Find any field named status
+        const statusFields = findStatusField(profile);
+        if (statusFields.length > 0) {
+          // Use the first status field found
+          return statusFields[0].value;
+        }
+        
         // Default status if not found
-        debug(`No status found for ${memberId}, using default 'pending'`);
         return 'pending';
       } catch (error) {
-        debug(`Error getting status for ${memberId}:`, error);
+        console.error(`Error getting status for ${memberId}:`, error);
         return 'pending';
       }
     }
@@ -628,6 +755,143 @@
       return teamNames.map(name => `<span class="team-badge">${name}</span>`).join('');
     }
 
+    // Debug function to find all possible status field paths in profiles
+    function analyzeProfileStructures() {
+      const allFields = new Set();
+      const statusFields = [];
+      const statusCounts = {};
+      
+      // Track how many profiles have each structure
+      const structureCounts = {};
+      
+      // Collect all first-level fields
+      for (const [userId, profile] of profilesMap.entries()) {
+        // Skip empty profiles
+        if (!profile) continue;
+        
+        // Get top-level keys as a string for counting
+        const topKeys = Object.keys(profile).sort().join(',');
+        structureCounts[topKeys] = (structureCounts[topKeys] || 0) + 1;
+        
+        // Collect all fields
+        const collectFields = (obj, prefix = '') => {
+          if (!obj || typeof obj !== 'object') return;
+          
+          for (const key in obj) {
+            const path = prefix ? `${prefix}.${key}` : key;
+            allFields.add(path);
+            
+            // If this is a status-like field, add it to the list
+            if (/status/i.test(key)) {
+              statusFields.push({
+                userId,
+                path,
+                value: obj[key]
+              });
+              
+              // Count occurrences of each status value
+              const statusKey = `${path}:${obj[key]}`;
+              statusCounts[statusKey] = (statusCounts[statusKey] || 0) + 1;
+            }
+            
+            // Recurse into objects
+            if (obj[key] && typeof obj[key] === 'object' && !Array.isArray(obj[key])) {
+              collectFields(obj[key], path);
+            }
+          }
+        };
+        
+        collectFields(profile);
+      }
+      
+      // Analyze profile structure variations
+      let structureAnalysis = '<h4>Profile Structure Variations</h4>';
+      structureAnalysis += '<table class="debug-table">';
+      structureAnalysis += '<tr><th>Top-Level Fields</th><th>Count</th></tr>';
+      
+      for (const [structure, count] of Object.entries(structureCounts)) {
+        structureAnalysis += `<tr><td>${structure}</td><td>${count}</td></tr>`;
+      }
+      
+      structureAnalysis += '</table>';
+      
+      // Sort status fields by frequency
+      const statusFieldPaths = {};
+      for (const field of statusFields) {
+        statusFieldPaths[field.path] = (statusFieldPaths[field.path] || 0) + 1;
+      }
+      
+      // Status fields analysis
+      let statusAnalysis = '<h4>Status Fields Found</h4>';
+      statusAnalysis += '<table class="debug-table">';
+      statusAnalysis += '<tr><th>Path</th><th>Count</th></tr>';
+      
+      for (const [path, count] of Object.entries(statusFieldPaths)) {
+        statusAnalysis += `<tr><td>${path}</td><td>${count}</td></tr>`;
+      }
+      
+      statusAnalysis += '</table>';
+      
+      // Status values analysis
+      let valuesAnalysis = '<h4>Status Values</h4>';
+      valuesAnalysis += '<table class="debug-table">';
+      valuesAnalysis += '<tr><th>Path:Value</th><th>Count</th></tr>';
+      
+      for (const [statusKey, count] of Object.entries(statusCounts)) {
+        valuesAnalysis += `<tr><td>${statusKey}</td><td>${count}</td></tr>`;
+      }
+      
+      valuesAnalysis += '</table>';
+      
+      // Sample profiles (first 3)
+      let sampleAnalysis = '<h4>Sample Profiles (First 3)</h4>';
+      
+      const profileEntries = Array.from(profilesMap.entries());
+      const samples = profileEntries.slice(0, 3);
+      
+      for (let i = 0; i < samples.length; i++) {
+        const [userId, profile] = samples[i];
+        sampleAnalysis += `<h5>Profile ${i+1} (${userId})</h5>`;
+        sampleAnalysis += `<pre>${prettyPrint(profile)}</pre>`;
+      }
+      
+      return {
+        structureAnalysis,
+        statusAnalysis,
+        valuesAnalysis,
+        sampleAnalysis,
+        statusFields
+      };
+    }
+
+    // Debug function to update profile analysis display
+    function updateProfileAnalysis() {
+      try {
+        const analysis = analyzeProfileStructures();
+        
+        profileStructure.innerHTML = analysis.structureAnalysis;
+        statusSummary.innerHTML = analysis.statusAnalysis + analysis.valuesAnalysis;
+        
+        // Build status fields table
+        let statusFieldsHtml = '<table class="debug-table">';
+        statusFieldsHtml += '<tr><th>User ID</th><th>Path</th><th>Value</th></tr>';
+        
+        // Take only first 20 to avoid overwhelming the UI
+        const displayFields = analysis.statusFields.slice(0, 20);
+        for (const field of displayFields) {
+          statusFieldsHtml += `<tr><td>${field.userId.substring(0, 8)}...</td><td>${field.path}</td><td>${field.value}</td></tr>`;
+        }
+        
+        statusFieldsHtml += '</table>';
+        statusFieldsHtml += `<p>Showing ${displayFields.length} of ${analysis.statusFields.length} status fields...</p>`;
+        
+        statusFields.innerHTML = statusFieldsHtml;
+      } catch (error) {
+        console.error('Error updating profile analysis:', error);
+        profileStructure.innerHTML = `<div class="alert alert-danger">Error analyzing profiles: ${error.message}</div>`;
+      }
+    }
+
     // Load initial data
     async function loadInitialData() {
       try {
@@ -648,11 +912,16 @@
         // Get all profiles
         const profilesSnapshot = await getDocs(collection(db, 'profiles'));
         profilesMap.clear();
+        profilesDataForDebug = [];
         
         // Store profiles in a Map for quick access
         profilesSnapshot.forEach(doc => {
-          profilesMap.set(doc.id, doc.data());
-          debug(`Loaded profile: ${doc.id}`, doc.data().adminReview);
+          const profileData = doc.data();
+          profilesMap.set(doc.id, profileData);
+          profilesDataForDebug.push({
+            id: doc.id,
+            data: profileData
+          });
         });
         
         // Process users and their grades
@@ -675,13 +944,8 @@
           });
         });
         
-        // Debug status information
-        debug(`Loaded ${allMembers.length} members`);
-        const statusBreakdown = allMembers.reduce((acc, member) => {
-          acc[member.profileStatus] = (acc[member.profileStatus] || 0) + 1;
-          return acc;
-        }, {});
-        debug("Status breakdown:", statusBreakdown);
+        // Update debug panel
+        updateProfileAnalysis();
         
         // Sort members by name
         allMembers.sort((a, b) => {
@@ -717,7 +981,6 @@
         
       } catch (error) {
         console.error('Error loading initial data:', error);
-        debug('Error loading initial data:', error);
         showAlert('Error loading data: ' + error.message, 'danger');
       } finally {
         setButtonLoading(refreshDataBtn, false);
@@ -1040,7 +1303,6 @@
         
       } catch (error) {
         console.error('Error loading team members:', error);
-        debug('Error loading team members:', error);
         showAlert('Error loading team members: ' + error.message, 'danger');
         teamMembersLoading.classList.add('hidden');
       }
@@ -1075,7 +1337,6 @@
         }
       } catch (error) {
         console.error('Error removing member from team:', error);
-        debug('Error removing member from team:', error);
         showAlert('Error removing member from team: ' + error.message, 'danger');
       }
     }
@@ -1145,7 +1406,6 @@
         
       } catch (error) {
         console.error('Error opening team selection modal:', error);
-        debug('Error opening team selection modal:', error);
         showAlert('Error loading teams: ' + error.message, 'danger');
       }
     }
@@ -1169,7 +1429,6 @@
             
             if (!memberDoc.exists()) {
               console.warn(`Member ${memberId} not found, skipping...`);
-              debug(`Member ${memberId} not found, skipping...`);
               continue;
             }
             
@@ -1229,10 +1488,59 @@
         
       } catch (error) {
         console.error('Error saving team assignments:', error);
-        debug('Error saving team assignments:', error);
         showAlert('Error saving team assignments: ' + error.message, 'danger');
       } finally {
         setButtonLoading(saveTeamsBtn, false);
+      }
+    }
+    
+    // Debug: Export profiles to JSON file
+    function exportProfilesToFile() {
+      try {
+        // Convert profiles to JSON string
+        const profilesJson = JSON.stringify(profilesDataForDebug, null, 2);
+        
+        // Create a Blob containing the data
+        const blob = new Blob([profilesJson], { type: 'application/json' });
+        
+        // Create an anchor element and set the href to the blob
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'profiles-data.json';
+        
+        // Append anchor to body, click it, and remove it
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        showAlert('Profiles data exported successfully.', 'success');
+      } catch (error) {
+        console.error('Error exporting profiles:', error);
+        showAlert('Error exporting profiles: ' + error.message, 'danger');
+      }
+    }
+    
+    // Debug: Toggle force status mode
+    function toggleForceStatus() {
+      forceStatusMode = !forceStatusMode;
+      
+      if (forceStatusMode) {
+        debugForceStatus.textContent = 'Disable Force Status';
+        debugForceStatus.classList.add('btn-warning');
+        showAlert('Force Status mode enabled - all members will show as "approved"', 'warning');
+      } else {
+        debugForceStatus.textContent = 'Force Status (Test)';
+        debugForceStatus.classList.remove('btn-warning');
+        showAlert('Force Status mode disabled - using actual status from profiles', 'info');
+      }
+      
+      // Refresh the current view
+      if (searchTab.classList.contains('active') && lastSearchTerm.length >= 3) {
+        searchMembers(true);
+      } else if (gradeTab.classList.contains('active') && lastGradeSelection) {
+        loadMembersByGrade(true);
+      } else if (teamTab.classList.contains('active') && lastTeamSelection) {
+        loadMembersByTeam(true);
       }
     }
 
@@ -1251,6 +1559,19 @@
     });
     
     saveTeamsBtn.addEventListener('click', saveTeamAssignments);
+    
+    // Debug panel event listeners
+    closeDebugBtn.addEventListener('click', () => {
+      debugPanel.style.display = 'none';
+    });
+    
+    inspectProfilesBtn.addEventListener('click', () => {
+      updateProfileAnalysis();
+    });
+    
+    debugForceStatus.addEventListener('click', toggleForceStatus);
+    
+    exportProfilesBtn.addEventListener('click', exportProfilesToFile);
     
     // Tab change event listener
     document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(tab => {
@@ -1304,7 +1625,6 @@
         
       } catch (error) {
         console.error('Error checking admin status:', error);
-        debug('Error checking admin status:', error);
         showAlert('Error checking permissions: ' + error.message, 'danger');
       }
     });
