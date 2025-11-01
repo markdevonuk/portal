@@ -347,7 +347,7 @@
             </div>
             
             <div id="teamMembers" class="hidden">
-              <div id="teamMembersList">
+              <div id="teamMembersListContainer">
                 <!-- Member cards will be populated dynamically -->
               </div>
             </div>
@@ -440,7 +440,7 @@
     // DOM Elements - By Team Tab
     const teamSelect = document.getElementById('teamSelect');
     const teamMembers = document.getElementById('teamMembers');
-    const teamMembersList = document.getElementById('teamMembersList');
+    const teamMembersListContainer = document.getElementById('teamMembersListContainer');
     const noTeamMembers = document.getElementById('noTeamMembers');
     const teamMembersLoading = document.getElementById('teamMembersLoading');
     
@@ -789,12 +789,12 @@
       // Get members in team
       try {
         // Get users in this team using the team-service function
-        const teamMembersList = await getUsersInTeam(selectedTeamId);
+        const membersInTeam = await getUsersInTeam(selectedTeamId);
         
         // Merge with profiles to get grades and status
         const membersWithDetails = [];
         
-        for (const member of teamMembersList) {
+        for (const member of membersInTeam) {
           // Get member's clinical grade from allMembers
           const fullMemberData = allMembers.find(m => m.id === member.id);
           
@@ -828,7 +828,7 @@
         }
         
         // Clear previous list
-        teamMembersList.innerHTML = '';
+        teamMembersListContainer.innerHTML = '';
         
         // Show members
         for (const member of membersWithDetails) {
@@ -851,7 +851,7 @@
             </div>
           `;
           
-          teamMembersList.appendChild(memberCard);
+          teamMembersListContainer.appendChild(memberCard);
         }
         
         // Add event listeners to remove buttons
