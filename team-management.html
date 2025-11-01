@@ -6,8 +6,42 @@
   <title>Team Management - FMS Prehospital Portal</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-  <link rel="stylesheet" href="css/styles.css">
+  <!-- Include the loader script -->
+  <script src="loader.js"></script>
   <style>
+    body { 
+      background: #f8f9fa; 
+      min-height: 100vh; 
+    }
+    
+    .navbar { 
+      background: linear-gradient(135deg, #00a896 0%, #028090 100%); 
+      box-shadow: 0 2px 10px rgba(0,0,0,.1); 
+    }
+    
+    .nav-link { 
+      color: #fff !important; 
+      font-weight: 500; 
+    }
+    
+    .nav-link:hover { 
+      color: #fff !important; 
+      opacity: 0.85; 
+    }
+    
+    .page-header {
+      margin-top: 30px;
+      margin-bottom: 20px;
+    }
+    
+    .admin-card { 
+      background: #fff; 
+      border-radius: 15px; 
+      box-shadow: 0 5px 20px rgba(0,0,0,.08); 
+      padding: 30px; 
+      margin: 20px 0; 
+    }
+    
     .team-card {
       border-radius: 10px;
       padding: 20px;
@@ -15,6 +49,7 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       transition: all 0.2s ease;
       margin-bottom: 20px;
+      position: relative;
     }
     
     .team-card:hover {
@@ -22,24 +57,42 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
     
-    .team-actions {
+    .team-card .team-actions {
+      position: absolute;
+      top: 20px;
+      right: 20px;
       display: flex;
-      gap: 8px;
-      justify-content: flex-end;
-      margin-top: 15px;
+      gap: 10px;
     }
     
-    .team-members {
-      font-size: 14px;
+    .team-header {
+      margin-bottom: 15px;
+      padding-right: 80px;
+    }
+    
+    .team-header h3 {
+      margin-bottom: 5px;
+      color: #333;
+    }
+    
+    .team-description {
       color: #6c757d;
-      margin-top: 5px;
+      margin-bottom: 15px;
     }
     
-    .no-teams-message {
-      background-color: #f8f9fa;
-      border-radius: 8px;
-      padding: 30px;
-      text-align: center;
+    .team-meta {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 10px;
+    }
+    
+    .team-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: #6c757d;
+      font-size: 0.9rem;
     }
     
     .btn-loading {
@@ -62,131 +115,235 @@
     
     @keyframes spinner { to { transform: rotate(360deg); } }
     
+    .add-team-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background-color: #00a896;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+      border: none;
+      font-size: 24px;
+      z-index: 1000;
+    }
+    
+    .add-team-btn:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+      background-color: #008f7e;
+      color: white;
+    }
+    
+    .team-empty-state {
+      text-align: center;
+      padding: 60px 0;
+      color: #6c757d;
+    }
+    
+    .team-empty-state i {
+      font-size: 60px;
+      margin-bottom: 20px;
+      color: #adb5bd;
+    }
+    
+    .team-empty-state h3 {
+      margin-bottom: 15px;
+      color: #495057;
+    }
+    
+    .team-empty-state p {
+      max-width: 500px;
+      margin: 0 auto 20px;
+    }
+    
+    .search-container {
+      position: relative;
+      margin-bottom: 30px;
+    }
+    
+    .search-container .form-control {
+      padding-left: 45px;
+      height: 50px;
+      border-radius: 25px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      border: 1px solid #e9ecef;
+    }
+    
+    .search-container .form-control:focus {
+      box-shadow: 0 0 0 0.25rem rgba(0,168,150,0.25);
+      border-color: #00a896;
+    }
+    
+    .search-icon {
+      position: absolute;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #adb5bd;
+      font-size: 18px;
+      z-index: 10;
+    }
+    
     .hidden {
       display: none !important;
+    }
+    
+    .btn-logout { 
+      background: rgba(255,255,255,.2); 
+      border: 2px solid #fff; 
+      color: #fff; 
+      font-weight: 600; 
+    }
+    
+    .btn-logout:hover { 
+      background: #fff; 
+      color: #00a896; 
+    }
+    
+    /* Add the page content visibility control */
+    .page-content {
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+    }
+    .page-content.loaded {
+      opacity: 1;
     }
   </style>
 </head>
 <body>
-  <!-- Navigation -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container">
-      <a class="navbar-brand" href="dashboard.html">FMS Prehospital Portal</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
-          
-          <li class="nav-item">
-            <a class="nav-link" href="admin.html">
-              <i class="bi bi-arrow-left"></i> Admin Dashboard
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="dashboard.html">
-              <i class="bi bi-house-fill"></i> Dashboard
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="team-assignment.html">
-              <i class="bi bi-people"></i> Team Assignment
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#" id="logoutLink">
-              <i class="bi bi-box-arrow-right"></i> Logout
-            </a>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </nav>
-
-  <div class="container">
-    <div class="page-header">
-      <h1 class="mb-2"><i class="bi bi-people-fill"></i> Team Management</h1>
-      <p class="mb-0">Create and manage teams for organization members</p>
-    </div>
-
-    <div id="alertContainer"></div>
-
-    <div class="admin-card">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3><i class="bi bi-people"></i> Teams</h3>
-        <button class="btn btn-primary" id="createTeamBtn">
-          <i class="bi bi-plus-circle"></i> Create New Team
+  <!-- Wrap all content in page-content div -->
+  <div class="page-content">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+      <div class="container">
+        <a class="navbar-brand" href="dashboard.html"><i class="bi bi-shield-lock"></i> FMS Prehospital Portal</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
         </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="admin.html">
+                <i class="bi bi-arrow-left"></i> Admin Dashboard
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="dashboard.html">
+                <i class="bi bi-house-fill"></i> Dashboard
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="team-assignment.html">
+                <i class="bi bi-person-plus-fill"></i> Team Assignment
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" id="logoutLink">
+                <i class="bi bi-box-arrow-right"></i> Logout
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+      <div class="page-header">
+        <h1 class="mb-2"><i class="bi bi-people-fill"></i> Team Management</h1>
+        <p class="mb-0">Create and manage clinical and operational teams</p>
+      </div>
+
+      <div id="alertContainer"></div>
+
+      <div class="search-container">
+        <i class="bi bi-search search-icon"></i>
+        <input type="text" id="teamSearchInput" class="form-control" placeholder="Search teams...">
       </div>
 
       <div id="teamsContainer">
-        <div id="loadingTeams" class="text-center py-4">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
+        <!-- Teams will be loaded here dynamically -->
+      </div>
+
+      <div id="teamsEmptyState" class="team-empty-state hidden">
+        <i class="bi bi-people"></i>
+        <h3>No teams created yet</h3>
+        <p>Teams allow you to organize members based on their roles, responsibilities, or other criteria to easily manage staff assignments for events.</p>
+        <button id="createFirstTeamBtn" class="btn btn-primary btn-lg">
+          <i class="bi bi-plus-circle me-2"></i> Create Your First Team
+        </button>
+      </div>
+
+      <div id="teamsLoading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-3 text-muted">Loading teams...</p>
+      </div>
+
+      <button class="add-team-btn" id="addTeamBtn" title="Add new team">
+        <i class="bi bi-plus-lg"></i>
+      </button>
+    </div>
+
+    <!-- Team Modal -->
+    <div class="modal fade" id="teamModal" tabindex="-1" aria-labelledby="teamModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="teamModalLabel">Create New Team</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-          <p class="mt-2 text-muted">Loading teams...</p>
-        </div>
-        
-        <div id="noTeamsMessage" class="alert alert-info hidden">
-          <i class="bi bi-info-circle"></i> No teams found. Create a new team to get started.
-        </div>
-        
-        <div id="teamsList" class="hidden">
-          <!-- Teams will be loaded here dynamically -->
+          <div class="modal-body">
+            <form id="teamForm">
+              <input type="hidden" id="teamId">
+              <div class="mb-3">
+                <label for="teamName" class="form-label">Team Name</label>
+                <input type="text" class="form-control" id="teamName" required>
+              </div>
+              <div class="mb-3">
+                <label for="teamDescription" class="form-label">Description</label>
+                <textarea class="form-control" id="teamDescription" rows="3"></textarea>
+              </div>
+              <div class="mb-3">
+                <label for="teamType" class="form-label">Team Type</label>
+                <select class="form-select" id="teamType" required>
+                  <option value="">-- Select a type --</option>
+                  <option value="clinical">Clinical</option>
+                  <option value="operational">Operational</option>
+                  <option value="administrative">Administrative</option>
+                </select>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="saveTeamBtn">Save Team</button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Team Modal -->
-  <div class="modal fade" id="teamModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title"><i class="bi bi-people"></i> <span id="teamModalTitle">Create Team</span></h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <form id="teamForm">
-            <div class="mb-3">
-              <label for="teamName" class="form-label">Team Name</label>
-              <input type="text" class="form-control" id="teamName" required>
-            </div>
-            <div class="mb-3">
-              <label for="teamDescription" class="form-label">Description (Optional)</label>
-              <textarea class="form-control" id="teamDescription" rows="3"></textarea>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" id="saveTeamBtn">
-            <i class="bi bi-save"></i> Save Team
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Delete Confirmation Modal -->
-  <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> Confirm Deletion</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <p>Are you sure you want to delete the team "<span id="deleteTeamName"></span>"?</p>
-          <div class="alert alert-warning">
-            <i class="bi bi-exclamation-circle"></i> This will remove the team from all members.
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="deleteConfirmModalLabel">Confirm Delete</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
-            <i class="bi bi-trash"></i> Delete Team
-          </button>
+          <div class="modal-body">
+            <p>Are you sure you want to delete the team <strong id="deleteTeamName"></strong>?</p>
+            <p class="text-danger">This action cannot be undone, and all team assignments will be removed.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete Team</button>
+          </div>
         </div>
       </div>
     </div>
@@ -198,55 +355,60 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
     import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
     import { 
-      getFirestore,
-      doc,
+      getFirestore, 
+      collection, 
+      doc, 
       getDoc,
-      collection,
-      getDocs
+      getDocs,
+      addDoc, 
+      updateDoc,
+      deleteDoc,
+      query,
+      where,
+      serverTimestamp 
     } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
     import { firebaseConfig } from './firebase-config.js';
-    import { 
-      getAllTeams,
-      getUsersInTeam,
-      createTeam,
-      updateTeam,
-      deleteTeam
-    } from './teams-service.js';
+    import { getAllTeams, getUsersInTeam, updateUserTeams } from './teams-service.js';
 
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // DOM Elements
-    const teamsList = document.getElementById('teamsList');
-    const loadingTeams = document.getElementById('loadingTeams');
-    const noTeamsMessage = document.getElementById('noTeamsMessage');
-    const createTeamBtn = document.getElementById('createTeamBtn');
-    const saveTeamBtn = document.getElementById('saveTeamBtn');
+    // DOM elements
+    const teamsContainer = document.getElementById('teamsContainer');
+    const teamsEmptyState = document.getElementById('teamsEmptyState');
+    const teamsLoading = document.getElementById('teamsLoading');
+    const teamSearchInput = document.getElementById('teamSearchInput');
+    const alertContainer = document.getElementById('alertContainer');
+    const addTeamBtn = document.getElementById('addTeamBtn');
+    const createFirstTeamBtn = document.getElementById('createFirstTeamBtn');
+    const logoutLink = document.getElementById('logoutLink');
+
+    // Modal elements
+    const teamModal = new bootstrap.Modal(document.getElementById('teamModal'));
     const teamForm = document.getElementById('teamForm');
+    const teamId = document.getElementById('teamId');
     const teamName = document.getElementById('teamName');
     const teamDescription = document.getElementById('teamDescription');
-    const teamModalTitle = document.getElementById('teamModalTitle');
-    const teamModal = new bootstrap.Modal(document.getElementById('teamModal'));
+    const teamType = document.getElementById('teamType');
+    const saveTeamBtn = document.getElementById('saveTeamBtn');
+
+    // Delete modal elements
     const deleteConfirmModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
     const deleteTeamName = document.getElementById('deleteTeamName');
     const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-    const alertContainer = document.getElementById('alertContainer');
-    const logoutLink = document.getElementById('logoutLink');
 
-    // Store current teams data
-    let currentTeams = [];
-    let currentTeamId = null;
+    // Store team data
+    let allTeams = [];
+    let teamMemberCounts = {};
+    let currentDeleteId = null;
 
-    // Set button loading state
-    function setButtonLoading(button, isLoading) {
-      if (isLoading) {
-        button.classList.add('btn-loading');
-        button.disabled = true;
-      } else {
-        button.classList.remove('btn-loading');
-        button.disabled = false;
+    // Function to show page content
+    function showPageContent() {
+      document.querySelector('.page-content').classList.add('loaded');
+      if (window.fmsLoader && window.fmsLoader.hide) {
+        window.fmsLoader.hide();
       }
     }
 
@@ -270,193 +432,298 @@
       }
     }
 
-    // Load all teams
+    // Load teams data
     async function loadTeams() {
       try {
-        teamsList.classList.add('hidden');
-        loadingTeams.classList.remove('hidden');
-        noTeamsMessage.classList.add('hidden');
-        
-        currentTeams = await getAllTeams();
-        
-        if (currentTeams.length === 0) {
-          loadingTeams.classList.add('hidden');
-          noTeamsMessage.classList.remove('hidden');
-          return;
+        // Show loader if available
+        if (window.fmsLoader && window.fmsLoader.show) {
+          window.fmsLoader.show();
         }
         
-        // Render teams
-        teamsList.innerHTML = '';
+        teamsLoading.classList.remove('hidden');
+        teamsEmptyState.classList.add('hidden');
+        teamsContainer.innerHTML = '';
         
-        for (const team of currentTeams) {
-          // Get users in this team
-          const users = await getUsersInTeam(team.id);
-          
-          const teamCard = document.createElement('div');
-          teamCard.className = 'team-card';
-          teamCard.innerHTML = `
-            <div class="d-flex justify-content-between align-items-start">
-              <div>
-                <h4 class="mb-1">${team.name}</h4>
-                <p class="text-muted mb-2">${team.description || 'No description'}</p>
-                <div class="team-members">
-                  <i class="bi bi-people-fill"></i> ${users.length} member${users.length !== 1 ? 's' : ''}
-                </div>
-              </div>
-            </div>
-            <div class="team-actions">
-              <button class="btn btn-sm btn-outline-primary edit-team-btn" data-team-id="${team.id}">
-                <i class="bi bi-pencil"></i> Edit
-              </button>
-              <button class="btn btn-sm btn-outline-danger delete-team-btn" data-team-id="${team.id}">
-                <i class="bi bi-trash"></i> Delete
-              </button>
-            </div>
-          `;
-          
-          teamsList.appendChild(teamCard);
+        // Get all teams
+        allTeams = await getAllTeams();
+        
+        // Get member counts for each team
+        teamMemberCounts = {};
+        
+        for (const team of allTeams) {
+          const members = await getUsersInTeam(team.id);
+          teamMemberCounts[team.id] = members.length;
         }
         
-        // Add event listeners
-        document.querySelectorAll('.edit-team-btn').forEach(btn => {
-          btn.addEventListener('click', () => openEditTeamModal(btn.dataset.teamId));
-        });
+        // Display teams
+        displayTeams(allTeams);
         
-        document.querySelectorAll('.delete-team-btn').forEach(btn => {
-          btn.addEventListener('click', () => openDeleteTeamModal(btn.dataset.teamId));
-        });
+        teamsLoading.classList.add('hidden');
         
-        loadingTeams.classList.add('hidden');
-        teamsList.classList.remove('hidden');
+        // Show empty state if no teams
+        if (allTeams.length === 0) {
+          teamsEmptyState.classList.remove('hidden');
+        }
         
+        // Show page content
+        showPageContent();
       } catch (error) {
         console.error('Error loading teams:', error);
         showAlert('Error loading teams: ' + error.message, 'danger');
-        loadingTeams.classList.add('hidden');
+        teamsLoading.classList.add('hidden');
+        
+        // Show page content even on error
+        showPageContent();
       }
     }
 
-    // Open create team modal
-    function openCreateTeamModal() {
-      currentTeamId = null;
-      teamModalTitle.textContent = 'Create Team';
-      teamForm.reset();
-      teamModal.show();
-    }
-
-    // Open edit team modal
-    function openEditTeamModal(teamId) {
-      const team = currentTeams.find(t => t.id === teamId);
+    // Display teams
+    function displayTeams(teams) {
+      teamsContainer.innerHTML = '';
       
-      if (!team) {
-        showAlert('Team not found.', 'danger');
+      if (teams.length === 0) {
+        teamsEmptyState.classList.remove('hidden');
         return;
       }
       
-      currentTeamId = teamId;
-      teamModalTitle.textContent = 'Edit Team';
+      teamsEmptyState.classList.add('hidden');
+      
+      // Sort teams by name
+      teams.sort((a, b) => a.name.localeCompare(b.name));
+      
+      for (const team of teams) {
+        const memberCount = teamMemberCounts[team.id] || 0;
+        const teamTypeFormatted = team.type ? team.type.charAt(0).toUpperCase() + team.type.slice(1) : 'General';
+        
+        const teamCard = document.createElement('div');
+        teamCard.className = 'team-card';
+        teamCard.innerHTML = `
+          <div class="team-actions">
+            <button class="btn btn-outline-primary btn-sm edit-team-btn" data-team-id="${team.id}">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button class="btn btn-outline-danger btn-sm delete-team-btn" data-team-id="${team.id}" data-team-name="${team.name}">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+          <div class="team-header">
+            <h3>${team.name}</h3>
+            <div class="team-meta">
+              <div class="team-meta-item">
+                <i class="bi bi-tag"></i> ${teamTypeFormatted}
+              </div>
+              <div class="team-meta-item">
+                <i class="bi bi-people"></i> ${memberCount} member${memberCount !== 1 ? 's' : ''}
+              </div>
+            </div>
+          </div>
+          <div class="team-description">${team.description || 'No description provided'}</div>
+          <div class="mt-3">
+            <a href="team-assignment.html" class="btn btn-sm btn-primary">
+              <i class="bi bi-person-plus"></i> Assign Members
+            </a>
+          </div>
+        `;
+        
+        teamsContainer.appendChild(teamCard);
+      }
+      
+      // Add event listeners to edit and delete buttons
+      document.querySelectorAll('.edit-team-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const teamId = btn.dataset.teamId;
+          openEditTeamModal(teamId);
+        });
+      });
+      
+      document.querySelectorAll('.delete-team-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const teamId = btn.dataset.teamId;
+          const name = btn.dataset.teamName;
+          openDeleteConfirmModal(teamId, name);
+        });
+      });
+    }
+
+    // Filter teams based on search
+    function filterTeams() {
+      const searchTerm = teamSearchInput.value.trim().toLowerCase();
+      
+      if (!searchTerm) {
+        displayTeams(allTeams);
+        return;
+      }
+      
+      const filteredTeams = allTeams.filter(team => 
+        team.name.toLowerCase().includes(searchTerm) ||
+        (team.description && team.description.toLowerCase().includes(searchTerm)) ||
+        (team.type && team.type.toLowerCase().includes(searchTerm))
+      );
+      
+      displayTeams(filteredTeams);
+    }
+
+    // Open team modal for creating a new team
+    function openCreateTeamModal() {
+      // Reset form
+      teamForm.reset();
+      teamId.value = '';
+      
+      // Update modal title
+      document.getElementById('teamModalLabel').textContent = 'Create New Team';
+      
+      // Show modal
+      teamModal.show();
+    }
+
+    // Open team modal for editing an existing team
+    function openEditTeamModal(id) {
+      // Find team
+      const team = allTeams.find(t => t.id === id);
+      
+      if (!team) {
+        showAlert('Team not found', 'danger');
+        return;
+      }
+      
+      // Fill form
+      teamId.value = team.id;
       teamName.value = team.name;
       teamDescription.value = team.description || '';
+      teamType.value = team.type || '';
       
+      // Update modal title
+      document.getElementById('teamModalLabel').textContent = 'Edit Team';
+      
+      // Show modal
       teamModal.show();
     }
 
-    // Open delete team modal
-    function openDeleteTeamModal(teamId) {
-      const team = currentTeams.find(t => t.id === teamId);
-      
-      if (!team) {
-        showAlert('Team not found.', 'danger');
-        return;
-      }
-      
-      currentTeamId = teamId;
-      deleteTeamName.textContent = team.name;
-      
+    // Open delete confirmation modal
+    function openDeleteConfirmModal(id, name) {
+      currentDeleteId = id;
+      deleteTeamName.textContent = name;
       deleteConfirmModal.show();
     }
 
-    // Save team (create or update)
+    // Create or update team
     async function saveTeam() {
       try {
-        setButtonLoading(saveTeamBtn, true);
-        
-        const name = teamName.value.trim();
-        const description = teamDescription.value.trim();
-        
-        if (!name) {
-          showAlert('Team name is required.', 'danger');
-          setButtonLoading(saveTeamBtn, false);
+        // Validate form
+        if (!teamForm.checkValidity()) {
+          teamForm.reportValidity();
           return;
         }
         
-        const teamData = {
-          name,
-          description
-        };
+        // Get form values
+        const id = teamId.value;
+        const name = teamName.value.trim();
+        const description = teamDescription.value.trim();
+        const type = teamType.value;
         
-        if (currentTeamId) {
+        // Disable save button
+        saveTeamBtn.disabled = true;
+        saveTeamBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+        
+        if (id) {
           // Update existing team
-          await updateTeam(currentTeamId, teamData);
-          showAlert(`Team "${name}" updated successfully.`, 'success');
+          const teamRef = doc(db, 'teams', id);
+          await updateDoc(teamRef, {
+            name,
+            description,
+            type,
+            updatedAt: serverTimestamp()
+          });
+          
+          showAlert('Team updated successfully', 'success');
         } else {
           // Create new team
-          await createTeam(teamData);
-          showAlert(`Team "${name}" created successfully.`, 'success');
+          await addDoc(collection(db, 'teams'), {
+            name,
+            description,
+            type,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          });
+          
+          showAlert('Team created successfully', 'success');
         }
         
+        // Close modal and reload teams
         teamModal.hide();
         await loadTeams();
-        
       } catch (error) {
         console.error('Error saving team:', error);
         showAlert('Error saving team: ' + error.message, 'danger');
       } finally {
-        setButtonLoading(saveTeamBtn, false);
+        // Re-enable save button
+        saveTeamBtn.disabled = false;
+        saveTeamBtn.innerHTML = 'Save Team';
       }
     }
 
     // Delete team
-    async function deleteTeamHandler() {
+    async function deleteTeam() {
+      if (!currentDeleteId) return;
+      
       try {
-        setButtonLoading(confirmDeleteBtn, true);
+        // Disable delete button
+        confirmDeleteBtn.disabled = true;
+        confirmDeleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
         
-        const team = currentTeams.find(t => t.id === currentTeamId);
+        // Get users in team
+        const members = await getUsersInTeam(currentDeleteId);
         
-        if (!team) {
-          showAlert('Team not found.', 'danger');
-          setButtonLoading(confirmDeleteBtn, false);
-          deleteConfirmModal.hide();
-          return;
+        // Remove team from all member records
+        for (const member of members) {
+          await updateUserTeams(member.id, currentDeleteId, false);
         }
         
-        await deleteTeam(currentTeamId);
-        showAlert(`Team "${team.name}" deleted successfully.`, 'success');
+        // Delete team document
+        await deleteDoc(doc(db, 'teams', currentDeleteId));
         
+        showAlert('Team deleted successfully', 'success');
+        
+        // Close modal and reload teams
         deleteConfirmModal.hide();
         await loadTeams();
-        
       } catch (error) {
         console.error('Error deleting team:', error);
         showAlert('Error deleting team: ' + error.message, 'danger');
       } finally {
-        setButtonLoading(confirmDeleteBtn, false);
+        // Re-enable delete button
+        confirmDeleteBtn.disabled = false;
+        confirmDeleteBtn.innerHTML = 'Delete Team';
+        currentDeleteId = null;
       }
     }
 
-    // Event Listeners
-    createTeamBtn.addEventListener('click', openCreateTeamModal);
+    // Event listeners
+    addTeamBtn.addEventListener('click', openCreateTeamModal);
+    createFirstTeamBtn.addEventListener('click', openCreateTeamModal);
     saveTeamBtn.addEventListener('click', saveTeam);
-    confirmDeleteBtn.addEventListener('click', deleteTeamHandler);
+    confirmDeleteBtn.addEventListener('click', deleteTeam);
+    teamSearchInput.addEventListener('input', filterTeams);
     
     logoutLink.addEventListener('click', async (e) => {
       e.preventDefault();
+      
+      // Show the loader when logging out
+      if (window.fmsLoader && window.fmsLoader.show) {
+        window.fmsLoader.show();
+      }
+      
       try {
         await signOut(auth);
         window.location.href = 'index.html';
       } catch (error) {
         console.error('Logout failed:', error);
         alert('Logout failed: ' + error.message);
+        
+        // Hide the loader on error
+        if (window.fmsLoader && window.fmsLoader.hide) {
+          window.fmsLoader.hide();
+        }
       }
     });
 
@@ -483,7 +750,9 @@
       } catch (error) {
         console.error('Error checking admin status:', error);
         showAlert('Error checking permissions: ' + error.message, 'danger');
-        // Don't redirect, just show the error
+        
+        // Show page content even on error
+        showPageContent();
       }
     });
   </script>

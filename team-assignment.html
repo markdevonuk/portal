@@ -6,8 +6,42 @@
   <title>Team Assignment - FMS Prehospital Portal</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-  <link rel="stylesheet" href="css/styles.css">
+  <!-- Include the loader script -->
+  <script src="loader.js"></script>
   <style>
+    body { 
+      background: #f8f9fa; 
+      min-height: 100vh; 
+    }
+    
+    .navbar { 
+      background: linear-gradient(135deg, #00a896 0%, #028090 100%); 
+      box-shadow: 0 2px 10px rgba(0,0,0,.1); 
+    }
+    
+    .nav-link { 
+      color: #fff !important; 
+      font-weight: 500; 
+    }
+    
+    .nav-link:hover { 
+      color: #fff !important; 
+      opacity: 0.85; 
+    }
+    
+    .page-header {
+      margin-top: 30px;
+      margin-bottom: 20px;
+    }
+    
+    .admin-card { 
+      background: #fff; 
+      border-radius: 15px; 
+      box-shadow: 0 5px 20px rgba(0,0,0,.08); 
+      padding: 30px; 
+      margin: 20px 0; 
+    }
+    
     .member-card {
       border-radius: 10px;
       padding: 15px;
@@ -33,25 +67,6 @@
       display: flex;
       gap: 15px;
       align-items: flex-start;
-    }
-    
-    .profile-pic-container {
-      width: 50px;
-      height: 50px;
-      flex-shrink: 0;
-    }
-    
-    .profile-pic {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      object-fit: cover;
-      background-color: #e9ecef;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: #adb5bd;
-      font-size: 20px;
     }
     
     .team-badge {
@@ -228,319 +243,231 @@
       display: none !important;
     }
     
-    /* Debug panel */
-    #debugPanel {
-      position: fixed;
-      top: 70px;
-      right: 20px;
-      background-color: rgba(0,0,0,0.8);
-      color: white;
-      padding: 10px;
-      border-radius: 5px;
-      font-family: monospace;
-      font-size: 12px;
-      max-width: 500px;
-      max-height: 80vh;
-      overflow-y: auto;
-      z-index: 9999;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    .btn-logout { 
+      background: rgba(255,255,255,.2); 
+      border: 2px solid #fff; 
+      color: #fff; 
+      font-weight: 600; 
     }
     
-    #debugOutput {
-      margin: 0;
-      padding: 0;
-      white-space: pre-wrap;
+    .btn-logout:hover { 
+      background: #fff; 
+      color: #00a896; 
     }
     
-    .debug-controls {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 10px;
+    /* Add the page content visibility control */
+    .page-content {
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
     }
-    
-    .debug-controls button {
-      background: none;
-      border: none;
-      color: white;
-      cursor: pointer;
-      padding: 5px;
-    }
-    
-    .debug-section {
-      margin-bottom: 10px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid rgba(255,255,255,0.2);
-    }
-    
-    .debug-section h3 {
-      font-size: 14px;
-      color: #00a896;
-      margin: 0 0 5px;
-    }
-    
-    .debug-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    
-    .debug-table th,
-    .debug-table td {
-      border: 1px solid rgba(255,255,255,0.2);
-      padding: 3px 5px;
-      font-size: 11px;
-      text-align: left;
-    }
-    
-    .debug-table th {
-      background-color: rgba(255,255,255,0.1);
-    }
-    
-    .debug-actions {
-      margin-top: 10px;
-    }
-    
-    .debug-actions button {
-      background-color: #00a896;
-      border: none;
-      color: white;
-      padding: 5px 10px;
-      font-size: 12px;
-      border-radius: 3px;
-      cursor: pointer;
-      margin-right: 5px;
+    .page-content.loaded {
+      opacity: 1;
     }
   </style>
 </head>
 <body>
-  <!-- Navigation -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <!-- Wrap all content in page-content div -->
+  <div class="page-content">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+      <div class="container">
+        <a class="navbar-brand" href="dashboard.html"><i class="bi bi-shield-lock"></i> FMS Prehospital Portal</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="admin.html">
+                <i class="bi bi-arrow-left"></i> Admin Dashboard
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="dashboard.html">
+                <i class="bi bi-house-fill"></i> Dashboard
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="team-management.html">
+                <i class="bi bi-people-fill"></i> Team Management
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" id="logoutLink">
+                <i class="bi bi-box-arrow-right"></i> Logout
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
     <div class="container">
-      <a class="navbar-brand" href="dashboard.html">FMS Prehospital Portal</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
-          
-          <li class="nav-item">
-            <a class="nav-link" href="admin.html">
-              <i class="bi bi-arrow-left"></i> Admin Dashboard
-            </a>
+      <div class="page-header">
+        <h1 class="mb-2"><i class="bi bi-person-plus-fill"></i> Team Assignment</h1>
+        <p class="mb-0">Assign members to clinical or operational teams</p>
+      </div>
+
+      <div id="alertContainer"></div>
+
+      <div class="admin-card">
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-pills mb-4" id="teamAssignmentTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="search-member-tab" data-bs-toggle="pill" data-bs-target="#search-member" type="button" role="tab">
+              <i class="bi bi-search"></i> Search Member
+            </button>
           </li>
-          <li class="nav-item">
-            <a class="nav-link" href="dashboard.html">
-              <i class="bi bi-house-fill"></i> Dashboard
-            </a>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="by-grade-tab" data-bs-toggle="pill" data-bs-target="#by-grade" type="button" role="tab">
+              <i class="bi bi-award"></i> By Clinical Grade
+            </button>
           </li>
-          <li class="nav-item">
-            <a class="nav-link" href="team-management.html">
-              <i class="bi bi-people-fill"></i> Team Management
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#" id="logoutLink">
-              <i class="bi bi-box-arrow-right"></i> Logout
-            </a>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="by-team-tab" data-bs-toggle="pill" data-bs-target="#by-team" type="button" role="tab">
+              <i class="bi bi-people"></i> By Team
+            </button>
           </li>
         </ul>
-      </div>
-    </div>
-  </nav>
-
-  <div class="container">
-    <div class="page-header">
-      <h1 class="mb-2"><i class="bi bi-person-plus-fill"></i> Team Assignment</h1>
-      <p class="mb-0">Assign members to clinical or operational teams</p>
-    </div>
-
-    <div id="alertContainer"></div>
-
-    <div class="admin-card">
-      <!-- Navigation Tabs -->
-      <ul class="nav nav-pills mb-4" id="teamAssignmentTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="search-member-tab" data-bs-toggle="pill" data-bs-target="#search-member" type="button" role="tab">
-            <i class="bi bi-search"></i> Search Member
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="by-grade-tab" data-bs-toggle="pill" data-bs-target="#by-grade" type="button" role="tab">
-            <i class="bi bi-award"></i> By Clinical Grade
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="by-team-tab" data-bs-toggle="pill" data-bs-target="#by-team" type="button" role="tab">
-            <i class="bi bi-people"></i> By Team
-          </button>
-        </li>
-      </ul>
-      
-      <!-- Tab Content -->
-      <div class="tab-content" id="teamAssignmentTabContent">
-        <!-- Search Member Tab -->
-        <div class="tab-pane fade show active" id="search-member" role="tabpanel">
-          <div class="option-content">
-            <div class="search-container">
-              <i class="bi bi-search search-icon"></i>
-              <input type="text" id="memberSearchInput" class="form-control" placeholder="Search by name or email (min. 3 characters)">
-              <div class="form-text">Type at least 3 characters to search for members</div>
-            </div>
-            
-            <div id="memberSearchResults"></div>
-            
-            <div id="memberSearchNoResults" class="alert alert-info hidden">
-              <i class="bi bi-info-circle"></i> No members found matching your search.
-            </div>
-            
-            <div id="memberSearchLoading" class="text-center py-3 hidden">
-              <div class="spinner-border text-primary" role="status"></div>
-              <p class="mt-2 text-muted">Searching members...</p>
-            </div>
-          </div>
-        </div>
         
-        <!-- By Grade Tab -->
-        <div class="tab-pane fade" id="by-grade" role="tabpanel">
-          <div class="option-content">
-            <div class="row mb-4">
-              <div class="col-md-6">
-                <label class="form-label">Select Clinical Grade</label>
-                <select class="form-select" id="gradeSelect">
-                  <option value="">-- Select a grade --</option>
-                  <!-- Grade options will be populated dynamically -->
-                </select>
-              </div>
-            </div>
-            
-            <div id="gradeMembers" class="hidden">
-              <div class="bulk-action-bar">
-                <div>
-                  <span class="bulk-action-label" id="selectedMembersCount">0 members selected</span>
-                </div>
-                <button class="btn btn-primary" id="assignSelectedBtn" disabled>
-                  <i class="bi bi-people"></i> Assign to Team(s)
-                </button>
+        <!-- Tab Content -->
+        <div class="tab-content" id="teamAssignmentTabContent">
+          <!-- Search Member Tab -->
+          <div class="tab-pane fade show active" id="search-member" role="tabpanel">
+            <div class="option-content">
+              <div class="search-container">
+                <i class="bi bi-search search-icon"></i>
+                <input type="text" id="memberSearchInput" class="form-control" placeholder="Search by name or email (min. 3 characters)">
+                <div class="form-text">Type at least 3 characters to search for members</div>
               </div>
               
-              <div class="select-all-container">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="selectAllMembers">
-                  <label class="form-check-label" for="selectAllMembers">
-                    Select All
-                  </label>
-                </div>
+              <div id="memberSearchResults"></div>
+              
+              <div id="memberSearchNoResults" class="alert alert-info hidden">
+                <i class="bi bi-info-circle"></i> No members found matching your search.
               </div>
               
-              <div id="gradeMembersList">
-                <!-- Member cards will be populated dynamically -->
+              <div id="memberSearchLoading" class="text-center py-3 hidden">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 text-muted">Searching members...</p>
               </div>
-            </div>
-            
-            <div id="noGradeMembers" class="alert alert-info hidden">
-              <i class="bi bi-info-circle"></i> No members found with the selected grade.
-            </div>
-            
-            <div id="gradeMembersLoading" class="text-center py-3 hidden">
-              <div class="spinner-border text-primary" role="status"></div>
-              <p class="mt-2 text-muted">Loading members...</p>
             </div>
           </div>
-        </div>
-        
-        <!-- By Team Tab -->
-        <div class="tab-pane fade" id="by-team" role="tabpanel">
-          <div class="option-content">
-            <div class="row mb-4">
-              <div class="col-md-6">
-                <label class="form-label">Select Team</label>
-                <select class="form-select" id="teamSelect">
-                  <option value="">-- Select a team --</option>
-                  <!-- Team options will be populated dynamically -->
-                </select>
-              </div>
-            </div>
-            
-            <div id="teamMembers" class="hidden">
-              <div id="teamMembersListContainer">
-                <!-- Member cards will be populated dynamically -->
-              </div>
-            </div>
-            
-            <div id="noTeamMembers" class="alert alert-info hidden">
-              <i class="bi bi-info-circle"></i> No members found in the selected team.
-            </div>
-            
-            <div id="teamMembersLoading" class="text-center py-3 hidden">
-              <div class="spinner-border text-primary" role="status"></div>
-              <p class="mt-2 text-muted">Loading team members...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Team Selection Modal -->
-  <div class="modal fade" id="teamSelectionModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title"><i class="bi bi-people"></i> Assign Teams</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <p id="teamSelectionDescription">Select teams for <strong id="memberName"></strong></p>
           
-          <div class="team-select-container" id="teamSelectContainer">
-            <div class="text-center py-3">
-              <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-              <span class="ms-2">Loading teams...</span>
+          <!-- By Grade Tab -->
+          <div class="tab-pane fade" id="by-grade" role="tabpanel">
+            <div class="option-content">
+              <div class="row mb-4">
+                <div class="col-md-6">
+                  <label class="form-label">Select Clinical Grade</label>
+                  <select class="form-select" id="gradeSelect">
+                    <option value="">-- Select a grade --</option>
+                    <!-- Grade options will be populated dynamically -->
+                  </select>
+                </div>
+              </div>
+              
+              <div id="gradeMembers" class="hidden">
+                <div class="bulk-action-bar">
+                  <div>
+                    <span class="bulk-action-label" id="selectedMembersCount">0 members selected</span>
+                  </div>
+                  <button class="btn btn-primary" id="assignSelectedBtn" disabled>
+                    <i class="bi bi-people"></i> Assign to Team(s)
+                  </button>
+                </div>
+                
+                <div class="select-all-container">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="selectAllMembers">
+                    <label class="form-check-label" for="selectAllMembers">
+                      Select All
+                    </label>
+                  </div>
+                </div>
+                
+                <div id="gradeMembersList">
+                  <!-- Member cards will be populated dynamically -->
+                </div>
+              </div>
+              
+              <div id="noGradeMembers" class="alert alert-info hidden">
+                <i class="bi bi-info-circle"></i> No members found with the selected grade.
+              </div>
+              
+              <div id="gradeMembersLoading" class="text-center py-3 hidden">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 text-muted">Loading members...</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- By Team Tab -->
+          <div class="tab-pane fade" id="by-team" role="tabpanel">
+            <div class="option-content">
+              <div class="row mb-4">
+                <div class="col-md-6">
+                  <label class="form-label">Select Team</label>
+                  <select class="form-select" id="teamSelect">
+                    <option value="">-- Select a team --</option>
+                    <!-- Team options will be populated dynamically -->
+                  </select>
+                </div>
+              </div>
+              
+              <div id="teamMembers" class="hidden">
+                <div id="teamMembersListContainer">
+                  <!-- Member cards will be populated dynamically -->
+                </div>
+              </div>
+              
+              <div id="noTeamMembers" class="alert alert-info hidden">
+                <i class="bi bi-info-circle"></i> No members found in the selected team.
+              </div>
+              
+              <div id="teamMembersLoading" class="text-center py-3 hidden">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 text-muted">Loading team members...</p>
+              </div>
             </div>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" id="saveTeamsBtn">
-            <i class="bi bi-save"></i> Save Teams
-          </button>
+      </div>
+    </div>
+
+    <!-- Team Selection Modal -->
+    <div class="modal fade" id="teamSelectionModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title"><i class="bi bi-people"></i> Assign Teams</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p id="teamSelectionDescription">Select teams for <strong id="memberName"></strong></p>
+            
+            <div class="team-select-container" id="teamSelectContainer">
+              <div class="text-center py-3">
+                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                <span class="ms-2">Loading teams...</span>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="saveTeamsBtn">
+              <i class="bi bi-save"></i> Save Teams
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Debug Panel -->
-  <div id="debugPanel">
-    <div class="debug-controls">
-      <h2 style="margin: 0; font-size: 14px;">Debug Panel</h2>
-      <button id="closeDebugBtn"><i class="bi bi-x"></i></button>
-    </div>
-    
-    <div class="debug-section">
-      <h3>Profile Structure</h3>
-      <div id="profileStructure">Loading profile structure...</div>
-    </div>
-    
-    <div class="debug-section">
-      <h3>Profile Status Summary</h3>
-      <div id="statusSummary">Calculating status summary...</div>
-    </div>
-    
-    <div class="debug-section">
-      <h3>Status Fields Inspection</h3>
-      <div id="statusFields">Inspecting status fields...</div>
-    </div>
-    
-    <div class="debug-actions">
-      <button id="inspectProfilesBtn">Inspect Profiles</button>
-      <button id="debugForceStatus">Force Status (Test)</button>
-      <button id="exportProfilesBtn">Export Profiles Data</button>
-    </div>
+    <!-- Refresh Button -->
+    <button class="refresh-btn" id="refreshDataBtn" title="Refresh data">
+      <i class="bi bi-arrow-repeat"></i>
+    </button>
   </div>
-
-  <!-- Refresh Button -->
-  <button class="refresh-btn" id="refreshDataBtn" title="Refresh data">
-    <i class="bi bi-arrow-repeat"></i>
-  </button>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   
@@ -602,26 +529,23 @@
     const logoutLink = document.getElementById('logoutLink');
     const refreshDataBtn = document.getElementById('refreshDataBtn');
     
-    // Debug Panel Elements
-    const debugPanel = document.getElementById('debugPanel');
-    const closeDebugBtn = document.getElementById('closeDebugBtn');
-    const inspectProfilesBtn = document.getElementById('inspectProfilesBtn');
-    const debugForceStatus = document.getElementById('debugForceStatus');
-    const exportProfilesBtn = document.getElementById('exportProfilesBtn');
-    const profileStructure = document.getElementById('profileStructure');
-    const statusSummary = document.getElementById('statusSummary');
-    const statusFields = document.getElementById('statusFields');
-    
     // Tab elements for reference
     const searchTab = document.getElementById('search-member-tab');
     const gradeTab = document.getElementById('by-grade-tab');
     const teamTab = document.getElementById('by-team-tab');
 
+    // Function to show page content
+    function showPageContent() {
+      document.querySelector('.page-content').classList.add('loaded');
+      if (window.fmsLoader && window.fmsLoader.hide) {
+        window.fmsLoader.hide();
+      }
+    }
+
     // Store data
     let allMembers = [];
     let allTeams = [];
     let profilesMap = new Map(); // Store profiles by user ID for quick lookup
-    let profilesDataForDebug = []; // Store profiles data for debug
     let selectedMemberIds = []; // For bulk assignment
     let currentMemberId = null; // For single member assignment
     let currentMemberTeams = [];
@@ -629,7 +553,6 @@
     let lastSearchTerm = '';
     let lastGradeSelection = '';
     let lastTeamSelection = '';
-    let forceStatusMode = false; // For debug - force all statuses to a value
 
     // Set button loading state
     function setButtonLoading(button, isLoading) {
@@ -662,70 +585,15 @@
       }
     }
 
-    // Recursive function to find status field in a nested object
-    function findStatusField(obj, path = '') {
-      if (!obj || typeof obj !== 'object') return [];
-      
-      const results = [];
-      
-      for (const key in obj) {
-        const newPath = path ? `${path}.${key}` : key;
-        
-        // If this is a key that could be a status
-        if (/status/i.test(key)) {
-          results.push({
-            path: newPath,
-            value: obj[key]
-          });
-        }
-        
-        // If this is an object, recursively search it
-        if (obj[key] && typeof obj[key] === 'object' && !Array.isArray(obj[key])) {
-          results.push(...findStatusField(obj[key], newPath));
-        }
-      }
-      
-      return results;
-    }
-
-    // Helper to pretty print object
-    function prettyPrint(obj) {
-      return JSON.stringify(obj, null, 2);
-    }
-
     // Get member's profile status
     function getMemberProfileStatus(memberId) {
       try {
         // Get profile data
         const profile = profilesMap.get(memberId);
         
-        if (!profile) return 'pending';
-        
-        // If we're in debug force status mode, return the test value
-        if (forceStatusMode) return 'approved';
-        
-        // Try multiple status field paths - this is debug mode so we check everything
-        
         // Check for status in adminUse.status
-        if (profile.adminUse && profile.adminUse.status) {
+        if (profile && profile.adminUse && profile.adminUse.status) {
           return profile.adminUse.status;
-        }
-        
-        // Check for status in adminReview.status
-        if (profile.adminReview && profile.adminReview.status) {
-          return profile.adminReview.status;
-        }
-        
-        // Check for direct status field
-        if (profile.status) {
-          return profile.status;
-        }
-        
-        // Find any field named status
-        const statusFields = findStatusField(profile);
-        if (statusFields.length > 0) {
-          // Use the first status field found
-          return statusFields[0].value;
         }
         
         // Default status if not found
@@ -755,146 +623,14 @@
       return teamNames.map(name => `<span class="team-badge">${name}</span>`).join('');
     }
 
-    // Debug function to find all possible status field paths in profiles
-    function analyzeProfileStructures() {
-      const allFields = new Set();
-      const statusFields = [];
-      const statusCounts = {};
-      
-      // Track how many profiles have each structure
-      const structureCounts = {};
-      
-      // Collect all first-level fields
-      for (const [userId, profile] of profilesMap.entries()) {
-        // Skip empty profiles
-        if (!profile) continue;
-        
-        // Get top-level keys as a string for counting
-        const topKeys = Object.keys(profile).sort().join(',');
-        structureCounts[topKeys] = (structureCounts[topKeys] || 0) + 1;
-        
-        // Collect all fields
-        const collectFields = (obj, prefix = '') => {
-          if (!obj || typeof obj !== 'object') return;
-          
-          for (const key in obj) {
-            const path = prefix ? `${prefix}.${key}` : key;
-            allFields.add(path);
-            
-            // If this is a status-like field, add it to the list
-            if (/status/i.test(key)) {
-              statusFields.push({
-                userId,
-                path,
-                value: obj[key]
-              });
-              
-              // Count occurrences of each status value
-              const statusKey = `${path}:${obj[key]}`;
-              statusCounts[statusKey] = (statusCounts[statusKey] || 0) + 1;
-            }
-            
-            // Recurse into objects
-            if (obj[key] && typeof obj[key] === 'object' && !Array.isArray(obj[key])) {
-              collectFields(obj[key], path);
-            }
-          }
-        };
-        
-        collectFields(profile);
-      }
-      
-      // Analyze profile structure variations
-      let structureAnalysis = '<h4>Profile Structure Variations</h4>';
-      structureAnalysis += '<table class="debug-table">';
-      structureAnalysis += '<tr><th>Top-Level Fields</th><th>Count</th></tr>';
-      
-      for (const [structure, count] of Object.entries(structureCounts)) {
-        structureAnalysis += `<tr><td>${structure}</td><td>${count}</td></tr>`;
-      }
-      
-      structureAnalysis += '</table>';
-      
-      // Sort status fields by frequency
-      const statusFieldPaths = {};
-      for (const field of statusFields) {
-        statusFieldPaths[field.path] = (statusFieldPaths[field.path] || 0) + 1;
-      }
-      
-      // Status fields analysis
-      let statusAnalysis = '<h4>Status Fields Found</h4>';
-      statusAnalysis += '<table class="debug-table">';
-      statusAnalysis += '<tr><th>Path</th><th>Count</th></tr>';
-      
-      for (const [path, count] of Object.entries(statusFieldPaths)) {
-        statusAnalysis += `<tr><td>${path}</td><td>${count}</td></tr>`;
-      }
-      
-      statusAnalysis += '</table>';
-      
-      // Status values analysis
-      let valuesAnalysis = '<h4>Status Values</h4>';
-      valuesAnalysis += '<table class="debug-table">';
-      valuesAnalysis += '<tr><th>Path:Value</th><th>Count</th></tr>';
-      
-      for (const [statusKey, count] of Object.entries(statusCounts)) {
-        valuesAnalysis += `<tr><td>${statusKey}</td><td>${count}</td></tr>`;
-      }
-      
-      valuesAnalysis += '</table>';
-      
-      // Sample profiles (first 3)
-      let sampleAnalysis = '<h4>Sample Profiles (First 3)</h4>';
-      
-      const profileEntries = Array.from(profilesMap.entries());
-      const samples = profileEntries.slice(0, 3);
-      
-      for (let i = 0; i < samples.length; i++) {
-        const [userId, profile] = samples[i];
-        sampleAnalysis += `<h5>Profile ${i+1} (${userId})</h5>`;
-        sampleAnalysis += `<pre>${prettyPrint(profile)}</pre>`;
-      }
-      
-      return {
-        structureAnalysis,
-        statusAnalysis,
-        valuesAnalysis,
-        sampleAnalysis,
-        statusFields
-      };
-    }
-
-    // Debug function to update profile analysis display
-    function updateProfileAnalysis() {
-      try {
-        const analysis = analyzeProfileStructures();
-        
-        profileStructure.innerHTML = analysis.structureAnalysis;
-        statusSummary.innerHTML = analysis.statusAnalysis + analysis.valuesAnalysis;
-        
-        // Build status fields table
-        let statusFieldsHtml = '<table class="debug-table">';
-        statusFieldsHtml += '<tr><th>User ID</th><th>Path</th><th>Value</th></tr>';
-        
-        // Take only first 20 to avoid overwhelming the UI
-        const displayFields = analysis.statusFields.slice(0, 20);
-        for (const field of displayFields) {
-          statusFieldsHtml += `<tr><td>${field.userId.substring(0, 8)}...</td><td>${field.path}</td><td>${field.value}</td></tr>`;
-        }
-        
-        statusFieldsHtml += '</table>';
-        statusFieldsHtml += `<p>Showing ${displayFields.length} of ${analysis.statusFields.length} status fields...</p>`;
-        
-        statusFields.innerHTML = statusFieldsHtml;
-      } catch (error) {
-        console.error('Error updating profile analysis:', error);
-        profileStructure.innerHTML = `<div class="alert alert-danger">Error analyzing profiles: ${error.message}</div>`;
-      }
-    }
-
     // Load initial data
     async function loadInitialData() {
       try {
+        // Show loader if available
+        if (window.fmsLoader && window.fmsLoader.show) {
+          window.fmsLoader.show();
+        }
+
         setButtonLoading(refreshDataBtn, true);
         
         // Load teams
@@ -912,16 +648,10 @@
         // Get all profiles
         const profilesSnapshot = await getDocs(collection(db, 'profiles'));
         profilesMap.clear();
-        profilesDataForDebug = [];
         
         // Store profiles in a Map for quick access
         profilesSnapshot.forEach(doc => {
-          const profileData = doc.data();
-          profilesMap.set(doc.id, profileData);
-          profilesDataForDebug.push({
-            id: doc.id,
-            data: profileData
-          });
+          profilesMap.set(doc.id, doc.data());
         });
         
         // Process users and their grades
@@ -943,9 +673,6 @@
             profileStatus: status
           });
         });
-        
-        // Update debug panel
-        updateProfileAnalysis();
         
         // Sort members by name
         allMembers.sort((a, b) => {
@@ -978,10 +705,15 @@
           teamSelect.value = lastTeamSelection;
           loadMembersByTeam(false);
         }
+
+        // Show page content
+        showPageContent();
         
       } catch (error) {
         console.error('Error loading initial data:', error);
         showAlert('Error loading data: ' + error.message, 'danger');
+        // Show page content even on error
+        showPageContent();
       } finally {
         setButtonLoading(refreshDataBtn, false);
       }
@@ -1493,56 +1225,6 @@
         setButtonLoading(saveTeamsBtn, false);
       }
     }
-    
-    // Debug: Export profiles to JSON file
-    function exportProfilesToFile() {
-      try {
-        // Convert profiles to JSON string
-        const profilesJson = JSON.stringify(profilesDataForDebug, null, 2);
-        
-        // Create a Blob containing the data
-        const blob = new Blob([profilesJson], { type: 'application/json' });
-        
-        // Create an anchor element and set the href to the blob
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'profiles-data.json';
-        
-        // Append anchor to body, click it, and remove it
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        showAlert('Profiles data exported successfully.', 'success');
-      } catch (error) {
-        console.error('Error exporting profiles:', error);
-        showAlert('Error exporting profiles: ' + error.message, 'danger');
-      }
-    }
-    
-    // Debug: Toggle force status mode
-    function toggleForceStatus() {
-      forceStatusMode = !forceStatusMode;
-      
-      if (forceStatusMode) {
-        debugForceStatus.textContent = 'Disable Force Status';
-        debugForceStatus.classList.add('btn-warning');
-        showAlert('Force Status mode enabled - all members will show as "approved"', 'warning');
-      } else {
-        debugForceStatus.textContent = 'Force Status (Test)';
-        debugForceStatus.classList.remove('btn-warning');
-        showAlert('Force Status mode disabled - using actual status from profiles', 'info');
-      }
-      
-      // Refresh the current view
-      if (searchTab.classList.contains('active') && lastSearchTerm.length >= 3) {
-        searchMembers(true);
-      } else if (gradeTab.classList.contains('active') && lastGradeSelection) {
-        loadMembersByGrade(true);
-      } else if (teamTab.classList.contains('active') && lastTeamSelection) {
-        loadMembersByTeam(true);
-      }
-    }
 
     // Event Listeners
     memberSearchInput.addEventListener('input', () => searchMembers(true));
@@ -1559,19 +1241,6 @@
     });
     
     saveTeamsBtn.addEventListener('click', saveTeamAssignments);
-    
-    // Debug panel event listeners
-    closeDebugBtn.addEventListener('click', () => {
-      debugPanel.style.display = 'none';
-    });
-    
-    inspectProfilesBtn.addEventListener('click', () => {
-      updateProfileAnalysis();
-    });
-    
-    debugForceStatus.addEventListener('click', toggleForceStatus);
-    
-    exportProfilesBtn.addEventListener('click', exportProfilesToFile);
     
     // Tab change event listener
     document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(tab => {
@@ -1594,12 +1263,23 @@
     
     logoutLink.addEventListener('click', async (e) => {
       e.preventDefault();
+      
+      // Show the loader when logging out
+      if (window.fmsLoader && window.fmsLoader.show) {
+        window.fmsLoader.show();
+      }
+      
       try {
         await signOut(auth);
         window.location.href = 'index.html';
       } catch (error) {
         console.error('Logout failed:', error);
         alert('Logout failed: ' + error.message);
+        
+        // Hide the loader on error
+        if (window.fmsLoader && window.fmsLoader.hide) {
+          window.fmsLoader.hide();
+        }
       }
     });
 
@@ -1626,6 +1306,9 @@
       } catch (error) {
         console.error('Error checking admin status:', error);
         showAlert('Error checking permissions: ' + error.message, 'danger');
+        
+        // Show page content even on error
+        showPageContent();
       }
     });
   </script>
