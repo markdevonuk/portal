@@ -17,7 +17,7 @@
       margin-bottom: 15px;
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
     }
     
     .member-card:hover {
@@ -32,7 +32,7 @@
     .member-info {
       display: flex;
       gap: 15px;
-      align-items: center;
+      align-items: flex-start;
     }
     
     .profile-pic-container {
@@ -190,6 +190,38 @@
     
     .bulk-action-label {
       font-weight: 500;
+    }
+    
+    .actions-column {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    
+    .refresh-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background-color: #00a896;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+    
+    .refresh-btn:hover {
+      transform: rotate(30deg);
+      background-color: #008f7e;
+    }
+    
+    .refresh-btn i {
+      font-size: 1.5rem;
     }
     
     .hidden {
@@ -394,6 +426,11 @@
     </div>
   </div>
 
+  <!-- Refresh Button -->
+  <button class="refresh-btn" id="refreshDataBtn" title="Refresh data">
+    <i class="bi bi-arrow-repeat"></i>
+  </button>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   
   <script type="module">
@@ -452,41 +489,24 @@
     const saveTeamsBtn = document.getElementById('saveTeamsBtn');
     const alertContainer = document.getElementById('alertContainer');
     const logoutLink = document.getElementById('logoutLink');
-
-    // Clinical grades list
-    const clinicalGrades = [
-      "AAP",
-      "Doctor",
-      "Doctor (Critical Care/BASICS/Merit)",
-      "Doctor (with FREC/PHTLS or similar)",
-      "EAA",
-      "ECA",
-      "FREC 3 (or similar level 3 certification)",
-      "FREC 4",
-      "Nurse",
-      "Nurse (Ambulance Nurse)",
-      "Nurse (with FREC/PHTLS or similar)",
-      "Paramedic",
-      "Paramedic (Critical care)",
-      "Paramedic (CTM/OO)",
-      "Paramedic (HART)",
-      "Paramedic (in Primary Care)",
-      "Paramedic (Specialist)",
-      "PHTLS",
-      "Student Paramedic (Year 2)",
-      "Student Paramedic (Year 3)",
-      "Technician",
-      "None (Non-clinical)",
-      "Other"
-    ];
+    const refreshDataBtn = document.getElementById('refreshDataBtn');
+    
+    // Tab elements for reference
+    const searchTab = document.getElementById('search-member-tab');
+    const gradeTab = document.getElementById('by-grade-tab');
+    const teamTab = document.getElementById('by-team-tab');
 
     // Store data
     let allMembers = [];
     let allTeams = [];
+    let profilesMap = new Map(); // Store profiles by user ID for quick lookup
     let selectedMemberIds = []; // For bulk assignment
     let currentMemberId = null; // For single member assignment
     let currentMemberTeams = [];
     let bulkAssignmentMode = false;
+    let lastSearchTerm = '';
+    let lastGradeSelection = '';
+    let lastTeamSelection = '';
 
     // Set button loading state
     function setButtonLoading(button, isLoading) {
@@ -519,9 +539,30 @@
       }
     }
 
+    // Get member's current teams as badges HTML
+    function getTeamBadgesHtml(memberTeams) {
+      if (!memberTeams || memberTeams.length === 0) {
+        return '<small class="text-muted">No teams assigned</small>';
+      }
+      
+      // Map team IDs to team names
+      const teamNames = memberTeams.map(teamId => {
+        const team = allTeams.find(t => t.id === teamId);
+        return team ? team.name : null;
+      }).filter(teamName => teamName !== null);
+      
+      if (teamNames.length === 0) {
+        return '<small class="text-muted">No teams assigned</small>';
+      }
+      
+      return teamNames.map(name => `<span class="team-badge">${name}</span>`).join('');
+    }
+
     // Load initial data
     async function loadInitialData() {
       try {
+        setButtonLoading(refreshDataBtn, true);
+        
         // Load teams
         allTeams = await getAllTeams();
         
@@ -531,15 +572,15 @@
           teamSelect.innerHTML += `<option value="${team.id}">${team.name}</option>`;
         }
         
-        // Load all users and profiles to get their clinical grades
+        // Load all users
         const usersSnapshot = await getDocs(collection(db, 'users'));
         
         // Get all profiles
         const profilesSnapshot = await getDocs(collection(db, 'profiles'));
-        const profiles = new Map();
+        profilesMap.clear();
         
         profilesSnapshot.forEach(doc => {
-          profiles.set(doc.id, doc.data());
+          profilesMap.set(doc.id, doc.data());
         });
         
         // Process users and their grades
@@ -548,7 +589,7 @@
           const userData = doc.data();
           
           // Get profile data if available
-          const profile = profiles.get(doc.id);
+          const profile = profilesMap.get(doc.id);
           const status = profile?.adminReview?.status || 'pending';
           
           allMembers.push({
@@ -580,15 +621,29 @@
           gradeSelect.innerHTML += `<option value="${grade}">${grade}</option>`;
         });
         
+        // Refresh current tab if needed
+        if (searchTab.classList.contains('active') && lastSearchTerm.length >= 3) {
+          searchMembers(false);
+        } else if (gradeTab.classList.contains('active') && lastGradeSelection) {
+          gradeSelect.value = lastGradeSelection;
+          loadMembersByGrade(false);
+        } else if (teamTab.classList.contains('active') && lastTeamSelection) {
+          teamSelect.value = lastTeamSelection;
+          loadMembersByTeam(false);
+        }
+        
       } catch (error) {
         console.error('Error loading initial data:', error);
         showAlert('Error loading data: ' + error.message, 'danger');
+      } finally {
+        setButtonLoading(refreshDataBtn, false);
       }
     }
 
     // Search members
-    async function searchMembers() {
+    async function searchMembers(showLoading = true) {
       const searchTerm = memberSearchInput.value.trim().toLowerCase();
+      lastSearchTerm = searchTerm;
       
       // Require at least 3 characters
       if (searchTerm.length < 3) {
@@ -597,7 +652,9 @@
         return;
       }
       
-      memberSearchLoading.classList.remove('hidden');
+      if (showLoading) {
+        memberSearchLoading.classList.remove('hidden');
+      }
       memberSearchResults.innerHTML = '';
       memberSearchNoResults.classList.add('hidden');
       
@@ -618,14 +675,7 @@
       
       // Show results
       for (const member of filteredMembers) {
-        // Get member's teams
-        let memberTeams = [];
-        if (member.teams && member.teams.length > 0) {
-          memberTeams = member.teams.map(teamId => {
-            const team = allTeams.find(t => t.id === teamId);
-            return team ? team.name : null;
-          }).filter(teamName => teamName !== null);
-        }
+        const memberTeams = member.teams || [];
         
         // Create member card
         const memberCard = document.createElement('div');
@@ -633,14 +683,16 @@
         memberCard.innerHTML = `
           <div class="member-info">
             <div class="member-details">
-              <h5 class="mb-1">${member.firstName} ${member.surname}</h5>
+              <h5 class="mb-1">
+                ${member.firstName} ${member.surname}
+                <span class="status-pill status-${member.profileStatus} ms-2">
+                  ${member.profileStatus.charAt(0).toUpperCase() + member.profileStatus.slice(1)}
+                </span>
+              </h5>
               <p class="text-muted mb-1">${member.email}</p>
               <div class="small">Grade: ${member.clinicalGrade || 'Not specified'}</div>
               <div class="member-teams">
-                ${memberTeams.length > 0 
-                  ? memberTeams.map(team => `<span class="team-badge">${team}</span>`).join('') 
-                  : '<small class="text-muted">No teams assigned</small>'
-                }
+                ${getTeamBadgesHtml(memberTeams)}
               </div>
             </div>
           </div>
@@ -667,8 +719,9 @@
     }
 
     // Load members by grade
-    async function loadMembersByGrade() {
+    async function loadMembersByGrade(showLoading = true) {
       const selectedGrade = gradeSelect.value;
+      lastGradeSelection = selectedGrade;
       
       if (!selectedGrade) {
         gradeMembers.classList.add('hidden');
@@ -676,7 +729,9 @@
         return;
       }
       
-      gradeMembersLoading.classList.remove('hidden');
+      if (showLoading) {
+        gradeMembersLoading.classList.remove('hidden');
+      }
       gradeMembers.classList.add('hidden');
       noGradeMembers.classList.add('hidden');
       selectedMemberIds = [];
@@ -699,24 +754,35 @@
       
       // Show members
       for (const member of filteredMembers) {
+        const memberTeams = member.teams || [];
+        
         // Create member card
         const memberCard = document.createElement('div');
         memberCard.className = 'member-card';
         memberCard.innerHTML = `
-          <div class="form-check">
-            <input class="form-check-input member-checkbox" type="checkbox" 
-                  value="${member.id}" id="member-${member.id}">
-            <label class="form-check-label" for="member-${member.id}">
-              <div class="member-details">
-                <h5 class="mb-1">${member.firstName} ${member.surname}</h5>
-                <p class="text-muted mb-0">${member.email}</p>
+          <div class="d-flex align-items-start w-100">
+            <div class="form-check me-3">
+              <input class="form-check-input member-checkbox" type="checkbox" 
+                    value="${member.id}" id="member-${member.id}">
+              <label class="form-check-label" for="member-${member.id}"></label>
+            </div>
+            <div class="member-details">
+              <h5 class="mb-1">
+                ${member.firstName} ${member.surname}
+                <span class="status-pill status-${member.profileStatus} ms-2">
+                  ${member.profileStatus.charAt(0).toUpperCase() + member.profileStatus.slice(1)}
+                </span>
+              </h5>
+              <p class="text-muted mb-1">${member.email}</p>
+              <div class="member-teams">
+                ${getTeamBadgesHtml(memberTeams)}
               </div>
-            </label>
+            </div>
           </div>
-          <div>
-            <span class="status-pill status-${member.profileStatus}">
-              ${member.profileStatus.charAt(0).toUpperCase() + member.profileStatus.slice(1)}
-            </span>
+          <div class="actions-column">
+            <button class="btn btn-outline-primary btn-sm assign-individual-btn" data-member-id="${member.id}" data-member-name="${member.firstName} ${member.surname}">
+              <i class="bi bi-people"></i> Assign
+            </button>
           </div>
         `;
         
@@ -732,6 +798,15 @@
             selectedMemberIds = selectedMemberIds.filter(id => id !== checkbox.value);
           }
           updateSelectedCount();
+        });
+      });
+      
+      // Add event listeners to individual assign buttons
+      document.querySelectorAll('.assign-individual-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const memberId = btn.dataset.memberId;
+          const memberFullName = btn.dataset.memberName;
+          openTeamSelectionModal(memberId, memberFullName);
         });
       });
       
@@ -765,8 +840,9 @@
     }
 
     // Load members by team
-    async function loadMembersByTeam() {
+    async function loadMembersByTeam(showLoading = true) {
       const selectedTeamId = teamSelect.value;
+      lastTeamSelection = selectedTeamId;
       
       if (!selectedTeamId) {
         teamMembers.classList.add('hidden');
@@ -774,7 +850,9 @@
         return;
       }
       
-      teamMembersLoading.classList.remove('hidden');
+      if (showLoading) {
+        teamMembersLoading.classList.remove('hidden');
+      }
       teamMembers.classList.add('hidden');
       noTeamMembers.classList.add('hidden');
       
@@ -837,14 +915,16 @@
           memberCard.className = 'member-card';
           memberCard.innerHTML = `
             <div class="member-details">
-              <h5 class="mb-1">${member.firstName} ${member.surname}</h5>
+              <h5 class="mb-1">
+                ${member.firstName} ${member.surname}
+                <span class="status-pill status-${member.profileStatus} ms-2">
+                  ${member.profileStatus.charAt(0).toUpperCase() + member.profileStatus.slice(1)}
+                </span>
+              </h5>
               <p class="text-muted mb-1">${member.email}</p>
               <div class="small">Grade: ${member.clinicalGrade}</div>
             </div>
             <div class="d-flex align-items-center">
-              <span class="status-pill status-${member.profileStatus} me-3">
-                ${member.profileStatus.charAt(0).toUpperCase() + member.profileStatus.slice(1)}
-              </span>
               <button class="btn btn-outline-danger btn-sm remove-from-team-btn" data-member-id="${member.id}">
                 <i class="bi bi-x-circle"></i> Remove
               </button>
@@ -1047,14 +1127,12 @@
           }
           
           showAlert('Teams updated successfully.', 'success');
-          
-          // Refresh the search results if on search tab
-          if (!document.getElementById('search-member-tab').classList.contains('active')) {
-            await searchMembers();
-          }
         }
         
         teamSelectionModal.hide();
+        
+        // Refresh current view
+        await loadInitialData();
         
       } catch (error) {
         console.error('Error saving team assignments:', error);
@@ -1065,12 +1143,12 @@
     }
 
     // Event Listeners
-    memberSearchInput.addEventListener('input', searchMembers);
+    memberSearchInput.addEventListener('input', () => searchMembers(true));
     
-    gradeSelect.addEventListener('change', loadMembersByGrade);
+    gradeSelect.addEventListener('change', () => loadMembersByGrade(true));
     selectAllMembers.addEventListener('change', handleSelectAll);
     
-    teamSelect.addEventListener('change', loadMembersByTeam);
+    teamSelect.addEventListener('change', () => loadMembersByTeam(true));
     
     assignSelectedBtn.addEventListener('click', () => {
       if (selectedMemberIds.length > 0) {
@@ -1079,6 +1157,25 @@
     });
     
     saveTeamsBtn.addEventListener('click', saveTeamAssignments);
+    
+    // Tab change event listener
+    document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(tab => {
+      tab.addEventListener('shown.bs.tab', (e) => {
+        const targetId = e.target.getAttribute('data-bs-target');
+        
+        // Refresh data if needed
+        if (targetId === '#search-member' && lastSearchTerm.length >= 3) {
+          searchMembers(true);
+        } else if (targetId === '#by-grade' && lastGradeSelection) {
+          loadMembersByGrade(true);
+        } else if (targetId === '#by-team' && lastTeamSelection) {
+          loadMembersByTeam(true);
+        }
+      });
+    });
+    
+    // Refresh button
+    refreshDataBtn.addEventListener('click', loadInitialData);
     
     logoutLink.addEventListener('click', async (e) => {
       e.preventDefault();
