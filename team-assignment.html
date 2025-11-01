@@ -12,15 +12,18 @@
   <style>
     body { background:#f8f9fa; min-height:100vh; }
     .navbar { 
-      background:linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      background: white; 
       box-shadow:0 2px 10px rgba(0,0,0,.1); 
     }
     .nav-link { 
-      color: rgba(255,255,255,.85) !important;
+      color: #495057 !important;
       font-weight: 500;
     }
     .nav-link:hover { 
-      color: #fff !important;
+      color: #00a896 !important;
+    }
+    .navbar-brand {
+      color: #212529 !important;
     }
     .page-header { 
       background:linear-gradient(135deg,#00a896 0%,#028090 100%); 
@@ -295,6 +298,16 @@
       border-color: #dc3545;
     }
     
+    .btn-secondary {
+      background-color: #6c757d;
+      border: none;
+    }
+    
+    .btn-danger {
+      background-color: #dc3545;
+      border: none;
+    }
+    
     .hidden {
       display: none !important;
     }
@@ -312,7 +325,7 @@
 <body>
   <div class="page-content">
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <nav class="navbar navbar-expand-lg">
       <div class="container-fluid">
         <a class="navbar-brand" href="dashboard.html"><i class="bi bi-shield-lock"></i> FMS Prehospital Portal</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
