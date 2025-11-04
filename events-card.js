@@ -2,7 +2,7 @@
 // This component will render an events card for the dashboard
 // It will show either a link to the events page, or display events the user has volunteered for
 
-async function renderEventsCard(container) {
+async function renderEventsCard(container, auth, db) {
   // Get the current user and check if they've volunteered for any events
   try {
     const currentUser = auth.currentUser;
