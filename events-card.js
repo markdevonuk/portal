@@ -133,7 +133,7 @@ async function renderEventsCard(container, auth, db, firebaseFunctions) {
           <i class="bi bi-calendar-plus"></i> View More Events
         </a>
       </div>
-    `;
+    `; 
     
   } catch (error) {
     console.error('Error loading events card:', error);
