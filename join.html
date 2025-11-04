@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Join Prehospital Team - FMS Prehospital Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link href="css/styles.css" rel="stylesheet">
+  <style>
+    body { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      min-height: 100vh; 
+      padding: 20px 0; 
+    }
+    .application-card { 
+      background: #fff; 
+      border-radius: 20px; 
+      box-shadow: 0 20px 60px rgba(0,0,0,.3); 
+      max-width: 800px; 
+      margin: 30px auto; 
+      padding: 0;
+      overflow: hidden;
+    }
+    .application-header { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      color: #fff; 
+      padding: 30px; 
+      text-align: center; 
+    }
+    .application-body { 
+      padding: 30px; 
+    }
+    .form-section {
+      margin-bottom: 30px;
+    }
+    .section-title {
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+      color: var(--secondary);
+    }
+    .form-explanation {
+      background-color: var(--light-bg);
+      border-radius: var(--border-radius-md);
+      padding: 15px;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+    }
+    .gift-aid-section {
+      background-color: var(--gray-100);
+      border-radius: var(--border-radius-md);
+      padding: 20px;
+      margin-top: 20px;
+      border-left: 3px solid var(--primary);
+    }
+    /* Hide the payment section initially */
+    #paymentSection {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="application-card">
+      <div class="application-header">
+        <h1><i class="bi bi-shield-plus"></i> Join FMS Prehospital</h1>
+        <p class="lead mb-0">Apply to join our prehospital team</p>
+      </div>
+      
+      <div class="application-body">
+        <div id="applicationForm">
+          <!-- Personal Information Section -->
+          <div class="form-section">
+            <h3 class="section-title"><i class="bi bi-person-fill"></i> Personal Information</h3>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">First Name <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-person"></i></span>
+                  <input type="text" class="form-control" id="firstName" required>
+                </div>
+              </div>
+              
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Surname <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-person"></i></span>
+                  <input type="text" class="form-control" id="surname" required>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Date of Birth <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                <input type="text" class="form-control" id="dob" placeholder="YYYY-MM-DD" required>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Email Address <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                <input type="email" class="form-control" id="email" required>
+              </div>
+              <small class="form-text text-muted">We'll use this email for all communications</small>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Mobile Number <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-phone"></i></span>
+                <input type="tel" class="form-control" id="mobile" required>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Postal Address (inc. postcode) <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-house"></i></span>
+                <textarea class="form-control" id="address" rows="3" required></textarea>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Professional Qualification Section -->
+          <div class="form-section">
+            <h3 class="section-title"><i class="bi bi-award"></i> Professional Qualification</h3>
+            
+            <div class="form-explanation">
+              <p><strong>Please select only the exact grade you are; do not pick what you believe to be the closest.</strong> If you are in any doubt please contact prehospital@festival-medical.org and we can help clarify which option to select. If you choose a grade you later cannot evidence, we reserve the right to refuse membership, and no refund will be given on your membership fee.</p>
+            </div>
+            
+            <div class="mb-4">
+              <label class="form-label">Grade/Qualification <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-mortarboard"></i></span>
+                <select class="form-select" id="qualification" required>
+                  <option value="">Select your qualification</option>
+                  <option value="Make Ready">Make Ready (with no clinical certification)</option>
+                  <option value="Medcomms">Medcomms (with no clinical certification)</option>
+                  <option value="Non Clinical">Non Clinical (other)</option>
+                  <option value="AAP">AAP</option>
+                  <option value="Doctor">Doctor</option>
+                  <option value="Doctor (Critical Care/BASICS/Merit)">Doctor (Critical Care/BASICS/Merit)</option>
+                  <option value="Doctor (with FREC/PHTLS or similar)">Doctor (with FREC/PHTLS or similar)</option>
+                  <option value="EAA">EAA</option>
+                  <option value="ECA">ECA</option>
+                  <option value="FREC 3 (or similar level 3 certification)">FREC 3 (or similar level 3 certification)</option>
+                  <option value="FREC 4">FREC 4</option>
+                  <option value="Nurse">Nurse</option>
+                  <option value="Nurse (Ambulance Nurse)">Nurse (Ambulance Nurse)</option>
+                  <option value="Nurse (with FREC/PHTLS or similar)">Nurse (with FREC/PHTLS or similar)</option>
+                  <option value="Paramedic">Paramedic</option>
+                  <option value="Paramedic (Critical care)">Paramedic (Critical care)</option>
+                  <option value="Paramedic (CTM/OO)">Paramedic (CTM/OO)</option>
+                  <option value="Paramedic (HART)">Paramedic (HART)</option>
+                  <option value="Paramedic (in Primary Care)">Paramedic (in Primary Care)</option>
+                  <option value="Paramedic (Specialist)">Paramedic (Specialist)</option>
+                  <option value="PHTLS">PHTLS</option>
+                  <option value="Student Paramedic (Year 2)">Student Paramedic (Year 2)</option>
+                  <option value="Student Paramedic (Year 3)">Student Paramedic (Year 3)</option>
+                  <option value="Technician">Technician</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Gift Aid Section -->
+          <div class="form-section gift-aid-section">
+            <h3 class="section-title"><i class="bi bi-heart"></i> Gift Aid Declaration</h3>
+            
+            <p>Gift aid raises more funds for the FMS charity without costing you a penny more. If you are a UK taxpayer we can reclaim the tax on your membership subscriptions. All we need is for you to indicate Yes below.</p>
+            
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="giftAidCheck">
+              <label class="form-check-label" for="giftAidCheck">
+                I am happy for FMS to reclaim the tax on any eligible donations or membership subscriptions that I make until further notice. I confirm that I pay at least as much UK income or capital gains tax as will be reclaimed by all charities on my donations in each tax year.
+              </label>
+            </div>
+          </div>
+          
+          <!-- Submit Button -->
+          <div class="text-center">
+            <button type="button" id="submitApplication" class="btn btn-primary btn-lg">
+              <i class="bi bi-check-circle"></i> Submit Application
+            </button>
+          </div>
+        </div>
+        
+        <!-- Payment Section (initially hidden, will be shown after form submission) -->
+        <div id="paymentSection">
+          <div class="text-center mb-4">
+            <h3>Thank you for your application</h3>
+            <p>Please complete your membership payment to finalize your application.</p>
+            
+            <div class="alert alert-info">
+              <p><strong>Membership Fee:</strong> £30.00 for 3 years</p>
+            </div>
+            
+            <!-- Stripe payment button will be inserted here -->
+            <div id="stripePaymentButton" class="my-4">
+              <button class="btn btn-primary btn-lg" id="stripeButton">
+                <i class="bi bi-credit-card"></i> Pay Membership Fee
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Confirmation Message (shown after payment) -->
+        <div id="confirmationMessage" style="display: none;">
+          <div class="text-center">
+            <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+            <h3 class="mt-4">Application Completed!</h3>
+            <p>Thank you for your application and payment. We will review your application and be in touch shortly.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  
+  <script>
+    // Initialize Firebase with your configuration
+    const firebaseConfig = {
+      // Your Firebase configuration will be added here
+      // This is typically loaded from a config file or environment variables
+    };
+    
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    
+    // Get a reference to Firestore
+    const db = firebase.firestore();
+    
+    // Initialize Flatpickr for date selection
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize date picker for DOB field
+      flatpickr("#dob", {
+        dateFormat: "Y-m-d",
+        maxDate: "today",
+        altInput: true,
+        altFormat: "F j, Y",
+        allowInput: true
+      });
+      
+      // Form submission handler
+      document.getElementById('submitApplication').addEventListener('click', function() {
+        if (validateForm()) {
+          saveApplicationToFirebase();
+        }
+      });
+    });
+    
+    // Form validation function
+    function validateForm() {
+      // Get all required fields
+      const requiredFields = document.querySelectorAll('[required]');
+      let isValid = true;
+      
+      // Check each required field
+      requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+          field.classList.add('is-invalid');
+          isValid = false;
+        } else {
+          field.classList.remove('is-invalid');
+        }
+      });
+      
+      // Additional validation can be added here (email format, etc.)
+      
+      if (!isValid) {
+        alert('Please fill in all required fields');
+      }
+      
+      return isValid;
+    }
+    
+    // Save application data to Firebase
+    function saveApplicationToFirebase() {
+      // Get form values
+      const applicationData = {
+        firstName: document.getElementById('firstName').value.trim(),
+        surname: document.getElementById('surname').value.trim(),
+        dob: document.getElementById('dob').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        mobile: document.getElementById('mobile').value.trim(),
+        address: document.getElementById('address').value.trim(),
+        qualification: document.getElementById('qualification').value,
+        giftAid: document.getElementById('giftAidCheck').checked,
+        applicationDate: new Date(),
+        status: 'pending',
+        paymentStatus: 'unpaid'
+      };
+      
+      // Add the application to Firestore
+      db.collection('applications').add(applicationData)
+        .then((docRef) => {
+          console.log('Application saved with ID: ', docRef.id);
+          // Store the document ID for reference during payment
+          window.applicationId = docRef.id;
+          // Show payment section
+          document.getElementById('applicationForm').style.display = 'none';
+          document.getElementById('paymentSection').style.display = 'block';
+          // Scroll to top of page
+          window.scrollTo(0, 0);
+        })
+        .catch((error) => {
+          console.error('Error adding application: ', error);
+          alert('There was an error submitting your application. Please try again.');
+        });
+    }
+    
+    // Function to set up Stripe payment (to be implemented later)
+    function setupStripePayment() {
+      // This function will be implemented after testing
+      // It will initialize Stripe and set up the payment flow
+      
+      // For now, we'll just simulate a successful payment
+      document.getElementById('stripeButton').addEventListener('click', function() {
+        simulateSuccessfulPayment();
+      });
+    }
+    
+    // Simulate successful payment (for testing)
+    function simulateSuccessfulPayment() {
+      // Update the application with payment info
+      db.collection('applications').doc(window.applicationId).update({
+        paymentStatus: 'paid',
+        paymentDate: new Date()
+      })
+      .then(() => {
+        console.log('Payment status updated');
+        // Show confirmation message
+        document.getElementById('paymentSection').style.display = 'none';
+        document.getElementById('confirmationMessage').style.display = 'block';
+        // Scroll to top of page
+        window.scrollTo(0, 0);
+      })
+      .catch((error) => {
+        console.error('Error updating payment status: ', error);
+        alert('There was an error processing your payment. Please try again.');
+      });
+    }
+    
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+      // Setup Stripe payment (will be implemented after testing)
+      setupStripePayment();
+    });
+  </script>
+</body>
+</html>
