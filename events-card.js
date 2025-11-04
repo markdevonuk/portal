@@ -100,25 +100,27 @@ async function renderEventsCard(container, auth, db, firebaseFunctions) {
       const endDate = event.endDate?.toDate ? formatDate(event.endDate.toDate()) : 'TBD';
       const dateDisplay = startDate === endDate ? startDate : `${startDate} - ${endDate}`;
       
-      const badgeClass = event.volunteerStatus === 'selected' ? 'selected-badge' : 'volunteered-badge';
-      const badgeText = event.volunteerStatus === 'selected' ? 'Selected!' : 'Volunteered';
+      // Determine appropriate badge class based on status
+      let badgeClass, badgeText;
+      if (event.volunteerStatus === 'selected') {
+        badgeClass = 'approved-badge'; // Using the same style as approved profiles
+        badgeText = 'Selected';
+      } else {
+        badgeClass = 'pending-badge'; // Using the same style as pending profiles
+        badgeText = 'Volunteered';
+      }
       
       eventsList += `
-        <div class="event-card position-relative mb-3">
-          <div class="${badgeClass}">${badgeText}</div>
-          <div class="d-flex justify-content-between align-items-start mb-2">
-            <div>
-              <i class="bi bi-calendar-event event-icon"></i>
-              <h5 class="mb-1">${event.name}</h5>
+        <div class="card mb-3 border-0 shadow-sm">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h5 class="card-title mb-1">${event.name}</h5>
+              <span class="${badgeClass}">${badgeText}</span>
             </div>
+            <p class="card-text mb-1"><i class="bi bi-geo-alt"></i> ${event.location || 'Location TBD'}</p>
+            <p class="card-text mb-2"><i class="bi bi-calendar-date"></i> ${dateDisplay}</p>
+            ${event.notes ? `<p class="card-text text-muted small fst-italic">Your notes: "${event.notes}"</p>` : ''}
           </div>
-          <div class="event-location">
-            <i class="bi bi-geo-alt"></i> ${event.location || 'Location TBD'}
-          </div>
-          <div class="event-date mb-3">
-            <i class="bi bi-calendar-date"></i> ${dateDisplay}
-          </div>
-          ${event.notes ? `<p class="text-muted small">Your notes: "${event.notes}"</p>` : ''}
         </div>
       `;
     });
@@ -133,7 +135,7 @@ async function renderEventsCard(container, auth, db, firebaseFunctions) {
           <i class="bi bi-calendar-plus"></i> View More Events
         </a>
       </div>
-    `; 
+    `;
     
   } catch (error) {
     console.error('Error loading events card:', error);
