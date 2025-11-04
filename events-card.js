@@ -44,7 +44,7 @@ async function renderEventsCard(container, auth, db, firebaseFunctions) {
     // If the user hasn't volunteered for any events, show a link to the events page
     if (volunteerSnapshot.empty) {
       eventsCard.innerHTML = `
-        <h3 class="mb-4"><i class="bi bi-calendar-event"></i> Events</h3>
+        <h3 class="mb-4"><i class="bi bi-calendar-event"></i> My Events</h3>
         <p class="mb-4">You haven't volunteered for any events yet. Check out the available events and volunteer opportunities.</p>
         <div class="text-center">
           <a href="events.html" class="btn btn-primary">
@@ -100,18 +100,20 @@ async function renderEventsCard(container, auth, db, firebaseFunctions) {
       const endDate = event.endDate?.toDate ? formatDate(event.endDate.toDate()) : 'TBD';
       const dateDisplay = startDate === endDate ? startDate : `${startDate} - ${endDate}`;
       
-      // Determine appropriate badge class based on status
-      let badgeClass, badgeText;
+      // Determine appropriate badge class and background color based on status
+      let badgeClass, badgeText, bgColorClass;
       if (event.volunteerStatus === 'selected') {
-        badgeClass = 'approved-badge'; // Using the same style as approved profiles
+        badgeClass = 'approved-badge';
         badgeText = 'Selected';
+        bgColorClass = 'bg-success bg-opacity-10'; // Light green background
       } else {
-        badgeClass = 'pending-badge'; // Using the same style as pending profiles
+        badgeClass = 'pending-badge';
         badgeText = 'Volunteered';
+        bgColorClass = 'bg-warning bg-opacity-10'; // Light yellow/orange background
       }
       
       eventsList += `
-        <div class="card mb-3 border-0 shadow-sm">
+        <div class="card mb-3 border-0 shadow-sm ${bgColorClass}" style="transition: all 0.2s ease;">
           <div class="card-body p-3">
             <div class="d-flex justify-content-between align-items-start mb-2">
               <h5 class="card-title mb-1">${event.name}</h5>
@@ -126,16 +128,31 @@ async function renderEventsCard(container, auth, db, firebaseFunctions) {
     });
     
     eventsCard.innerHTML = `
-      <h3 class="mb-4"><i class="bi bi-calendar-event"></i> Events</h3>
+      <h3 class="mb-4"><i class="bi bi-calendar-event"></i> My Events</h3>
       <div class="mb-4">
         ${eventsList}
       </div>
       <div class="text-center">
         <a href="events.html" class="btn btn-primary">
-          <i class="bi bi-calendar-plus"></i> View More Events
+          <i class="bi bi-calendar-plus"></i> Add/Edit Events
         </a>
       </div>
     `;
+    
+    // Add hover effect with JavaScript
+    setTimeout(() => {
+      const eventCards = document.querySelectorAll('#eventsCard .card');
+      eventCards.forEach(card => {
+        card.addEventListener('mouseenter', () => {
+          card.style.transform = 'translateY(-3px)';
+          card.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.15)';
+        });
+        card.addEventListener('mouseleave', () => {
+          card.style.transform = 'translateY(0)';
+          card.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.1)';
+        });
+      });
+    }, 100);
     
   } catch (error) {
     console.error('Error loading events card:', error);
@@ -143,7 +160,7 @@ async function renderEventsCard(container, auth, db, firebaseFunctions) {
     // Show error state
     if (document.getElementById('eventsCard')) {
       document.getElementById('eventsCard').innerHTML = `
-        <h3 class="mb-4"><i class="bi bi-calendar-event"></i> Events</h3>
+        <h3 class="mb-4"><i class="bi bi-calendar-event"></i> My Events</h3>
         <div class="alert alert-danger">
           <i class="bi bi-exclamation-triangle"></i> Error loading events. Please refresh the page.
         </div>
