@@ -138,7 +138,8 @@
         </div>
       </div>
       
-     
+     <!-- Events Card Container -->
+7<div id="eventsCardContainer"></div>
 
       <div class="dashboard-card">
         <h3 class="mb-4"><i class="bi bi-person-badge"></i> Account Information</h3>
@@ -367,6 +368,12 @@
         // Update profile status card
         await updateProfileStatus();
         
+        // Add this code here:
+const eventsCardContainer = document.getElementById('eventsCardContainer');
+if (eventsCardContainer) {
+  renderEventsCard(eventsCardContainer);
+}
+        
         // Now that everything is loaded, show the page content
         showPageContent();
         
@@ -409,6 +416,16 @@
         }
       }
     });
+    
+    import { 
+collection, 
+query, 
+where, 
+getDocs, 
+getDoc, 
+doc 
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+22import { renderEventsCard } from './events-card.js';
   </script>
 </body>
 </html>
