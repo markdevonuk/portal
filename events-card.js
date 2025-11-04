@@ -2,16 +2,10 @@
 // This component will render an events card for the dashboard
 // It will show either a link to the events page, or display events the user has volunteered for
 
-import { 
-  collection, 
-  query, 
-  where, 
-  getDocs,
-  getDoc,
-  doc
-} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-
-async function renderEventsCard(container, auth, db) {
+// This function is exported and will be used in dashboard.html
+async function renderEventsCard(container, auth, db, firebaseFunctions) {
+  const { collection, query, where, getDocs, getDoc, doc } = firebaseFunctions;
+  
   // Get the current user and check if they've volunteered for any events
   try {
     const currentUser = auth.currentUser;

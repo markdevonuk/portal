@@ -368,11 +368,19 @@
         // Update profile status card
         await updateProfileStatus();
         
-        // Render events card
-        const eventsCardContainer = document.getElementById('eventsCardContainer');
-        if (eventsCardContainer) {
-          renderEventsCard(eventsCardContainer, auth, db);
-        }
+       // Render events card with all required Firebase functions
+const eventsCardContainer = document.getElementById('eventsCardContainer');
+if (eventsCardContainer) {
+  const firebaseFunctions = {
+    collection, 
+    query, 
+    where, 
+    getDocs,
+    getDoc,
+    doc
+  };
+  renderEventsCard(eventsCardContainer, auth, db, firebaseFunctions);
+}
         
         // Now that everything is loaded, show the page content
         showPageContent();
