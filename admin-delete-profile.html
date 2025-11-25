@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Delete Member Profile - FMS Prehospital Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background:#f8f9fa; min-height:100vh; }
+    .navbar { 
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); 
+      box-shadow:0 2px 10px rgba(0,0,0,0.1); 
+    }
+    .navbar-brand { color: #fff !important; }
+    .nav-link { color: rgba(255,255,255,.85) !important; font-weight: 500; }
+    .nav-link:hover { color: #fff !important; }
+    .page-header { 
+      background:linear-gradient(135deg,#dc3545 0%,#c82333 100%); 
+      color:#fff; 
+      border-radius:15px; 
+      padding:30px; 
+      margin:30px 0 20px 0; 
+    }
+    .admin-card { 
+      background:#fff; 
+      border-radius:15px; 
+      box-shadow:0 5px 20px rgba(0,0,0,.08); 
+      padding:30px; 
+      margin:20px 0; 
+    }
+    .danger-zone {
+      border: 3px solid #dc3545;
+      border-radius: 15px;
+      padding: 25px;
+      background: #fff5f5;
+    }
+    .btn-danger { 
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); 
+      border: none; 
+      font-weight: 600; 
+    }
+    .btn-danger:hover { 
+      transform: translateY(-2px); 
+      box-shadow: 0 5px 15px rgba(220,53,69,.4); 
+    }
+    .form-control:focus { 
+      border-color: #dc3545; 
+      box-shadow: 0 0 0 0.2rem rgba(220,53,69,.25); 
+    }
+    .btn-loading { position: relative; pointer-events: none; opacity: .7; }
+    .btn-loading::after { 
+      content:""; position:absolute; width:16px; height:16px; top:50%; left:50%; 
+      margin:-8px 0 0 -8px; border:2px solid #fff; border-radius:50%; 
+      border-top-color:transparent; animation:spinner .6s linear infinite; 
+    }
+    @keyframes spinner { to { transform: rotate(360deg); } }
+    .hidden { display: none; }
+    
+    .search-container { position: relative; }
+    .search-results {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: #fff;
+      border-radius: 0 0 15px 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      max-height: 300px;
+      overflow-y: auto;
+      display: none;
+    }
+    .search-results.show { display: block; }
+    .search-item {
+      padding: 10px 15px;
+      border-bottom: 1px solid #e9ecef;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .search-item:hover { background-color: #f8f9fa; }
+    .search-item:last-child { border-bottom: none; }
+    
+    .member-details-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      border: 2px solid #dc3545;
+    }
+    .profile-photo {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 3px solid #dc3545;
+    }
+    .profile-photo-placeholder {
+      width: 100px;
+      height: 100px;
+      border-radius: 10px;
+      border: 3px solid #e9ecef;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8f9fa;
+      color: #adb5bd;
+      font-size: 2rem;
+    }
+    .data-section {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    .data-label {
+      font-weight: 600;
+      color: #495057;
+      margin-bottom: 5px;
+    }
+    .warning-box {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 10px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .critical-warning {
+      background: #f8d7da;
+      border: 3px solid #dc3545;
+      border-radius: 10px;
+      padding: 25px;
+      margin: 20px 0;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="dashboard.html">
+        <i class="bi bi-exclamation-triangle-fill"></i> FMS Admin - Delete Profile
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="admin.html">
+              <i class="bi bi-shield-lock"></i> Admin Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="dashboard.html">
+              <i class="bi bi-house-fill"></i> Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="logoutLink">
+              <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="page-header">
+      <h1 class="mb-2">
+        <i class="bi bi-exclamation-octagon-fill"></i> Delete Member Profile
+      </h1>
+      <p class="mb-0">DANGER: Permanently remove a member and all associated data</p>
+    </div>
+
+    <div id="alertContainer"></div>
+
+    <!-- Warning Notice -->
+    <div class="critical-warning">
+      <i class="bi bi-exclamation-triangle-fill" style="font-size: 3rem; color: #dc3545;"></i>
+      <h3 class="mt-3 text-danger">CRITICAL WARNING</h3>
+      <p class="mb-0">This action is <strong>PERMANENT and IRREVERSIBLE</strong>. It will delete:</p>
+      <ul class="mt-3 mb-0" style="list-style: none; padding: 0;">
+        <li><i class="bi bi-x-circle-fill text-danger"></i> Member's user account (they cannot log in)</li>
+        <li><i class="bi bi-x-circle-fill text-danger"></i> Complete profile data</li>
+        <li><i class="bi bi-x-circle-fill text-danger"></i> All event volunteer assignments</li>
+        <li><i class="bi bi-x-circle-fill text-danger"></i> All associated documents</li>
+      </ul>
+    </div>
+
+    <!-- Search Section -->
+    <div class="admin-card">
+      <h4 class="mb-3"><i class="bi bi-search"></i> Search for Member</h4>
+      <div class="search-container">
+        <input 
+          type="text" 
+          class="form-control" 
+          id="searchInput" 
+          placeholder="Search by name or email (minimum 3 characters)..."
+        >
+        <div id="searchResults" class="search-results">
+          <!-- Search results will appear here -->
+        </div>
+      </div>
+      <small class="form-text text-muted">Type at least 3 characters to start searching</small>
+    </div>
+
+    <!-- Member Details Section (Hidden initially) -->
+    <div id="memberDetailsSection" class="hidden">
+      <div class="danger-zone">
+        <h4 class="text-danger mb-3">
+          <i class="bi bi-person-x-fill"></i> Selected Member
+        </h4>
+        
+        <div id="memberDetailsContainer">
+          <!-- Member details will be loaded here -->
+        </div>
+
+        <!-- Warning and Confirmation Section -->
+        <div class="warning-box mt-4">
+          <h5 class="text-warning">
+            <i class="bi bi-exclamation-triangle-fill"></i> First Confirmation Required
+          </h5>
+          <p class="mb-3">Please confirm you understand this action cannot be undone.</p>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="firstConfirmCheck">
+            <label class="form-check-label" for="firstConfirmCheck">
+              I understand this will permanently delete all data for this member
+            </label>
+          </div>
+        </div>
+
+        <div id="secondConfirmSection" class="hidden">
+          <div class="critical-warning mt-3">
+            <h5 class="text-danger">
+              <i class="bi bi-shield-x-fill"></i> Final Confirmation Required
+            </h5>
+            <p class="mb-3">Type the member's <strong>FULL NAME</strong> exactly as shown above to confirm deletion:</p>
+            <p class="mb-3"><strong>Member Name: <span id="confirmNameDisplay" class="text-danger"></span></strong></p>
+            <input 
+              type="text" 
+              class="form-control" 
+              id="confirmNameInput" 
+              placeholder="Type the full name here..."
+            >
+            <small class="form-text text-muted">This must match exactly (case-sensitive)</small>
+          </div>
+
+          <div class="text-center mt-4">
+            <button type="button" class="btn btn-secondary me-2" id="cancelBtn">
+              <i class="bi bi-x-circle"></i> Cancel
+            </button>
+            <button type="button" class="btn btn-danger" id="deleteBtn" disabled>
+              <i class="bi bi-trash-fill"></i> DELETE MEMBER PERMANENTLY
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signOut, deleteUser } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { 
+      getFirestore, 
+      doc, 
+      getDoc, 
+      deleteDoc,
+      collection, 
+      getDocs, 
+      query, 
+      where 
+    } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { firebaseConfig } from './firebase-config.js';
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // DOM Elements
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+    const memberDetailsSection = document.getElementById('memberDetailsSection');
+    const memberDetailsContainer = document.getElementById('memberDetailsContainer');
+    const firstConfirmCheck = document.getElementById('firstConfirmCheck');
+    const secondConfirmSection = document.getElementById('secondConfirmSection');
+    const confirmNameDisplay = document.getElementById('confirmNameDisplay');
+    const confirmNameInput = document.getElementById('confirmNameInput');
+    const deleteBtn = document.getElementById('deleteBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const alertContainer = document.getElementById('alertContainer');
+    const logoutLink = document.getElementById('logoutLink');
+
+    // Store data
+    let users = [];
+    let profiles = [];
+    let selectedMember = null;
+    let selectedMemberFullName = '';
+
+    // Set button loading state
+    function setButtonLoading(buttonId, isLoading) {
+      const button = typeof buttonId === 'string' ? document.getElementById(buttonId) : buttonId;
+      if (isLoading) {
+        button.classList.add('btn-loading');
+        button.disabled = true;
+      } else {
+        button.classList.remove('btn-loading');
+        button.disabled = false;
+      }
+    }
+
+    // Show alert message
+    function showAlert(message, type) {
+      const html = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>`;
+      alertContainer.innerHTML = html;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      if (type === 'success') {
+        setTimeout(() => {
+          const alert = document.querySelector('.alert');
+          if (alert) {
+            alert.classList.remove('show');
+            setTimeout(() => alert.remove(), 150);
+          }
+        }, 5000);
+      }
+    }
+
+    // Load all users and profiles
+    async function loadUsersAndProfiles() {
+      try {
+        const usersQuery = query(collection(db, 'users'));
+        const usersSnapshot = await getDocs(usersQuery);
+        users = [];
+        usersSnapshot.forEach(doc => {
+          users.push({
+            id: doc.id,
+            ...doc.data()
+          });
+        });
+
+        const profilesQuery = query(collection(db, 'profiles'));
+        const profilesSnapshot = await getDocs(profilesQuery);
+        profiles = [];
+        profilesSnapshot.forEach(doc => {
+          profiles.push({
+            userId: doc.id,
+            ...doc.data()
+          });
+        });
+
+        console.log(`Loaded ${users.length} users and ${profiles.length} profiles`);
+      } catch (error) {
+        console.error('Error loading data:', error);
+        showAlert('Error loading member data: ' + error.message, 'danger');
+      }
+    }
+
+    // Handle search input
+    function handleSearch() {
+      const searchTerm = searchInput.value.trim().toLowerCase();
+
+      if (searchTerm.length < 3) {
+        searchResults.innerHTML = '';
+        searchResults.classList.remove('show');
+        return;
+      }
+
+      const filteredUsers = users.filter(user => {
+        const firstName = (user.firstName || '').toLowerCase();
+        const surname = (user.surname || '').toLowerCase();
+        const email = (user.email || '').toLowerCase();
+        
+        return firstName.includes(searchTerm) || 
+               surname.includes(searchTerm) || 
+               email.includes(searchTerm);
+      });
+
+      if (filteredUsers.length === 0) {
+        searchResults.innerHTML = '<div class="search-item text-muted">No members found</div>';
+        searchResults.classList.add('show');
+        return;
+      }
+
+      searchResults.innerHTML = filteredUsers.map(user => {
+        const fullName = `${user.firstName || ''} ${user.surname || ''}`.trim();
+        return `
+          <div class="search-item" data-user-id="${user.id}">
+            <strong>${fullName}</strong><br>
+            <small class="text-muted">${user.email || 'No email'}</small>
+          </div>
+        `;
+      }).join('');
+
+      searchResults.classList.add('show');
+
+      // Add click handlers to search items
+      document.querySelectorAll('.search-item[data-user-id]').forEach(item => {
+        item.addEventListener('click', () => {
+          const userId = item.getAttribute('data-user-id');
+          selectMember(userId);
+        });
+      });
+    }
+
+    // Select a member and load their details
+    async function selectMember(userId) {
+      try {
+        // Clear search
+        searchInput.value = '';
+        searchResults.innerHTML = '';
+        searchResults.classList.remove('show');
+
+        // Reset confirmations
+        firstConfirmCheck.checked = false;
+        secondConfirmSection.classList.add('hidden');
+        confirmNameInput.value = '';
+        deleteBtn.disabled = true;
+
+        // Get user and profile data
+        const user = users.find(u => u.id === userId);
+        if (!user) {
+          showAlert('User not found', 'danger');
+          return;
+        }
+
+        const profile = profiles.find(p => p.userId === userId);
+
+        // Get event volunteer records
+        const eventVolunteersRef = collection(db, 'eventVolunteers');
+        const eventVolunteersSnapshot = await getDocs(eventVolunteersRef);
+        const volunteerRecords = [];
+        
+        eventVolunteersSnapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.userId === userId) {
+            volunteerRecords.push({
+              id: doc.id,
+              ...data
+            });
+          }
+        });
+
+        // Store selected member data
+        selectedMember = {
+          user: user,
+          profile: profile,
+          volunteerRecords: volunteerRecords
+        };
+
+        selectedMemberFullName = `${user.firstName || ''} ${user.surname || ''}`.trim();
+        confirmNameDisplay.textContent = selectedMemberFullName;
+
+        // Display member details
+        displayMemberDetails();
+
+        // Show member details section
+        memberDetailsSection.classList.remove('hidden');
+        memberDetailsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      } catch (error) {
+        console.error('Error selecting member:', error);
+        showAlert('Error loading member details: ' + error.message, 'danger');
+      }
+    }
+
+    // Display member details
+    function displayMemberDetails() {
+      const { user, profile, volunteerRecords } = selectedMember;
+      const fullName = `${user.firstName || ''} ${user.surname || ''}`.trim();
+
+      let html = `
+        <div class="member-details-card">
+          <div class="row">
+            <div class="col-md-2 text-center">
+      `;
+
+      // Profile photo
+      if (profile && profile.profilePhotoURL) {
+        html += `<img src="${profile.profilePhotoURL}" alt="${fullName}" class="profile-photo">`;
+      } else {
+        html += `
+          <div class="profile-photo-placeholder">
+            <i class="bi bi-person"></i>
+          </div>
+        `;
+      }
+
+      html += `
+            </div>
+            <div class="col-md-10">
+              <h4 class="text-danger mb-3">${fullName}</h4>
+              
+              <div class="data-section">
+                <div class="data-label">User ID</div>
+                <div>${user.id}</div>
+              </div>
+
+              <div class="data-section">
+                <div class="data-label">Email</div>
+                <div>${user.email || 'No email'}</div>
+              </div>
+
+              <div class="data-section">
+                <div class="data-label">Mobile</div>
+                <div>${user.mobile || 'Not provided'}</div>
+              </div>
+
+              <div class="data-section">
+                <div class="data-label">Admin Status</div>
+                <div>${user.isAdmin ? '<span class="badge bg-warning">Admin User</span>' : '<span class="badge bg-secondary">Regular User</span>'}</div>
+              </div>
+
+              <div class="data-section">
+                <div class="data-label">Profile Status</div>
+                <div>${profile ? `<span class="badge bg-${profile.adminUse?.status === 'approved' ? 'success' : profile.adminUse?.status === 'pending' ? 'warning' : profile.adminUse?.status === 'rejected' ? 'danger' : 'secondary'}">${profile.adminUse?.status || 'Draft'}</span>` : '<span class="badge bg-secondary">No Profile</span>'}</div>
+              </div>
+
+              <div class="data-section">
+                <div class="data-label">Event Volunteer Records</div>
+                <div>
+      `;
+
+      if (volunteerRecords.length === 0) {
+        html += '<em class="text-muted">No volunteer records</em>';
+      } else {
+        html += `<strong>${volunteerRecords.length} record(s) will be deleted</strong>`;
+        html += '<ul class="mt-2 mb-0">';
+        volunteerRecords.forEach(record => {
+          html += `<li>Event ID: ${record.eventId} (Grade: ${record.grade || 'N/A'})</li>`;
+        });
+        html += '</ul>';
+      }
+
+      html += `
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      memberDetailsContainer.innerHTML = html;
+    }
+
+    // Handle first confirmation checkbox
+    firstConfirmCheck.addEventListener('change', () => {
+      if (firstConfirmCheck.checked) {
+        secondConfirmSection.classList.remove('hidden');
+        secondConfirmSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        secondConfirmSection.classList.add('hidden');
+        confirmNameInput.value = '';
+        deleteBtn.disabled = true;
+      }
+    });
+
+    // Handle name confirmation input
+    confirmNameInput.addEventListener('input', () => {
+      const inputName = confirmNameInput.value;
+      // Must match exactly (case-sensitive)
+      if (inputName === selectedMemberFullName) {
+        deleteBtn.disabled = false;
+      } else {
+        deleteBtn.disabled = true;
+      }
+    });
+
+    // Handle cancel button
+    cancelBtn.addEventListener('click', () => {
+      if (confirm('Are you sure you want to cancel? All entered data will be lost.')) {
+        resetForm();
+      }
+    });
+
+    // Reset form
+    function resetForm() {
+      selectedMember = null;
+      selectedMemberFullName = '';
+      memberDetailsSection.classList.add('hidden');
+      firstConfirmCheck.checked = false;
+      secondConfirmSection.classList.add('hidden');
+      confirmNameInput.value = '';
+      deleteBtn.disabled = true;
+      searchInput.value = '';
+      searchResults.innerHTML = '';
+      searchResults.classList.remove('show');
+    }
+
+    // Handle delete button
+    deleteBtn.addEventListener('click', async () => {
+      if (!selectedMember) {
+        showAlert('No member selected', 'danger');
+        return;
+      }
+
+      // Final confirmation dialog
+      const confirmed = confirm(
+        `⚠️ FINAL WARNING ⚠️\n\n` +
+        `You are about to PERMANENTLY DELETE:\n` +
+        `• ${selectedMemberFullName}\n` +
+        `• Email: ${selectedMember.user.email}\n` +
+        `• All associated data\n\n` +
+        `This action CANNOT be undone!\n\n` +
+        `Click OK to proceed with deletion, or Cancel to abort.`
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      setButtonLoading(deleteBtn, true);
+
+      try {
+        const userId = selectedMember.user.id;
+
+        // 1. Delete all event volunteer records
+        console.log(`Deleting ${selectedMember.volunteerRecords.length} volunteer records...`);
+        for (const record of selectedMember.volunteerRecords) {
+          await deleteDoc(doc(db, 'eventVolunteers', record.id));
+        }
+
+        // 2. Delete profile (if exists)
+        if (selectedMember.profile) {
+          console.log('Deleting profile...');
+          await deleteDoc(doc(db, 'profiles', userId));
+        }
+
+        // 3. Delete user document
+        console.log('Deleting user document...');
+        await deleteDoc(doc(db, 'users', userId));
+
+        // Note: We cannot delete the Firebase Authentication user from the client side
+        // This would need to be done via Admin SDK on the backend
+        // For now, we just delete the Firestore data
+
+        showAlert(
+          `✓ Successfully deleted ${selectedMemberFullName} and all associated data.\n\n` +
+          `Note: The Firebase Authentication account may still exist and should be deleted manually from the Firebase Console if needed.`,
+          'success'
+        );
+
+        // Reload data
+        await loadUsersAndProfiles();
+
+        // Reset form
+        resetForm();
+
+      } catch (error) {
+        console.error('Error deleting member:', error);
+        showAlert('Error deleting member: ' + error.message, 'danger');
+      } finally {
+        setButtonLoading(deleteBtn, false);
+      }
+    });
+
+    // Search input event
+    searchInput.addEventListener('input', handleSearch);
+
+    // Close search results when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+        searchResults.classList.remove('show');
+      }
+    });
+
+    // Logout handler
+    logoutLink.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        await signOut(auth);
+        window.location.href = 'index.html';
+      } catch (error) {
+        showAlert('Logout failed: ' + error.message, 'danger');
+      }
+    });
+
+    // Check authentication and admin status
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        
+        if (!userDoc.exists() || userDoc.data().isAdmin !== true) {
+          showAlert('Unauthorized: You do not have permission to access this page.', 'danger');
+          setTimeout(() => {
+            window.location.href = 'dashboard.html';
+          }, 2000);
+          return;
+        }
+
+        // Load data
+        await loadUsersAndProfiles();
+
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        showAlert('Error checking permissions: ' + error.message, 'danger');
+      }
+    });
+  </script>
+</body>
+</html>
