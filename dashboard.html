@@ -244,9 +244,14 @@
             </div>
           `;
         } else if (profile.adminUse && profile.adminUse.status === 'rejected') {
-          // Profile rejected
-          profileCard.className = 'profile-card rejected';
-          const notes = profile.adminUse.notes ? `: "${profile.adminUse.notes}"` : '';
+  // Profile rejected
+  profileCard.className = 'profile-card rejected';
+  // Get only the most recent note (notes are stored newest first, separated by \n\n)
+  let latestNote = '';
+  if (profile.adminUse.notes) {
+    latestNote = profile.adminUse.notes.split('\n\n')[0];
+  }
+  const notes = latestNote ? `: "${latestNote}"` : '';
           profileCard.innerHTML = `
             <i class="bi bi-x-circle-fill profile-icon"></i>
             <h2 class="profile-status">Profile Needs Updates</h2>
