@@ -80,7 +80,7 @@ async function createProfile(profileData) {
         details: "",
         gmc: "",
         hcpc: "",
-        nbc: "",
+        nmc: "",
         qualification: ""
       },
       submission: {
@@ -109,23 +109,27 @@ async function createProfile(profileData) {
 /**
  * Update personal details section of the profile
  * @param {Object} personalDetails - Updated personal details
+ * @param {string} userId - Optional user ID (for admin edits). If not provided, uses current user.
  * @returns {Promise<void>}
  */
-async function updatePersonalDetails(personalDetails) {
-  const user = auth.currentUser;
-  if (!user) {
-    throw new Error("No user is signed in");
+async function updatePersonalDetails(personalDetails, userId = null) {
+  // If userId provided, use it; otherwise use current user
+  const targetUserId = userId || (auth.currentUser ? auth.currentUser.uid : null);
+  
+  if (!targetUserId) {
+    throw new Error("No user ID provided and no user is signed in");
   }
   
   try {
-    const profileRef = doc(db, 'profiles', user.uid);
+    const profileRef = doc(db, 'profiles', targetUserId);
     
     // Check if the profile exists
     const profileSnap = await getDoc(profileRef);
     if (profileSnap.exists()) {
       // Only update the status if it's not already set to a different value
       const profile = profileSnap.data();
-      if (!profile.adminUse || profile.adminUse.status === "pending" || profile.adminUse.status === "") {
+      // Only update status when editing your own profile (not when admin edits someone else's)
+      if (!userId && (!profile.adminUse || profile.adminUse.status === "pending" || profile.adminUse.status === "")) {
         await updateDoc(profileRef, {
           personalDetails: personalDetails,
           "adminUse.status": "draft" // Ensure draft status when saving without submitting
@@ -151,23 +155,27 @@ async function updatePersonalDetails(personalDetails) {
 /**
  * Update driving information section of the profile
  * @param {Object} driving - Updated driving information
+ * @param {string} userId - Optional user ID (for admin edits). If not provided, uses current user.
  * @returns {Promise<void>}
  */
-async function updateDriving(driving) {
-  const user = auth.currentUser;
-  if (!user) {
-    throw new Error("No user is signed in");
+async function updateDriving(driving, userId = null) {
+  // If userId provided, use it; otherwise use current user
+  const targetUserId = userId || (auth.currentUser ? auth.currentUser.uid : null);
+  
+  if (!targetUserId) {
+    throw new Error("No user ID provided and no user is signed in");
   }
   
   try {
-    const profileRef = doc(db, 'profiles', user.uid);
+    const profileRef = doc(db, 'profiles', targetUserId);
     
     // Check if the profile exists
     const profileSnap = await getDoc(profileRef);
     if (profileSnap.exists()) {
       // Only update the status if it's not already set to a different value
       const profile = profileSnap.data();
-      if (!profile.adminUse || profile.adminUse.status === "pending" || profile.adminUse.status === "") {
+      // Only update status when editing your own profile (not when admin edits someone else's)
+      if (!userId && (!profile.adminUse || profile.adminUse.status === "pending" || profile.adminUse.status === "")) {
         await updateDoc(profileRef, {
           driving: driving,
           "adminUse.status": "draft" // Ensure draft status when saving without submitting
@@ -193,23 +201,27 @@ async function updateDriving(driving) {
 /**
  * Update medical qualifications section of the profile
  * @param {Object} medicalQualifications - Updated medical qualifications
+ * @param {string} userId - Optional user ID (for admin edits). If not provided, uses current user.
  * @returns {Promise<void>}
  */
-async function updateMedicalQualifications(medicalQualifications) {
-  const user = auth.currentUser;
-  if (!user) {
-    throw new Error("No user is signed in");
+async function updateMedicalQualifications(medicalQualifications, userId = null) {
+  // If userId provided, use it; otherwise use current user
+  const targetUserId = userId || (auth.currentUser ? auth.currentUser.uid : null);
+  
+  if (!targetUserId) {
+    throw new Error("No user ID provided and no user is signed in");
   }
   
   try {
-    const profileRef = doc(db, 'profiles', user.uid);
+    const profileRef = doc(db, 'profiles', targetUserId);
     
     // Check if the profile exists
     const profileSnap = await getDoc(profileRef);
     if (profileSnap.exists()) {
       // Only update the status if it's not already set to a different value
       const profile = profileSnap.data();
-      if (!profile.adminUse || profile.adminUse.status === "pending" || profile.adminUse.status === "") {
+      // Only update status when editing your own profile (not when admin edits someone else's)
+      if (!userId && (!profile.adminUse || profile.adminUse.status === "pending" || profile.adminUse.status === "")) {
         await updateDoc(profileRef, {
           medicalQualifications: medicalQualifications,
           "adminUse.status": "draft" // Ensure draft status when saving without submitting
@@ -298,12 +310,6 @@ async function reviewProfile(userId, status, notes) {
     throw error;
   }
 }
-
-/**
- * Update a profile and reset it to pending status
- * @param {Object} updatedProfile - The updated profile data
- * @returns {Promise<void>}
- */
 
 /**
  * Update a profile and reset it to pending status
