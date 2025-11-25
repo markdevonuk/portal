@@ -113,7 +113,7 @@
               <span class="input-group-text"><i class="bi bi-lock"></i></span>
               <input type="password" class="form-control" id="registerPassword" minlength="8" required autocomplete="new-password">
             </div>
-            <small class="form-text text-muted">Minimum 8 characters</small>
+            <small class="form-text text-muted">Minimum 8 characters with upper and lowercase letters and at least one number</small>
           </div>
           
           <div class="mb-3">
@@ -187,10 +187,28 @@
       }
 
       // Validate password strength
-      if (password.length < 8) {
-        showAlert('Password must be at least 8 characters long', 'danger');
-        return;
-      }
+if (password.length < 8) {
+  showAlert('Password must be at least 8 characters long', 'danger');
+  return;
+}
+
+// Check for uppercase letter
+if (!/[A-Z]/.test(password)) {
+  showAlert('Password must contain at least one uppercase letter', 'danger');
+  return;
+}
+
+// Check for lowercase letter
+if (!/[a-z]/.test(password)) {
+  showAlert('Password must contain at least one lowercase letter', 'danger');
+  return;
+}
+
+// Check for number
+if (!/[0-9]/.test(password)) {
+  showAlert('Password must contain at least one number', 'danger');
+  return;
+}
 
       setButtonLoading('registerBtn', true);
 
