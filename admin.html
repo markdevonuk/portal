@@ -49,6 +49,33 @@
       color: #00a896;
       margin-bottom: 20px;
     }
+    
+    /* Danger card styling */
+    .danger-card {
+      background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%);
+      border: 3px solid #dc3545;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(220,53,69,.15);
+      padding: 30px;
+      margin: 20px 0;
+      transition: transform .3s, box-shadow .3s;
+    }
+    .danger-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(220,53,69,.25);
+    }
+    .danger-icon {
+      font-size: 3rem;
+      color: #dc3545;
+      margin-bottom: 20px;
+    }
+    .danger-card h3 {
+      color: #dc3545;
+    }
+    .danger-card .text-muted {
+      color: #721c24 !important;
+    }
+    
     .unauthorized { text-align: center; padding: 60px 20px; }
     .hidden { display: none; }
   </style>
@@ -122,7 +149,7 @@
         </div>
       </div>
       
-           <!-- New row for Team Management -->
+      <!-- New row for Team Management -->
       <div class="row">
         <div class="col-md-6 mb-4">
           <a href="team-management.html" class="admin-card-link">
@@ -134,7 +161,7 @@
            </div>
           </a>
         </div>
-                <div class="col-md-6 mb-4">
+        <div class="col-md-6 mb-4">
           <a href="team-assignment.html" class="admin-card-link">
             <div class="admin-card text-center">
               <i class="bi bi-person-plus-fill admin-icon"></i>
@@ -145,33 +172,30 @@
           </a>
         </div>
       </div>
-      
 
-<div class="row">
-  <div class="col-md-6 mb-4">
-    <a href="event-management.html" class="admin-card-link">
-      <div class="admin-card text-center">
-        <i class="bi bi-calendar-event-fill admin-icon"></i>
-        <h3>Event Management</h3>
-        <p class="text-muted mb-0">Manage volunteer events</p>
-        <small class="text-muted">Create events and manage volunteer registrations</small>
+      <div class="row">
+        <div class="col-md-6 mb-4">
+          <a href="event-management.html" class="admin-card-link">
+            <div class="admin-card text-center">
+              <i class="bi bi-calendar-event-fill admin-icon"></i>
+              <h3>Event Management</h3>
+              <p class="text-muted mb-0">Manage volunteer events</p>
+              <small class="text-muted">Create events and manage volunteer registrations</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-6 mb-4">
+          <a href="search-members.html" class="admin-card-link">
+            <div class="admin-card text-center">
+              <i class="bi bi-search admin-icon"></i>
+              <h3>Member Search</h3>
+              <p class="text-muted mb-0">Find and view member details</p>
+              <small class="text-muted">Search members by name or email and view their information</small>
+            </div>
+          </a>
+        </div>
       </div>
-    </a>
-  </div>
-  <!-- Space for future card -->
-  <div class="col-md-6 mb-4">
-<a href="search-members.html" class="admin-card-link">
-<div class="admin-card text-center">
-<i class="bi bi-search admin-icon"></i>
- <h3>Member Search</h3>
-<p class="text-muted mb-0">Find and view member details</p>
-<small class="text-muted">Search members by name or email and view their information</small>
- </div>
-</a>
-</div>
-</div>
 
-       
       <div class="row">
         <div class="col-md-6 mb-4">
           <a href="admin-allowed-emails.html" class="admin-card-link">
@@ -184,7 +208,6 @@
           </a>
         </div>
         
-       
         <div class="col-md-6 mb-4">
           <a href="admin-user-management.html" class="admin-card-link">
             <div class="admin-card text-center">
@@ -196,6 +219,7 @@
           </a>
         </div>
       </div>
+
       <div class="row">
         <div class="col-md-12">
           <div class="admin-card">
@@ -217,7 +241,26 @@
           </div>
         </div>
       </div>
+
+      <!-- DANGER ZONE - Delete Profile -->
+      <div class="row">
+        <div class="col-md-12 mb-4">
+          <a href="admin-delete-profile.html" class="admin-card-link">
+            <div class="danger-card text-center">
+              <i class="bi bi-exclamation-octagon-fill danger-icon"></i>
+              <h3>⚠️ Delete Member Profile</h3>
+              <p class="text-muted mb-0">DANGER: Permanently remove members</p>
+              <small class="text-muted">Delete user accounts, profiles, and all associated data</small>
+              <div class="mt-3">
+                <span class="badge bg-danger">IRREVERSIBLE ACTION</span>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+
     </div>
+  </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
