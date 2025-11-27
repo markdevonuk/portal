@@ -103,11 +103,11 @@
                 <i class="bi bi-person-vcard-fill"></i> My Profile
               </a>
             </li>
-            <li class="nav-item">
-            <a class="nav-link" href="events.html">
-              <i class="bi bi-calendar-event"></i> Events
-            </a>
-          </li>
+         <li class="nav-item hidden" id="eventsNavItem">
+  <a class="nav-link" href="events.html">
+    <i class="bi bi-calendar-event"></i> Events
+  </a>
+</li>
             <li class="nav-item">
               <a class="nav-link" href="#" id="logoutLink">
                 <i class="bi bi-box-arrow-right"></i> Logout
@@ -373,18 +373,26 @@
         // Update profile status card
         await updateProfileStatus();
         
-       // Render events card with all required Firebase functions
+// Render events card ONLY if profile is approved
 const eventsCardContainer = document.getElementById('eventsCardContainer');
 if (eventsCardContainer) {
-  const firebaseFunctions = {
-    collection, 
-    query, 
-    where, 
-    getDocs,
-    getDoc,
-    doc
-  };
-  renderEventsCard(eventsCardContainer, auth, db, firebaseFunctions);
+  const profile = await getCurrentUserProfile();
+  if (profile && profile.adminUse && profile.adminUse.status === 'approved') {
+    // Show events nav link
+    const eventsNavItem = document.getElementById('eventsNavItem');
+    if (eventsNavItem) eventsNavItem.classList.remove('hidden');
+    
+    // Render events card
+    const firebaseFunctions = {
+      collection, 
+      query, 
+      where, 
+      getDocs,
+      getDoc,
+      doc
+    };
+    renderEventsCard(eventsCardContainer, auth, db, firebaseFunctions);
+  }
 }
         
         // Now that everything is loaded, show the page content
