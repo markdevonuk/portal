@@ -1,3 +1,7 @@
+
+
+
+
 // profile-service.js
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
@@ -8,8 +12,6 @@ import {
   setDoc, 
   updateDoc, 
   serverTimestamp 
-  collection,
-  addDoc 
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 
@@ -291,13 +293,6 @@ async function submitProfile(agreedToTerms) {
  * @param {string} notes - Admin notes about the review
  * @returns {Promise<void>}
  */
-/**
- * Admin function to review a user's profile
- * @param {string} userId - The user ID whose profile is being reviewed
- * @param {string} status - The review status (approved, rejected)
- * @param {string} notes - Admin notes about the review
- * @returns {Promise<void>}
- */
 async function reviewProfile(userId, status, notes) {
   const admin = auth.currentUser;
   if (!admin) {
@@ -314,62 +309,6 @@ async function reviewProfile(userId, status, notes) {
       "adminUse.reviewedAt": serverTimestamp()
     });
     console.log("Profile review updated successfully");
-    
-    // Send approval email if status is approved
-    if (status === 'approved') {
-      try {
-        // Get user details for the email
-        const userRef = doc(db, 'users', userId);
-        const userSnap = await getDoc(userRef);
-        
-        if (userSnap.exists()) {
-          const userData = userSnap.data();
-          const firstName = userData.firstName || 'Member';
-          const userEmail = userData.email;
-          
-          if (userEmail) {
-            // Create the approval email content
-            const emailSubject = 'FMS Prehospital Portal - Profile Approved';
-            const emailContent = `Dear ${firstName}
-
-Congratulations, your profile has been reviewed and approved.
-
-You may now log on to https://portal.fmsprehospital.co.uk and select the events at which you would like to volunteer. As your profile is now approved you will find the link in the top menu bar.
-
-In the events section you can see all the events, which teams are required at which events and volunteer. When team selection takes place you will, of course, be notified but you will also see on your dashboard as it will show you as "selected"
-
-If any of your details change, you can edit your profile at any time, and a Team leader will review it.
-
-We look forward to seeing you at an event very soon.
-
-Prehospital Team Leaders
-prehospital@festival-medical.org`;
-
-            // Send email via Firebase mail collection
-            await addDoc(collection(db, 'mail'), {
-              to: userEmail,
-              replyTo: 'prehospital@festival-medical.org',
-              message: {
-                subject: emailSubject,
-                text: emailContent,
-                html: emailContent.replace(/\n/g, '<br>')
-              }
-            });
-            
-            console.log("Approval email sent to:", userEmail);
-          } else {
-            console.warn("No email address found for user:", userId);
-          }
-        } else {
-          console.warn("User document not found for:", userId);
-        }
-      } catch (emailError) {
-        // Log the email error but don't fail the whole operation
-        console.error("Error sending approval email:", emailError);
-        // The profile was still approved, so we don't throw the error
-      }
-    }
-    
   } catch (error) {
     console.error("Error reviewing profile:", error);
     throw error;
