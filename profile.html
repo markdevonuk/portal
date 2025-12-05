@@ -187,16 +187,16 @@
               <img src="https://via.placeholder.com/150?text=No+Photo" alt="Profile Photo" class="profile-photo" id="photoPreview">
             </div>
           </div>
+          
           <div class="col-md-8">
-            <div class="mb-3">
-              <label for="profilePhotoInput" class="form-label">Select Photo</label>
-              <input type="file" class="form-control" id="profilePhotoInput" accept="image/jpeg, image/png">
-              <div class="form-text">Max file size: 7.5MB</div>
-            </div>
+            <input type="file" class="d-none" id="profilePhotoInput" accept="image/jpeg, image/png">
             
-            <button type="button" class="btn btn-primary" id="uploadPhotoBtn">
-              <i class="bi bi-cloud-upload"></i> Upload Photo
+            <button type="button" class="btn btn-success btn-lg" id="uploadPhotoBtn">
+              <i class="bi bi-camera-fill"></i> Choose & Upload Photo
             </button>
+            <div class="form-text mt-2">Click the button to select a photo (max 7.5MB). It will upload automatically.</div>
+          
+          
             
             <div class="progress mt-2 hidden" id="photoUploadProgressContainer">
               <div class="progress-bar bg-success" id="photoUploadProgressBar" role="progressbar" style="width: 0%"></div>
@@ -323,15 +323,12 @@
             <p class="mt-2 mb-0">Accepted files are PDF, Word, JPG, PNG.</p>
           </div>
           
-          <div class="mb-3">
-            <label for="qualificationDocInput" class="form-label">Select Document</label>
-            <input type="file" class="form-control" id="qualificationDocInput" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
-            <div class="form-text">Max file size: 7.5MB</div>
-          </div>
+         <input type="file" class="d-none" id="qualificationDocInput" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
           
-          <button type="button" class="btn btn-primary" id="uploadQualDocBtn">
-            <i class="bi bi-cloud-upload"></i> Upload Document
+          <button type="button" class="btn btn-success btn-lg" id="uploadQualDocBtn">
+            <i class="bi bi-file-earmark-arrow-up-fill"></i> Choose & Upload Document
           </button>
+          <div class="form-text mt-2">Click the button to select a document (max 7.5MB). It will upload automatically.</div>
           
           <div class="progress mt-2 hidden" id="qualDocUploadProgressContainer">
             <div class="progress-bar bg-success" id="qualDocUploadProgressBar" role="progressbar" style="width: 0%"></div>
@@ -687,11 +684,15 @@ function showInlineConfirmation(message, parentElement, isSubmission = false) {
       }
     }
 
-    // Upload profile photo
-    uploadPhotoBtn.addEventListener('click', async () => {
+   // When button is clicked, open file picker
+    uploadPhotoBtn.addEventListener('click', () => {
+      profilePhotoInput.click();
+    });
+
+    // Upload profile photo automatically when file is selected
+    profilePhotoInput.addEventListener('change', async () => {
       const file = profilePhotoInput.files[0];
       if (!file) {
-        showAlert('Please select a photo to upload', 'warning');
         return;
       }
       
@@ -788,13 +789,19 @@ function showInlineConfirmation(message, parentElement, isSubmission = false) {
       }
     });
     
-    // Upload qualification document
-    uploadQualDocBtn.addEventListener('click', async () => {
+ // When button is clicked, open file picker
+    uploadQualDocBtn.addEventListener('click', () => {
+      qualificationDocInput.click();
+    });
+
+    // Upload qualification document automatically when file is selected
+    qualificationDocInput.addEventListener('change', async () => {
       const file = qualificationDocInput.files[0];
       if (!file) {
-        showAlert('Please select a document to upload', 'warning');
         return;
       }
+ 
+ 
       
       // Validate file size (max 7.5MB)
       if (file.size > 7.5 * 1024 * 1024) {
