@@ -258,7 +258,7 @@
             <div class="mb-3" id="qualificationUploadSection">
               <label for="qualificationProof" class="form-label required-label">Upload Proof of Qualification</label>
               <input type="file" class="form-control" id="qualificationProof" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
-              <div class="file-info">Accepted formats: PDF, Word, JPG, PNG (Max 7.5MB)</div>
+              <div class="file-info">Please upload a screenshot of HCPC/GMC/NMC registration, your certificate or ID card.  Accepted formats: PDF, Word, JPG, PNG (Max 7.5MB)</div>
               <div class="progress-container hidden" id="uploadProgressContainer">
                 <div class="progress">
                   <div class="progress-bar bg-success" id="uploadProgressBar" role="progressbar" style="width: 0%"></div>
@@ -376,18 +376,21 @@
       }
     }
 
-    // Handle qualification level change - show/hide file upload
-    qualificationLevel.addEventListener('change', () => {
-      const selectedValue = qualificationLevel.value;
-      
-      if (selectedValue === 'Make Ready') {
-        qualificationUploadSection.classList.add('hidden');
-        qualificationProof.removeAttribute('required');
-      } else {
-        qualificationUploadSection.classList.remove('hidden');
-        qualificationProof.setAttribute('required', '');
-      }
-    });
+// Handle qualification level change - show/hide file upload
+// Non-clinical roles don't require qualification documents
+const nonClinicalRoles = ['Make Ready', 'Medcomms', 'Non Clinical'];
+
+qualificationLevel.addEventListener('change', () => {
+  const selectedValue = qualificationLevel.value;
+  
+  if (nonClinicalRoles.includes(selectedValue)) {
+    qualificationUploadSection.classList.add('hidden');
+    qualificationProof.removeAttribute('required');
+  } else {
+    qualificationUploadSection.classList.remove('hidden');
+    qualificationProof.setAttribute('required', '');
+  }
+});
 
     // Upload file to Firebase Storage
     async function uploadFile(file) {
@@ -474,9 +477,10 @@
           return;
         }
 
-        // Handle file upload (if not Make Ready)
-        let qualificationDocument = null;
-        if (qualification !== 'Make Ready') {
+       // Handle file upload (skip for non-clinical roles)
+const nonClinicalRoles = ['Make Ready', 'Medcomms', 'Non Clinical'];
+let qualificationDocument = null;
+if (!nonClinicalRoles.includes(qualification)) {
           const file = qualificationProof.files[0];
           if (!file) {
             showAlert('Please upload proof of your qualification', 'warning');
