@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Applicants - FMS Prehospital Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background:#f8f9fa; min-height:100vh; }
+    .navbar { 
+      background: linear-gradient(135deg, #00a896 0%, #028090 100%); 
+      box-shadow:0 2px 10px rgba(0,0,0,0.1); 
+    }
+    .nav-link { color: rgba(255,255,255,.85) !important; font-weight: 500; }
+    .nav-link:hover { color: #fff !important; }
+    .page-header { 
+      background:linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      color:#fff; 
+      border-radius:15px; 
+      padding:30px; 
+      margin:30px 0 20px 0;
+      box-shadow: 0 10px 30px rgba(0,168,150,.3);
+    }
+    .admin-card { 
+      background:#fff; 
+      border-radius:15px; 
+      box-shadow:0 5px 20px rgba(0,0,0,.08); 
+      padding:30px; 
+      margin:20px 0; 
+    }
+    .btn-primary { 
+      background: linear-gradient(135deg, #00a896 0%, #028090 100%); 
+      border: none; 
+      font-weight: 600; 
+    }
+    .btn-primary:hover { 
+      transform: translateY(-2px); 
+      box-shadow: 0 5px 15px rgba(0,168,150,.4); 
+    }
+    .form-control:focus, .form-select:focus { 
+      border-color: #00a896; 
+      box-shadow: 0 0 0 0.2rem rgba(0,168,150,.25); 
+    }
+    
+    /* Tab Styles */
+    .nav-tabs .nav-link {
+      color: #6c757d;
+      font-weight: 500;
+      border: none;
+      padding: 12px 20px;
+    }
+    .nav-tabs .nav-link.active {
+      color: #00a896;
+      font-weight: 600;
+      border-bottom: 3px solid #00a896;
+      background: transparent;
+    }
+    .nav-tabs .nav-link:hover:not(.active) {
+      border-color: transparent;
+      color: #028090;
+    }
+    .tab-content {
+      padding-top: 20px;
+    }
+    
+    /* Badge Styles */
+    .status-badge {
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .badge-pending {
+      background: #fff3cd;
+      color: #856404;
+    }
+    .badge-approved-to-pay {
+      background: #cce5ff;
+      color: #004085;
+    }
+    .badge-paid {
+      background: #d4edda;
+      color: #155724;
+    }
+    .badge-external-approved {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+    .badge-rejected {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    /* Applicant Card Styles */
+    .applicant-card {
+      border: 1px solid #e9ecef;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 15px;
+      background: #fff;
+      transition: box-shadow 0.3s, transform 0.3s;
+    }
+    .applicant-card:hover {
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+    }
+    .applicant-info h5 {
+      margin-bottom: 5px;
+      color: #333;
+    }
+    .applicant-info p {
+      margin-bottom: 3px;
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+    .applicant-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    /* Modal Styles */
+    .detail-label {
+      font-weight: 600;
+      color: #495057;
+    }
+    .detail-value {
+      color: #333;
+    }
+    .detail-row {
+      padding: 10px 0;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+    
+    /* Document Preview */
+    .doc-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      text-decoration: none;
+      color: #00a896;
+      transition: background 0.2s;
+    }
+    .doc-link:hover {
+      background: #e9ecef;
+      color: #028090;
+    }
+    
+    /* Loading Spinner */
+    .btn-loading { 
+      position: relative; 
+      pointer-events: none; 
+      opacity: .7; 
+    }
+    .btn-loading::after { 
+      content:""; 
+      position:absolute; 
+      width:16px; 
+      height:16px; 
+      top:50%; 
+      left:50%; 
+      margin:-8px 0 0 -8px; 
+      border:2px solid #fff; 
+      border-radius:50%; 
+      border-top-color:transparent; 
+      animation:spinner .6s linear infinite; 
+    }
+    @keyframes spinner { to { transform: rotate(360deg); } }
+    
+    /* Export Button */
+    .export-section {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .nav-tabs .nav-link {
+        padding: 10px 12px;
+        font-size: 0.85rem;
+      }
+      .applicant-card {
+        padding: 15px;
+      }
+      .applicant-actions {
+        margin-top: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+      <a class="navbar-brand" href="dashboard.html">
+        <i class="bi bi-heart-pulse"></i> FMS Portal
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="admin.html">
+              <i class="bi bi-arrow-left"></i> Admin Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="dashboard.html">
+              <i class="bi bi-house-fill"></i> Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="logoutLink">
+              <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1 class="mb-2"><i class="bi bi-person-plus-fill"></i> Applicant Management</h1>
+      <p class="mb-0">Review and process new team applicants</p>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alertContainer"></div>
+
+    <!-- Main Content Card -->
+    <div class="admin-card">
+      <!-- Tabs Navigation -->
+      <ul class="nav nav-tabs" id="applicantTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab">
+            <i class="bi bi-hourglass-split"></i> Pending
+            <span class="badge bg-warning text-dark ms-1" id="pendingCount">0</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="approved-to-pay-tab" data-bs-toggle="tab" data-bs-target="#approved-to-pay" type="button" role="tab">
+            <i class="bi bi-credit-card"></i> Awaiting Payment
+            <span class="badge bg-info ms-1" id="approvedToPayCount">0</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="paid-tab" data-bs-toggle="tab" data-bs-target="#paid" type="button" role="tab">
+            <i class="bi bi-check2-circle"></i> Paid
+            <span class="badge bg-success ms-1" id="paidCount">0</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="external-approved-tab" data-bs-toggle="tab" data-bs-target="#external-approved" type="button" role="tab">
+            <i class="bi bi-shield-check"></i> Ready to Register
+            <span class="badge bg-primary ms-1" id="externalApprovedCount">0</span>
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button" role="tab">
+            <i class="bi bi-x-circle"></i> Rejected
+            <span class="badge bg-danger ms-1" id="rejectedCount">0</span>
+          </button>
+        </li>
+      </ul>
+
+      <!-- Tab Content -->
+      <div class="tab-content" id="applicantTabContent">
+        <!-- Pending Tab -->
+        <div class="tab-pane fade show active" id="pending" role="tabpanel">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">New Applications</h5>
+            <div class="input-group" style="max-width: 300px;">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control" id="pendingSearch" placeholder="Search...">
+            </div>
+          </div>
+          <div id="pendingContainer">
+            <div class="text-center py-4">
+              <div class="spinner-border text-primary" role="status"></div>
+              <p class="mt-3 text-muted">Loading applicants...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Approved to Pay Tab -->
+        <div class="tab-pane fade" id="approved-to-pay" role="tabpanel">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Awaiting Payment</h5>
+            <div class="input-group" style="max-width: 300px;">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control" id="approvedToPaySearch" placeholder="Search...">
+            </div>
+          </div>
+          <div id="approvedToPayContainer">
+            <div class="text-center py-4">
+              <div class="spinner-border text-primary" role="status"></div>
+              <p class="mt-3 text-muted">Loading applicants...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Paid Tab -->
+        <div class="tab-pane fade" id="paid" role="tabpanel">
+          <!-- Export Section -->
+          <div class="export-section">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div>
+                <strong><i class="bi bi-file-earmark-spreadsheet"></i> Export for External Verification</strong>
+                <p class="text-muted mb-0 small">Download CSV of paid applicants for external processing</p>
+              </div>
+              <button class="btn btn-success" id="exportCsvBtn">
+                <i class="bi bi-download"></i> Export CSV
+              </button>
+            </div>
+          </div>
+          
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Paid - Awaiting External Verification</h5>
+            <div class="input-group" style="max-width: 300px;">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control" id="paidSearch" placeholder="Search...">
+            </div>
+          </div>
+          <div id="paidContainer">
+            <div class="text-center py-4">
+              <div class="spinner-border text-primary" role="status"></div>
+              <p class="mt-3 text-muted">Loading applicants...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- External Approved Tab -->
+        <div class="tab-pane fade" id="external-approved" role="tabpanel">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Ready to Add to Approved List</h5>
+            <div class="input-group" style="max-width: 300px;">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control" id="externalApprovedSearch" placeholder="Search...">
+            </div>
+          </div>
+          <div id="externalApprovedContainer">
+            <div class="text-center py-4">
+              <div class="spinner-border text-primary" role="status"></div>
+              <p class="mt-3 text-muted">Loading applicants...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rejected Tab -->
+        <div class="tab-pane fade" id="rejected" role="tabpanel">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Rejected Applications</h5>
+            <div class="input-group" style="max-width: 300px;">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control" id="rejectedSearch" placeholder="Search...">
+            </div>
+          </div>
+          <div id="rejectedContainer">
+            <div class="text-center py-4">
+              <div class="spinner-border text-primary" role="status"></div>
+              <p class="mt-3 text-muted">Loading applicants...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Applicant Modal -->
+  <div class="modal fade" id="viewApplicantModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-person-badge"></i> Applicant Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="applicantDetailsBody">
+          <!-- Content loaded dynamically -->
+        </div>
+        <div class="modal-footer" id="applicantModalFooter">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Approve Applicant Modal -->
+  <div class="modal fade" id="approveModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title"><i class="bi bi-check-circle"></i> Approve Applicant</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>You are about to approve <strong id="approveApplicantName"></strong>.</p>
+          <p>This will:</p>
+          <ul>
+            <li>Change their status to "Awaiting Payment"</li>
+            <li>Send them an email with the Stripe payment link</li>
+          </ul>
+          <div class="mb-3">
+            <label class="form-label">Admin Notes (optional)</label>
+            <textarea class="form-control" id="approveNotes" rows="2" placeholder="Any notes about this approval..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-success" id="confirmApproveBtn">
+            <i class="bi bi-check-circle"></i> Approve & Send Email
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reject Applicant Modal -->
+  <div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title"><i class="bi bi-x-circle"></i> Reject Applicant</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>You are about to reject <strong id="rejectApplicantName"></strong>.</p>
+          <div class="mb-3">
+            <label class="form-label">Reason for Rejection <span class="text-danger">*</span></label>
+            <textarea class="form-control" id="rejectReason" rows="3" placeholder="Please provide a reason..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmRejectBtn">
+            <i class="bi bi-x-circle"></i> Reject Application
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mark as Paid Modal -->
+  <div class="modal fade" id="markPaidModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title"><i class="bi bi-cash-coin"></i> Mark as Paid</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>Confirm that <strong id="markPaidApplicantName"></strong> has paid the £30 membership fee?</p>
+          <div class="mb-3">
+            <label class="form-label">Payment Reference (optional)</label>
+            <input type="text" class="form-control" id="paymentReference" placeholder="Stripe payment ID or reference...">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-success" id="confirmMarkPaidBtn">
+            <i class="bi bi-check-circle"></i> Confirm Payment
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mark External Approved Modal -->
+  <div class="modal fade" id="externalApproveModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-info text-white">
+          <h5 class="modal-title"><i class="bi bi-shield-check"></i> External Verification Complete</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>Confirm that <strong id="externalApproveApplicantName"></strong> has passed external DBS/ID verification?</p>
+          <p class="text-muted small">This will move them to "Ready to Register" status.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-info" id="confirmExternalApproveBtn">
+            <i class="bi bi-shield-check"></i> Confirm Verification
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add to Approved List Modal -->
+  <div class="modal fade" id="addToApprovedModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title"><i class="bi bi-person-check"></i> Add to Approved List</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>You are about to add <strong id="addToApprovedApplicantName"></strong> to the approved members list.</p>
+          <p>This will:</p>
+          <ul>
+            <li>Add their email (<span id="addToApprovedEmail"></span>) to the allowed emails list</li>
+            <li>Send them an email with registration instructions</li>
+            <li>Mark their application as complete</li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="confirmAddToApprovedBtn">
+            <i class="bi bi-person-check"></i> Add & Send Email
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { 
+      getFirestore, 
+      collection, 
+      doc, 
+      getDoc, 
+      getDocs, 
+      updateDoc, 
+      setDoc,
+      addDoc,
+      serverTimestamp,
+      query,
+      orderBy 
+    } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { firebaseConfig } from './firebase-config.js';
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Global variables
+    let allApplicants = {
+      pending: [],
+      approved_to_pay: [],
+      paid: [],
+      external_approved: [],
+      rejected: []
+    };
+    let currentApplicantId = null;
+    let currentAdmin = null;
+
+    // Stripe Payment Link - UPDATE THIS WITH YOUR ACTUAL STRIPE LINK
+    const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/YOUR_STRIPE_LINK_HERE';
+
+    // DOM Elements
+    const logoutLink = document.getElementById('logoutLink');
+
+    // Helper Functions
+    function showAlert(message, type) {
+      const html = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>`;
+      document.getElementById('alertContainer').innerHTML = html;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function setButtonLoading(buttonId, loading) {
+      const btn = document.getElementById(buttonId);
+      if (!btn) return;
+      if (loading) {
+        btn.classList.add('btn-loading');
+        btn.disabled = true;
+      } else {
+        btn.classList.remove('btn-loading');
+        btn.disabled = false;
+      }
+    }
+
+    function formatDate(timestamp) {
+      if (!timestamp) return 'N/A';
+      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      return date.toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      });
+    }
+
+    function formatDateTime(timestamp) {
+      if (!timestamp) return 'N/A';
+      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      return date.toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    // Load all applicants
+    async function loadAllApplicants() {
+      try {
+        const applicantsRef = collection(db, 'applicants');
+        const q = query(applicantsRef, orderBy('submittedAt', 'desc'));
+        const snapshot = await getDocs(q);
+
+        // Reset arrays
+        allApplicants = {
+          pending: [],
+          approved_to_pay: [],
+          paid: [],
+          external_approved: [],
+          rejected: []
+        };
+
+        snapshot.forEach(doc => {
+          const data = { id: doc.id, ...doc.data() };
+          const status = data.status || 'pending';
+          
+          if (allApplicants[status]) {
+            allApplicants[status].push(data);
+          } else {
+            allApplicants.pending.push(data);
+          }
+        });
+
+        // Update counts
+        document.getElementById('pendingCount').textContent = allApplicants.pending.length;
+        document.getElementById('approvedToPayCount').textContent = allApplicants.approved_to_pay.length;
+        document.getElementById('paidCount').textContent = allApplicants.paid.length;
+        document.getElementById('externalApprovedCount').textContent = allApplicants.external_approved.length;
+        document.getElementById('rejectedCount').textContent = allApplicants.rejected.length;
+
+        // Display applicants
+        displayApplicants('pending', allApplicants.pending);
+        displayApplicants('approved_to_pay', allApplicants.approved_to_pay);
+        displayApplicants('paid', allApplicants.paid);
+        displayApplicants('external_approved', allApplicants.external_approved);
+        displayApplicants('rejected', allApplicants.rejected);
+
+      } catch (error) {
+        console.error('Error loading applicants:', error);
+        showAlert('Error loading applicants: ' + error.message, 'danger');
+      }
+    }
+
+    // Display applicants for a status
+    function displayApplicants(status, applicants) {
+      const containerId = status === 'approved_to_pay' ? 'approvedToPayContainer' : 
+                          status === 'external_approved' ? 'externalApprovedContainer' : 
+                          `${status}Container`;
+      const container = document.getElementById(containerId);
+      
+      if (!container) return;
+
+      if (applicants.length === 0) {
+        container.innerHTML = `<div class="alert alert-info">No applicants in this category</div>`;
+        return;
+      }
+
+      let html = '';
+      applicants.forEach(applicant => {
+        const name = `${applicant.firstName} ${applicant.surname}`;
+        const qualification = applicant.qualificationLevel || 'Not specified';
+        const submittedDate = formatDate(applicant.submittedAt);
+        
+        html += `
+          <div class="applicant-card" data-id="${applicant.id}" data-name="${name.toLowerCase()}" data-email="${applicant.email.toLowerCase()}">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+              <div class="applicant-info">
+                <h5>${name}</h5>
+                <p><i class="bi bi-envelope"></i> ${applicant.email}</p>
+                <p><i class="bi bi-phone"></i> ${applicant.mobile || 'N/A'}</p>
+                <p><i class="bi bi-mortarboard"></i> ${qualification}</p>
+                <small class="text-muted">Applied: ${submittedDate}</small>
+              </div>
+              <div class="applicant-actions">
+                <button class="btn btn-sm btn-outline-primary" onclick="viewApplicant('${applicant.id}')">
+                  <i class="bi bi-eye"></i> View
+                </button>
+                ${getActionButtons(status, applicant.id, name)}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // Get action buttons based on status
+    function getActionButtons(status, id, name) {
+      switch (status) {
+        case 'pending':
+          return `
+            <button class="btn btn-sm btn-success" onclick="openApproveModal('${id}', '${name}')">
+              <i class="bi bi-check-circle"></i> Approve
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="openRejectModal('${id}', '${name}')">
+              <i class="bi bi-x-circle"></i> Reject
+            </button>
+          `;
+        case 'approved_to_pay':
+          return `
+            <button class="btn btn-sm btn-success" onclick="openMarkPaidModal('${id}', '${name}')">
+              <i class="bi bi-cash-coin"></i> Mark Paid
+            </button>
+          `;
+        case 'paid':
+          return `
+            <button class="btn btn-sm btn-info" onclick="openExternalApproveModal('${id}', '${name}')">
+              <i class="bi bi-shield-check"></i> Verify Complete
+            </button>
+          `;
+        case 'external_approved':
+          return `
+            <button class="btn btn-sm btn-primary" onclick="openAddToApprovedModal('${id}')">
+              <i class="bi bi-person-check"></i> Add to Approved List
+            </button>
+          `;
+        case 'rejected':
+          return `
+            <button class="btn btn-sm btn-outline-success" onclick="openApproveModal('${id}', '${name}')">
+              <i class="bi bi-arrow-counterclockwise"></i> Reconsider
+            </button>
+          `;
+        default:
+          return '';
+      }
+    }
+
+    // View applicant details
+    window.viewApplicant = async function(id) {
+      const applicant = findApplicantById(id);
+      if (!applicant) return;
+
+      const name = `${applicant.firstName} ${applicant.surname}`;
+      
+      let docHtml = '';
+      if (applicant.qualificationDocument && applicant.qualificationDocument.url) {
+        docHtml = `
+          <a href="${applicant.qualificationDocument.url}" target="_blank" class="doc-link">
+            <i class="bi bi-file-earmark-text"></i> ${applicant.qualificationDocument.fileName || 'View Document'}
+          </a>
+        `;
+      } else {
+        docHtml = '<span class="text-muted">No document uploaded</span>';
+      }
+
+      const statusBadge = getStatusBadge(applicant.status);
+
+      const html = `
+        <div class="row">
+          <div class="col-md-6">
+            <div class="detail-row">
+              <span class="detail-label">Name:</span>
+              <span class="detail-value">${name}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Email:</span>
+              <span class="detail-value">${applicant.email}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Mobile:</span>
+              <span class="detail-value">${applicant.mobile || 'N/A'}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Date of Birth:</span>
+              <span class="detail-value">${applicant.dateOfBirth || 'N/A'}</span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-row">
+              <span class="detail-label">Status:</span>
+              ${statusBadge}
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Qualification:</span>
+              <span class="detail-value">${applicant.qualificationLevel || 'N/A'}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Applied:</span>
+              <span class="detail-value">${formatDateTime(applicant.submittedAt)}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Qualification Document:</span>
+              <div>${docHtml}</div>
+            </div>
+          </div>
+        </div>
+        <div class="detail-row mt-3">
+          <span class="detail-label">Address:</span>
+          <p class="detail-value mb-0">${applicant.address || 'N/A'}</p>
+        </div>
+        ${applicant.adminNotes && applicant.adminNotes.length > 0 ? `
+          <div class="detail-row mt-3">
+            <span class="detail-label">Admin Notes:</span>
+            <div class="bg-light p-3 rounded mt-2">
+              ${applicant.adminNotes.map(note => `<p class="mb-1 small">${note}</p>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+      `;
+
+      document.getElementById('applicantDetailsBody').innerHTML = html;
+      new bootstrap.Modal(document.getElementById('viewApplicantModal')).show();
+    };
+
+    function getStatusBadge(status) {
+      const badges = {
+        'pending': '<span class="status-badge badge-pending">Pending Review</span>',
+        'approved_to_pay': '<span class="status-badge badge-approved-to-pay">Awaiting Payment</span>',
+        'paid': '<span class="status-badge badge-paid">Paid</span>',
+        'external_approved': '<span class="status-badge badge-external-approved">Ready to Register</span>',
+        'rejected': '<span class="status-badge badge-rejected">Rejected</span>'
+      };
+      return badges[status] || badges['pending'];
+    }
+
+    function findApplicantById(id) {
+      for (const status in allApplicants) {
+        const found = allApplicants[status].find(a => a.id === id);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    // Modal openers
+    window.openApproveModal = function(id, name) {
+      currentApplicantId = id;
+      document.getElementById('approveApplicantName').textContent = name;
+      document.getElementById('approveNotes').value = '';
+      new bootstrap.Modal(document.getElementById('approveModal')).show();
+    };
+
+    window.openRejectModal = function(id, name) {
+      currentApplicantId = id;
+      document.getElementById('rejectApplicantName').textContent = name;
+      document.getElementById('rejectReason').value = '';
+      new bootstrap.Modal(document.getElementById('rejectModal')).show();
+    };
+
+    window.openMarkPaidModal = function(id, name) {
+      currentApplicantId = id;
+      document.getElementById('markPaidApplicantName').textContent = name;
+      document.getElementById('paymentReference').value = '';
+      new bootstrap.Modal(document.getElementById('markPaidModal')).show();
+    };
+
+    window.openExternalApproveModal = function(id, name) {
+      currentApplicantId = id;
+      document.getElementById('externalApproveApplicantName').textContent = name;
+      new bootstrap.Modal(document.getElementById('externalApproveModal')).show();
+    };
+
+    window.openAddToApprovedModal = function(id) {
+      const applicant = findApplicantById(id);
+      if (!applicant) return;
+      
+      currentApplicantId = id;
+      document.getElementById('addToApprovedApplicantName').textContent = `${applicant.firstName} ${applicant.surname}`;
+      document.getElementById('addToApprovedEmail').textContent = applicant.email;
+      new bootstrap.Modal(document.getElementById('addToApprovedModal')).show();
+    };
+
+    // Confirm Approve
+    document.getElementById('confirmApproveBtn').addEventListener('click', async () => {
+      setButtonLoading('confirmApproveBtn', true);
+      
+      try {
+        const applicant = findApplicantById(currentApplicantId);
+        if (!applicant) throw new Error('Applicant not found');
+
+        const notes = document.getElementById('approveNotes').value.trim();
+        const timestamp = new Date().toLocaleString('en-GB');
+        const adminNote = `[${timestamp}] Approved by ${currentAdmin.email}${notes ? ': ' + notes : ''}`;
+
+        // Update applicant status
+        await updateDoc(doc(db, 'applicants', currentApplicantId), {
+          status: 'approved_to_pay',
+          approvedAt: serverTimestamp(),
+          approvedBy: currentAdmin.uid,
+          adminNotes: [...(applicant.adminNotes || []), adminNote]
+        });
+
+        // Send approval email
+        await addDoc(collection(db, 'mail'), {
+          to: applicant.email,
+          message: {
+            subject: 'FMS Prehospital - Application Approved',
+            text: `Dear ${applicant.firstName},
+
+Congratulations, you have been approved to join the FMS prehospital team.
+
+You can now pay your non-refundable membership application fee. Your fee will include membership of FMS for 3 years and covers both your identity checks, DBS check and set up.
+
+The link is ${STRIPE_PAYMENT_LINK}
+
+Once paid your application will be sent to our membership team for processing and you will hear from them next.
+
+We look forward to you completing this stage and welcoming you to the team.
+
+FMS Prehospital Team Leaders
+prehospital@festival-medical.org`,
+            html: `<p>Dear ${applicant.firstName},</p>
+<p>Congratulations, you have been approved to join the FMS prehospital team.</p>
+<p>You can now pay your non-refundable membership application fee. Your fee will include membership of FMS for 3 years and covers both your identity checks, DBS check and set up.</p>
+<p><strong>The link is <a href="${STRIPE_PAYMENT_LINK}">${STRIPE_PAYMENT_LINK}</a></strong></p>
+<p>Once paid your application will be sent to our membership team for processing and you will hear from them next.</p>
+<p>We look forward to you completing this stage and welcoming you to the team.</p>
+<p>FMS Prehospital Team Leaders<br>prehospital@festival-medical.org</p>`
+          }
+        });
+
+        bootstrap.Modal.getInstance(document.getElementById('approveModal')).hide();
+        showAlert('Applicant approved and email sent!', 'success');
+        await loadAllApplicants();
+
+      } catch (error) {
+        console.error('Error approving applicant:', error);
+        showAlert('Error: ' + error.message, 'danger');
+      } finally {
+        setButtonLoading('confirmApproveBtn', false);
+      }
+    });
+
+    // Confirm Reject
+    document.getElementById('confirmRejectBtn').addEventListener('click', async () => {
+      const reason = document.getElementById('rejectReason').value.trim();
+      if (!reason) {
+        showAlert('Please provide a reason for rejection', 'warning');
+        return;
+      }
+
+      setButtonLoading('confirmRejectBtn', true);
+      
+      try {
+        const applicant = findApplicantById(currentApplicantId);
+        if (!applicant) throw new Error('Applicant not found');
+
+        const timestamp = new Date().toLocaleString('en-GB');
+        const adminNote = `[${timestamp}] Rejected by ${currentAdmin.email}: ${reason}`;
+
+        await updateDoc(doc(db, 'applicants', currentApplicantId), {
+          status: 'rejected',
+          rejectedAt: serverTimestamp(),
+          rejectedBy: currentAdmin.uid,
+          rejectionReason: reason,
+          adminNotes: [...(applicant.adminNotes || []), adminNote]
+        });
+
+        bootstrap.Modal.getInstance(document.getElementById('rejectModal')).hide();
+        showAlert('Application rejected', 'success');
+        await loadAllApplicants();
+
+      } catch (error) {
+        console.error('Error rejecting applicant:', error);
+        showAlert('Error: ' + error.message, 'danger');
+      } finally {
+        setButtonLoading('confirmRejectBtn', false);
+      }
+    });
+
+    // Confirm Mark Paid
+    document.getElementById('confirmMarkPaidBtn').addEventListener('click', async () => {
+      setButtonLoading('confirmMarkPaidBtn', true);
+      
+      try {
+        const applicant = findApplicantById(currentApplicantId);
+        if (!applicant) throw new Error('Applicant not found');
+
+        const paymentRef = document.getElementById('paymentReference').value.trim();
+        const timestamp = new Date().toLocaleString('en-GB');
+        const adminNote = `[${timestamp}] Payment confirmed by ${currentAdmin.email}${paymentRef ? ' (Ref: ' + paymentRef + ')' : ''}`;
+
+        await updateDoc(doc(db, 'applicants', currentApplicantId), {
+          status: 'paid',
+          paidAt: serverTimestamp(),
+          stripePaymentId: paymentRef || null,
+          adminNotes: [...(applicant.adminNotes || []), adminNote]
+        });
+
+        bootstrap.Modal.getInstance(document.getElementById('markPaidModal')).hide();
+        showAlert('Payment confirmed!', 'success');
+        await loadAllApplicants();
+
+      } catch (error) {
+        console.error('Error marking as paid:', error);
+        showAlert('Error: ' + error.message, 'danger');
+      } finally {
+        setButtonLoading('confirmMarkPaidBtn', false);
+      }
+    });
+
+    // Confirm External Approve
+    document.getElementById('confirmExternalApproveBtn').addEventListener('click', async () => {
+      setButtonLoading('confirmExternalApproveBtn', true);
+      
+      try {
+        const applicant = findApplicantById(currentApplicantId);
+        if (!applicant) throw new Error('Applicant not found');
+
+        const timestamp = new Date().toLocaleString('en-GB');
+        const adminNote = `[${timestamp}] External verification completed by ${currentAdmin.email}`;
+
+        await updateDoc(doc(db, 'applicants', currentApplicantId), {
+          status: 'external_approved',
+          externalApprovedAt: serverTimestamp(),
+          adminNotes: [...(applicant.adminNotes || []), adminNote]
+        });
+
+        bootstrap.Modal.getInstance(document.getElementById('externalApproveModal')).hide();
+        showAlert('External verification confirmed!', 'success');
+        await loadAllApplicants();
+
+      } catch (error) {
+        console.error('Error confirming external approval:', error);
+        showAlert('Error: ' + error.message, 'danger');
+      } finally {
+        setButtonLoading('confirmExternalApproveBtn', false);
+      }
+    });
+
+    // Confirm Add to Approved List
+    document.getElementById('confirmAddToApprovedBtn').addEventListener('click', async () => {
+      setButtonLoading('confirmAddToApprovedBtn', true);
+      
+      try {
+        const applicant = findApplicantById(currentApplicantId);
+        if (!applicant) throw new Error('Applicant not found');
+
+        const timestamp = new Date().toLocaleString('en-GB');
+        const adminNote = `[${timestamp}] Added to approved list by ${currentAdmin.email}`;
+
+        // Add email to allowed emails list
+        await setDoc(doc(db, 'allowedEmails', applicant.email.toLowerCase()), {
+          allowed: true,
+          addedDate: new Date().toISOString(),
+          addedFrom: 'applicant',
+          applicantId: currentApplicantId
+        });
+
+        // Update applicant status
+        await updateDoc(doc(db, 'applicants', currentApplicantId), {
+          status: 'member',
+          addedToApprovedListAt: serverTimestamp(),
+          adminNotes: [...(applicant.adminNotes || []), adminNote]
+        });
+
+        // Send registration email
+        await addDoc(collection(db, 'mail'), {
+          to: applicant.email,
+          message: {
+            subject: 'FMS Prehospital - You Can Now Register!',
+            text: `Dear ${applicant.firstName},
+
+Congratulations, you have completed the DBS and ID checks and are now cleared for the FMS Prehospital team.
+
+You now need to register on the Prehospital portal which allows us to carry out the required CQC checks (don't worry, just a few simple questions). Once this is done you can volunteer for events on the portal.
+
+The link is https://portal.fmsprehospital.co.uk/login.html
+
+FMS Prehospital Team Leaders
+prehospital@festival-medical.org`,
+            html: `<p>Dear ${applicant.firstName},</p>
+<p>Congratulations, you have completed the DBS and ID checks and are now cleared for the FMS Prehospital team.</p>
+<p>You now need to register on the Prehospital portal which allows us to carry out the required CQC checks (don't worry, just a few simple questions). Once this is done you can volunteer for events on the portal.</p>
+<p><strong>The link is <a href="https://portal.fmsprehospital.co.uk/login.html">https://portal.fmsprehospital.co.uk/login.html</a></strong></p>
+<p>FMS Prehospital Team Leaders<br>prehospital@festival-medical.org</p>`
+          }
+        });
+
+        bootstrap.Modal.getInstance(document.getElementById('addToApprovedModal')).hide();
+        showAlert('Added to approved list and email sent!', 'success');
+        await loadAllApplicants();
+
+      } catch (error) {
+        console.error('Error adding to approved list:', error);
+        showAlert('Error: ' + error.message, 'danger');
+      } finally {
+        setButtonLoading('confirmAddToApprovedBtn', false);
+      }
+    });
+
+    // Export CSV
+    document.getElementById('exportCsvBtn').addEventListener('click', () => {
+      const paidApplicants = allApplicants.paid;
+      
+      if (paidApplicants.length === 0) {
+        showAlert('No paid applicants to export', 'warning');
+        return;
+      }
+
+      // CSV headers - you can customize these based on what the external source needs
+      const headers = ['First Name', 'Surname', 'Email', 'Mobile', 'Date of Birth', 'Address', 'Qualification', 'Applied Date', 'Paid Date'];
+      
+      const rows = paidApplicants.map(a => [
+        a.firstName || '',
+        a.surname || '',
+        a.email || '',
+        a.mobile || '',
+        a.dateOfBirth || '',
+        (a.address || '').replace(/\n/g, ', '),
+        a.qualificationLevel || '',
+        formatDate(a.submittedAt),
+        formatDate(a.paidAt)
+      ]);
+
+      // Create CSV content
+      let csvContent = headers.join(',') + '\n';
+      rows.forEach(row => {
+        csvContent += row.map(field => `"${field}"`).join(',') + '\n';
+      });
+
+      // Download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `fms_applicants_paid_${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+
+      showAlert(`Exported ${paidApplicants.length} applicants to CSV`, 'success');
+    });
+
+    // Search functionality
+    function setupSearch(inputId, status) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      
+      input.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        const containerId = status === 'approved_to_pay' ? 'approvedToPayContainer' : 
+                            status === 'external_approved' ? 'externalApprovedContainer' : 
+                            `${status}Container`;
+        const container = document.getElementById(containerId);
+        const cards = container.querySelectorAll('.applicant-card');
+        
+        cards.forEach(card => {
+          const name = card.dataset.name || '';
+          const email = card.dataset.email || '';
+          const matches = name.includes(term) || email.includes(term);
+          card.style.display = matches ? '' : 'none';
+        });
+      });
+    }
+
+    setupSearch('pendingSearch', 'pending');
+    setupSearch('approvedToPaySearch', 'approved_to_pay');
+    setupSearch('paidSearch', 'paid');
+    setupSearch('externalApprovedSearch', 'external_approved');
+    setupSearch('rejectedSearch', 'rejected');
+
+    // Logout handler
+    logoutLink.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        await signOut(auth);
+        window.location.href = 'login.html';
+      } catch (error) {
+        showAlert('Logout failed: ' + error.message, 'danger');
+      }
+    });
+
+    // Check authentication and load data
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (!userDoc.exists() || userDoc.data().isAdmin !== true) {
+          window.location.href = 'dashboard.html';
+          return;
+        }
+        
+        currentAdmin = { uid: user.uid, ...userDoc.data() };
+        await loadAllApplicants();
+        
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        window.location.href = 'dashboard.html';
+      }
+    });
+  </script>
+</body>
+</html>
