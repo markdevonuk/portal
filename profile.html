@@ -6,7 +6,7 @@
   <title>My Profile - FMS Prehospital Portal</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  
   <style>
     body { background:#f8f9fa; min-height:100vh; }
     .navbar { 
@@ -449,7 +449,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
   
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
@@ -515,27 +515,90 @@
       }
     });
     
-
+// Date validation and auto-correction helper
+    function formatDateInput(input, allowFuture = true) {
+      input.addEventListener('blur', function() {
+        let value = this.value.trim();
+        if (!value) return;
+        
+        // Replace common separators with /
+        value = value.replace(/[-.\s]/g, '/');
+        
+        // Remove any double slashes
+        value = value.replace(/\/+/g, '/');
+        
+        // Try to parse the date
+        let day, month, year;
+        
+        // Check for DD/MM/YYYY or D/M/YYYY format
+        const parts = value.split('/');
+        
+        if (parts.length === 3) {
+          day = parseInt(parts[0], 10);
+          month = parseInt(parts[1], 10);
+          year = parseInt(parts[2], 10);
+          
+          // Handle 2-digit years
+          if (year < 100) {
+            year = year > 50 ? 1900 + year : 2000 + year;
+          }
+          
+          // Validate ranges
+          if (month < 1 || month > 12) {
+            showAlert('Invalid month. Please enter a date in DD/MM/YYYY format.', 'warning');
+            return;
+          }
+          
+          // Days in each month (accounting for leap years)
+          const daysInMonth = [31, (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+          
+          if (day < 1 || day > daysInMonth[month - 1]) {
+            showAlert('Invalid day for this month. Please check the date.', 'warning');
+            return;
+          }
+          
+          // Check year is reasonable (between 1900 and 2100)
+          if (year < 1900 || year > 2100) {
+            showAlert('Invalid year. Please enter a date in DD/MM/YYYY format.', 'warning');
+            return;
+          }
+          
+          // Create date object to validate
+          const dateObj = new Date(year, month - 1, day);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          
+          // Check if date is in the future (for DOB)
+          if (!allowFuture && dateObj > today) {
+            showAlert('Date of birth cannot be in the future.', 'warning');
+            return;
+          }
+          
+          // Check if date is in the past (for cert expiry)
+          if (allowFuture === 'futureOnly' && dateObj < today) {
+            showAlert('Certificate expiry date cannot be in the past.', 'warning');
+            return;
+          }
+          
+          // Format with leading zeros
+          const formattedDay = day.toString().padStart(2, '0');
+          const formattedMonth = month.toString().padStart(2, '0');
+          
+          this.value = `${formattedDay}/${formattedMonth}/${year}`;
+          
+        } else {
+          showAlert('Please enter the date in DD/MM/YYYY format (e.g. 25/12/1990).', 'warning');
+        }
+      });
+    }
+    
+    // Apply date formatting to DOB (no future dates allowed)
+    formatDateInput(document.getElementById('dob'), false);
+    
+    // Apply date formatting to cert expiry (only future dates allowed)
+    formatDateInput(document.getElementById('certExpiry'), 'futureOnly');
   
-  // Check if this is a mobile device
-const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-if (isMobile) {
-  // For mobile devices, use native date inputs
-  document.getElementById('dob').type = "date";
-  document.getElementById('certExpiry').type = "date";
-} else {
-  // For desktop, use flatpickr
-  flatpickr("#dob", {
-    dateFormat: "d/m/Y",
-    maxDate: new Date() // Can't select future dates
-  });
   
-  flatpickr("#certExpiry", {
-    dateFormat: "d/m/Y",
-    minDate: new Date() // Can't select past dates
-  });
-}
 
     // DOM elements
     const profileForm = document.getElementById('profileForm');
@@ -1246,31 +1309,23 @@ function showInlineConfirmation(message, parentElement, isSubmission = false) {
           if (profile.personalDetails) {
             logDebug('Loading personal details:', profile.personalDetails);
             
-       if (profile.personalDetails.DOB) {
-  // Convert timestamp to date string
-  let date;
-  if (profile.personalDetails.DOB.seconds) {
-    date = new Date(profile.personalDetails.DOB.seconds * 1000);
-  } else {
-    date = new Date(profile.personalDetails.DOB);
-  }
-  
-  const dobInput = document.getElementById('dob');
-  
-  // Format differently based on input type (date for mobile, text for desktop)
-  if (dobInput.type === 'date') {
-    // YYYY-MM-DD format for native date inputs on mobile
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    dobInput.value = `${year}-${month}-${day}`;
-  } else {
-    // DD/MM/YYYY format for flatpickr on desktop
-    dobInput.value = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
-  }
-  
-  logDebug('Loaded DOB:', dobInput.value, 'Input type:', dobInput.type);
-}
+if (profile.personalDetails.DOB) {
+              // Convert timestamp to date string
+              let date;
+              if (profile.personalDetails.DOB.seconds) {
+                date = new Date(profile.personalDetails.DOB.seconds * 1000);
+              } else {
+                date = new Date(profile.personalDetails.DOB);
+              }
+              
+              // Format as DD/MM/YYYY
+              const day = date.getDate().toString().padStart(2, '0');
+              const month = (date.getMonth() + 1).toString().padStart(2, '0');
+              const year = date.getFullYear();
+              document.getElementById('dob').value = `${day}/${month}/${year}`;
+              
+              logDebug('Loaded DOB:', document.getElementById('dob').value);
+            }
             
             document.getElementById('emergencyContact').value = profile.personalDetails.emergencyContact || '';
           }
@@ -1293,29 +1348,21 @@ function showInlineConfirmation(message, parentElement, isSubmission = false) {
             document.getElementById('nmc').value = profile.medicalQualifications.nmc || '';
             document.getElementById('details').value = profile.medicalQualifications.details || '';
             
-         if (profile.medicalQualifications.certExpiry) {
-  // Convert timestamp to date string
-  let date;
-  if (profile.medicalQualifications.certExpiry.seconds) {
-    date = new Date(profile.medicalQualifications.certExpiry.seconds * 1000);
-  } else {
-    date = new Date(profile.medicalQualifications.certExpiry);
-  }
-  
-  const certExpiryInput = document.getElementById('certExpiry');
-  
-  // Format differently based on input type (date for mobile, text for desktop)
-  if (certExpiryInput.type === 'date') {
-    // YYYY-MM-DD format for native date inputs on mobile
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    certExpiryInput.value = `${year}-${month}-${day}`;
-  } else {
-    // DD/MM/YYYY format for flatpickr on desktop
-    certExpiryInput.value = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
-  }
-}
+if (profile.medicalQualifications.certExpiry) {
+              // Convert timestamp to date string
+              let date;
+              if (profile.medicalQualifications.certExpiry.seconds) {
+                date = new Date(profile.medicalQualifications.certExpiry.seconds * 1000);
+              } else {
+                date = new Date(profile.medicalQualifications.certExpiry);
+              }
+              
+              // Format as DD/MM/YYYY
+              const day = date.getDate().toString().padStart(2, '0');
+              const month = (date.getMonth() + 1).toString().padStart(2, '0');
+              const year = date.getFullYear();
+              document.getElementById('certExpiry').value = `${day}/${month}/${year}`;
+            }
             
             // Trigger change event to show/hide appropriate fields
             qualification.dispatchEvent(new Event('change'));
@@ -1386,29 +1433,18 @@ function showInlineConfirmation(message, parentElement, isSubmission = false) {
 function parseDateString(dateStr) {
   if (!dateStr) return null;
   
-  let date;
-  
-  // Try to handle both formats (YYYY-MM-DD from mobile or DD/MM/YYYY from desktop)
-  if (dateStr.includes('-')) {
-    // Mobile format (YYYY-MM-DD)
-    date = new Date(dateStr);
-  } else if (dateStr.includes('/')) {
-    // Desktop format (DD/MM/YYYY)
-    const parts = dateStr.split('/');
-    if (parts.length === 3) {
-      const day = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1; // Months are 0-based
-      const year = parseInt(parts[2], 10);
-      date = new Date(year, month, day);
+  // Expect DD/MM/YYYY format
+  const parts = dateStr.split('/');
+  if (parts.length === 3) {
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; // Months are 0-based
+    const year = parseInt(parts[2], 10);
+    const date = new Date(year, month, day);
+    
+    // Check if the date is valid
+    if (date instanceof Date && !isNaN(date.getTime())) {
+      return date;
     }
-  } else {
-    // Try direct parsing as fallback
-    date = new Date(dateStr);
-  }
-  
-  // Check if the date is valid
-  if (date instanceof Date && !isNaN(date.getTime())) {
-    return date;
   }
   
   return null;
