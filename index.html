@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FMS Prehospital Portal - Sign In</title>
+  <title>FMS Prehospital Portal - Welcome</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
   <style>
@@ -19,7 +19,7 @@
       border-radius:20px; 
       box-shadow:0 20px 60px rgba(0,0,0,.3); 
       overflow:hidden; 
-      max-width:450px; 
+      max-width:500px; 
       margin:0 auto; 
     }
     .auth-header { 
@@ -28,228 +28,84 @@
       padding:30px; 
       text-align:center; 
     }
-    .auth-body { padding:30px; }
-    .form-control:focus { 
-      border-color:#00a896; 
-      box-shadow:0 0 0 .2rem rgba(0,168,150,.25); 
+    .auth-body { 
+      padding:30px; 
     }
-    .btn-primary { 
+    .welcome-btn {
       background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
       border:none; 
-      padding:12px; 
-      font-weight:600; 
+      padding:20px 30px; 
+      font-weight:600;
+      font-size: 1.1rem;
+      border-radius: 12px;
+      color: #fff;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+      transition: transform .2s, box-shadow .2s;
     }
-    .btn-primary:hover { 
-      transform:translateY(-2px); 
-      box-shadow:0 5px 15px rgba(0,168,150,.4); 
+    .welcome-btn:hover { 
+      transform:translateY(-3px); 
+      box-shadow:0 8px 20px rgba(0,168,150,.4);
+      color: #fff;
     }
-    .hidden { display:none; }
-    .alert { border-radius:10px; }
-    .input-group-text { background:#f8f9fa; border-right:none; }
-    .form-control { border-left:none; }
-    .btn-loading { 
-      position:relative; 
-      pointer-events:none; 
-      opacity:.7; 
+    .welcome-btn i {
+      font-size: 1.5rem;
+      display: block;
+      margin-bottom: 10px;
     }
-    .btn-loading::after { 
-      content:""; 
-      position:absolute; 
-      width:16px; 
-      height:16px; 
-      top:50%; 
-      left:50%; 
-      margin-left:-8px; 
-      margin-top:-8px; 
-      border:2px solid #fff; 
-      border-radius:50%; 
-      border-top-color:transparent; 
-      animation:spinner .6s linear infinite; 
+    .btn-secondary-custom {
+      background: #fff;
+      border: 2px solid #00a896;
+      color: #00a896;
+      padding:20px 30px; 
+      font-weight:600;
+      font-size: 1.1rem;
+      border-radius: 12px;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+      transition: transform .2s, box-shadow .2s, background .2s;
     }
-    @keyframes spinner { to { transform: rotate(360deg); } }
+    .btn-secondary-custom:hover {
+      transform:translateY(-3px); 
+      box-shadow:0 8px 20px rgba(0,168,150,.2);
+      background: #f8f9fa;
+      color: #028090;
+    }
+    .btn-secondary-custom i {
+      font-size: 1.5rem;
+      display: block;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="auth-card">
       <div class="auth-header">
-        <h2 class="mb-0"><i class="bi bi-shield-lock"></i> FMS Prehospital Portal</h2>
-        <p class="mb-0 mt-2">Secure Authentication System</p>
+        <h2 class="mb-0"><i class="bi bi-heart-pulse"></i> FMS Prehospital Portal</h2>
+        <p class="mb-0 mt-2">Make your choice below....</p>
       </div>
 
       <div class="auth-body">
-        <div id="alertContainer"></div>
-
-        <!-- Login Form -->
-        <div id="loginForm">
-          <h4 class="mb-4">Well hello you...</h4>
-          <form id="loginFormElement">
-            <div class="mb-3">
-              <label class="form-label">Email Address</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                <input type="email" class="form-control" id="loginEmail" required autocomplete="email">
-              </div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Password</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                <input type="password" class="form-control" id="loginPassword" required autocomplete="current-password">
-              </div>
-            </div>
-            <button type="submit" id="loginBtn" class="btn btn-primary w-100 mb-3">
-              <i class="bi bi-box-arrow-in-right"></i> Sign In
-            </button>
-            <div class="text-center">
-              <a href="register.html" class="text-decoration-none">First time here? Register now</a><br>
-              <a href="#" id="showRecovery" class="text-decoration-none mt-2 d-inline-block">Forgot Password?</a>
-            </div>
-          </form>
-        </div>
-
-        <!-- Recovery Form -->
-        <div id="recoveryForm" class="hidden">
-          <h4 class="mb-4">Password Recovery</h4>
-          <p class="text-muted">Enter your email address to receive a recovery link</p>
-          <form id="recoveryFormElement">
-            <div class="mb-3">
-              <label class="form-label">Email Address</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                <input type="email" class="form-control" id="recoveryEmail" required>
-              </div>
-            </div>
-            <button type="submit" id="recoveryBtn" class="btn btn-primary w-100 mb-3">
-              <i class="bi bi-envelope-check"></i> Send Recovery Link
-            </button>
-            <button type="button" class="btn btn-outline-secondary w-100" id="backToLogin">
-              <i class="bi bi-arrow-left"></i> Back to Login
-            </button>
-          </form>
+        <h4 class="text-center mb-4">Welcome! How can we help you today?</h4>
+        
+        <div class="d-grid gap-3">
+          <a href="joinfms.html" class="welcome-btn">
+            <i class="bi bi-person-plus"></i>
+            I would like to join the FMS Prehospital Team
+          </a>
+          
+          <a href="login.html" class="btn-secondary-custom">
+            <i class="bi bi-box-arrow-in-right"></i>
+            I am already an approved member
+          </a>
         </div>
       </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  
-  <!-- Firebase SDK -->
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-    import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail, setPersistence, browserSessionPersistence } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-    import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-    import { firebaseConfig } from './firebase-config.js';
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    // Set session persistence
-    setPersistence(auth, browserSessionPersistence);
-
-    // Helper functions
-    function setButtonLoading(id, loading) {
-      const btn = document.getElementById(id);
-      if (!btn) return;
-      if (loading) {
-        btn.classList.add('btn-loading');
-        btn.disabled = true;
-      } else {
-        btn.classList.remove('btn-loading');
-        btn.disabled = false;
-      }
-    }
-
-    function showAlert(message, type) {
-      const html = `
-        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-          ${message}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>`;
-      document.getElementById('alertContainer').innerHTML = html;
-    }
-
-    function toggleForm(id) {
-      document.querySelectorAll('.auth-body > div:not(#alertContainer)').forEach(el => el.classList.add('hidden'));
-      document.getElementById(id).classList.remove('hidden');
-      document.getElementById('alertContainer').innerHTML = '';
-    }
-
-    // Show/Hide Forms
-    document.getElementById('showRecovery').addEventListener('click', (e) => {
-      e.preventDefault();
-      toggleForm('recoveryForm');
-    });
-
-    document.getElementById('backToLogin').addEventListener('click', () => {
-      toggleForm('loginForm');
-    });
-
-    // Login Handler
-    document.getElementById('loginFormElement').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      setButtonLoading('loginBtn', true);
-      
-      const email = document.getElementById('loginEmail').value.trim().toLowerCase();
-      const password = document.getElementById('loginPassword').value;
-
-      try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        
-        // Check if user has 2FA enabled
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        
-        if (userDoc.exists() && userDoc.data().has2FA === true) {
-          // Store flag for 2FA verification (keep user signed in)
-          sessionStorage.setItem('needs2FA', 'true');
-          sessionStorage.setItem('pendingAuthEmail', email);
-          
-          // Redirect to 2FA verification (keep user authenticated)
-          window.location.href = 'verify-2fa.html';
-        } else {
-          // No 2FA, go directly to dashboard
-          showAlert('Login successful! Redirecting...', 'success');
-          setTimeout(() => window.location.href = 'dashboard.html', 1000);
-        }
-      } catch (error) {
-        setButtonLoading('loginBtn', false);
-        
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-          showAlert('Invalid email or password', 'danger');
-        } else if (error.code === 'auth/too-many-requests') {
-          showAlert('Too many failed attempts. Please try again later or reset your password.', 'danger');
-        } else if (error.code === 'auth/user-disabled') {
-          showAlert('This account has been disabled. Please contact support.', 'danger');
-        } else {
-          showAlert('Login failed: ' + error.message, 'danger');
-        }
-      }
-    });
-
-    // Password Recovery Handler
-    document.getElementById('recoveryFormElement').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      setButtonLoading('recoveryBtn', true);
-
-      const email = document.getElementById('recoveryEmail').value.trim().toLowerCase();
-
-      try {
-        await sendPasswordResetEmail(auth, email);
-        showAlert('Password reset email sent! Check your inbox.', 'success');
-        setTimeout(() => toggleForm('loginForm'), 3000);
-      } catch (error) {
-        if (error.code === 'auth/user-not-found') {
-          // Don't reveal if email exists
-          showAlert('If the email exists, a recovery link has been sent.', 'info');
-        } else {
-          showAlert('Error: ' + error.message, 'danger');
-        }
-      } finally {
-        setButtonLoading('recoveryBtn', false);
-      }
-    });
-  </script>
 </body>
 </html>
