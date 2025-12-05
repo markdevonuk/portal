@@ -546,15 +546,7 @@
     import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
     import { getFirestore, collection, doc, getDoc, getDocs, updateDoc, addDoc, query, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
     import { getStorage, ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyCYu3kLJewbbTKvvupO2be2PObqdB8V_hY",
-      authDomain: "fms-portal-31c49.firebaseapp.com",
-      projectId: "fms-portal-31c49",
-      storageBucket: "fms-portal-31c49.firebasestorage.app",
-      messagingSenderId: "869878739498",
-      appId: "1:869878739498:web:0bb06e36e84cf6fcfe966a"
-    };
+    import { firebaseConfig } from './firebase-config.js';
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
