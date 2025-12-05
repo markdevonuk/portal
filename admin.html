@@ -126,6 +126,7 @@
         <p class="mb-0">Manage system settings and user permissions</p>
       </div>
       
+      <!-- Row 1: Manage Profiles and Applicants -->
       <div class="row">
         <div class="col-md-6 mb-4">
           <a href="admin-profiles.html" class="admin-card-link">
@@ -138,18 +139,18 @@
           </a>
         </div>
         <div class="col-md-6 mb-4">
-          <a href="admin-downloads.html" class="admin-card-link">
+          <a href="admin-applicants.html" class="admin-card-link">
             <div class="admin-card text-center">
-              <i class="bi bi-cloud-download admin-icon"></i>
-              <h3>Downloads</h3>
-              <p class="text-muted mb-0">Export portal data</p>
-              <small class="text-muted">Generate reports and data exports</small>
+              <i class="bi bi-person-plus-fill admin-icon"></i>
+              <h3>Applicants</h3>
+              <p class="text-muted mb-0">Manage membership applications</p>
+              <small class="text-muted">Review, approve and track new applicants</small>
             </div>
           </a>
         </div>
       </div>
       
-      <!-- New row for Team Management -->
+      <!-- Row 2: Team Management -->
       <div class="row">
         <div class="col-md-6 mb-4">
           <a href="team-management.html" class="admin-card-link">
@@ -173,6 +174,7 @@
         </div>
       </div>
 
+      <!-- Row 3: Events and Member Search -->
       <div class="row">
         <div class="col-md-6 mb-4">
           <a href="event-management.html" class="admin-card-link">
@@ -196,6 +198,7 @@
         </div>
       </div>
 
+      <!-- Row 4: Allowed Emails and Admin Users -->
       <div class="row">
         <div class="col-md-6 mb-4">
           <a href="admin-allowed-emails.html" class="admin-card-link">
@@ -220,6 +223,21 @@
         </div>
       </div>
 
+      <!-- Row 5: Downloads (moved to bottom) -->
+      <div class="row">
+        <div class="col-md-6 mb-4">
+          <a href="admin-downloads.html" class="admin-card-link">
+            <div class="admin-card text-center">
+              <i class="bi bi-cloud-download admin-icon"></i>
+              <h3>Downloads</h3>
+              <p class="text-muted mb-0">Export portal data</p>
+              <small class="text-muted">Generate reports and data exports</small>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
       <div class="row">
         <div class="col-md-12">
           <div class="admin-card">
@@ -275,8 +293,31 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Logout handler
-    document.getElementById('logoutLink').addEventListener('click', async (e) => {
+    const logoutLink = document.getElementById('logoutLink');
+    const adminContent = document.getElementById('adminContent');
+    const unauthorizedMsg = document.getElementById('unauthorizedMsg');
+
+    // Load quick stats
+    async function loadQuickStats() {
+      try {
+        // Get total users
+        const usersSnapshot = await getDocs(collection(db, 'users'));
+        document.getElementById('totalUsers').textContent = usersSnapshot.size;
+
+        // Get admin users
+        const adminQuery = query(collection(db, 'users'), where('isAdmin', '==', true));
+        const adminSnapshot = await getDocs(adminQuery);
+        document.getElementById('totalAdmins').textContent = adminSnapshot.size;
+
+        // Get allowed emails count
+        const allowedEmailsSnapshot = await getDocs(collection(db, 'allowedEmails'));
+        document.getElementById('allowedEmailsCount').textContent = allowedEmailsSnapshot.size;
+      } catch (error) {
+        console.error('Error loading quick stats:', error);
+      }
+    }
+
+    logoutLink.addEventListener('click', async (e) => {
       e.preventDefault();
       try {
         await signOut(auth);
@@ -286,7 +327,6 @@
       }
     });
 
-    // Check authentication and admin status
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         window.location.href = 'index.html';
@@ -296,37 +336,19 @@
       try {
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         if (userDoc.exists() && userDoc.data().isAdmin === true) {
-          document.getElementById('adminContent').classList.remove('hidden');
-          
-          // Load quick stats
-          await loadStats();
+          adminContent.classList.remove('hidden');
+          unauthorizedMsg.classList.add('hidden');
+          loadQuickStats();
         } else {
-          document.getElementById('unauthorizedMsg').classList.remove('hidden');
+          adminContent.classList.add('hidden');
+          unauthorizedMsg.classList.remove('hidden');
         }
       } catch (error) {
         console.error('Error checking admin status:', error);
-        document.getElementById('unauthorizedMsg').classList.remove('hidden');
+        adminContent.classList.add('hidden');
+        unauthorizedMsg.classList.remove('hidden');
       }
     });
-
-    async function loadStats() {
-      try {
-        // Count total users
-        const usersSnapshot = await getDocs(collection(db, 'users'));
-        document.getElementById('totalUsers').textContent = usersSnapshot.size;
-
-        // Count admin users
-        const adminQuery = query(collection(db, 'users'), where('isAdmin', '==', true));
-        const adminSnapshot = await getDocs(adminQuery);
-        document.getElementById('totalAdmins').textContent = adminSnapshot.size;
-
-        // Count allowed emails
-        const emailsSnapshot = await getDocs(collection(db, 'allowedEmails'));
-        document.getElementById('allowedEmailsCount').textContent = emailsSnapshot.size;
-      } catch (error) {
-        console.error('Error loading stats:', error);
-      }
-    }
   </script>
 </body>
 </html>
