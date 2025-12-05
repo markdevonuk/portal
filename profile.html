@@ -194,7 +194,7 @@
             <button type="button" class="btn btn-success btn-lg" id="uploadPhotoBtn">
               <i class="bi bi-camera-fill"></i> Choose & Upload Photo
             </button>
-            <div class="form-text mt-2">Click the button to select a photo (max 7.5MB). It will upload automatically.</div>
+            <div class="form-text mt-2" id="photoHelperText">Click the button to select a photo (max 7.5MB). It will upload automatically.</div>
           
           
             
@@ -328,7 +328,7 @@
           <button type="button" class="btn btn-success btn-lg" id="uploadQualDocBtn">
             <i class="bi bi-file-earmark-arrow-up-fill"></i> Choose & Upload Document
           </button>
-          <div class="form-text mt-2">Click the button to select a document (max 7.5MB). It will upload automatically.</div>
+          <div class="form-text mt-2" id="qualDocHelperText">Click the button to select a document (max 7.5MB). It will upload automatically.</div>
           
           <div class="progress mt-2 hidden" id="qualDocUploadProgressContainer">
             <div class="progress-bar bg-success" id="qualDocUploadProgressBar" role="progressbar" style="width: 0%"></div>
@@ -1083,9 +1083,19 @@ function showInlineConfirmation(message, parentElement, isSubmission = false) {
         input.setAttribute('disabled', 'disabled');
       });
       
-   // Hide upload buttons when not in edit mode
+// Hide upload buttons when not in edit mode
       uploadPhotoBtn.classList.add('hidden');
       uploadQualDocBtn.classList.add('hidden');
+      
+      // Update helper text to show edit instructions
+      document.getElementById('photoHelperText').textContent = 'You can change your image by clicking the Edit Profile button.';
+      document.getElementById('qualDocHelperText').textContent = 'You can change your evidence by clicking the Edit Profile button.';
+      
+      // Hide delete button on qualification document
+      const deleteDocBtn = document.querySelector('.delete-doc-btn');
+      if (deleteDocBtn) {
+        deleteDocBtn.classList.add('hidden');
+      }
       
       saveAsDraftBtn.classList.add('hidden');
       submitProfileBtn.classList.add('hidden');
@@ -1119,7 +1129,7 @@ function showInlineConfirmation(message, parentElement, isSubmission = false) {
           }
         }
         
-        showAlert(`Your profile status is "${profileStatus}". To make changes, click the "Edit Profile" button.`, 'info');
+        
       }
        }
 
@@ -1132,9 +1142,19 @@ function showInlineConfirmation(message, parentElement, isSubmission = false) {
         input.removeAttribute('disabled');
       });
       
-     // Show upload buttons when in edit mode
+// Show upload buttons when in edit mode
       uploadPhotoBtn.classList.remove('hidden');
       uploadQualDocBtn.classList.remove('hidden');
+      
+      // Restore helper text to show upload instructions
+      document.getElementById('photoHelperText').textContent = 'Click the button to select a photo (max 7.5MB). It will upload automatically.';
+      document.getElementById('qualDocHelperText').textContent = 'Click the button to select a document (max 7.5MB). It will upload automatically.';
+      
+      // Show delete button on qualification document
+      const deleteDocBtn = document.querySelector('.delete-doc-btn');
+      if (deleteDocBtn) {
+        deleteDocBtn.classList.remove('hidden');
+      }
       
       saveAsDraftBtn.classList.remove('hidden');
       
