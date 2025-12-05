@@ -543,12 +543,14 @@
       query,
       orderBy 
     } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { getStorage, ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
     import { firebaseConfig } from './firebase-config.js';
 
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    const storage = getStorage(app);
 
     // Global variables
     let allApplicants = {
@@ -751,13 +753,21 @@
 
       const name = `${applicant.firstName} ${applicant.surname}`;
       
+      // Get download URL for qualification document if path exists
       let docHtml = '';
-      if (applicant.qualificationDocument && applicant.qualificationDocument.url) {
-        docHtml = `
-          <a href="${applicant.qualificationDocument.url}" target="_blank" class="doc-link">
-            <i class="bi bi-file-earmark-text"></i> ${applicant.qualificationDocument.fileName || 'View Document'}
-          </a>
-        `;
+      if (applicant.qualificationDocument && applicant.qualificationDocument.path) {
+        try {
+          const storageRef = ref(storage, applicant.qualificationDocument.path);
+          const downloadURL = await getDownloadURL(storageRef);
+          docHtml = `
+            <a href="${downloadURL}" target="_blank" class="doc-link">
+              <i class="bi bi-file-earmark-text"></i> ${applicant.qualificationDocument.fileName || 'View Document'}
+            </a>
+          `;
+        } catch (error) {
+          console.error('Error getting document URL:', error);
+          docHtml = '<span class="text-muted">Error loading document</span>';
+        }
       } else {
         docHtml = '<span class="text-muted">No document uploaded</span>';
       }

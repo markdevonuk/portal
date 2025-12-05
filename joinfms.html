@@ -419,18 +419,14 @@
             uploadProgressContainer.classList.add('hidden');
             reject(error);
           },
-          async () => {
-            try {
-              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              uploadProgressText.textContent = 'Upload complete!';
-              resolve({
-                url: downloadURL,
-                path: storagePath,
-                fileName: file.name
-              });
-            } catch (error) {
-              reject(error);
-            }
+          () => {
+            // Upload complete - don't try to get download URL (requires auth)
+            // Just save the storage path - admins can access the file later
+            uploadProgressText.textContent = 'Upload complete!';
+            resolve({
+              path: storagePath,
+              fileName: file.name
+            });
           }
         );
       });
