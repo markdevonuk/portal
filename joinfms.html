@@ -200,7 +200,11 @@
 
             <div class="mb-3">
               <label for="dateOfBirth" class="form-label required-label">Date of Birth</label>
-              <input type="text" class="form-control" id="dateOfBirth" required placeholder="DD/MM/YYYY">
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                <input type="text" class="form-control" id="dateOfBirth" required placeholder="DD/MM/YYYY">
+              </div>
+              <small class="form-text text-muted">Enter your date of birth</small>
             </div>
 
             <!-- Volunteering Disclaimer -->
@@ -334,12 +338,21 @@
     const applicationFormContainer = document.getElementById('applicationFormContainer');
     const successContainer = document.getElementById('successContainer');
 
-    // Initialize date picker
-    flatpickr("#dateOfBirth", {
-      dateFormat: "d/m/Y",
-      maxDate: "today",
-      allowInput: true
-    });
+    // Check if this is a mobile device
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    // Initialize date field based on device type
+    if (isMobile) {
+      // For mobile devices, use native date input
+      document.getElementById('dateOfBirth').type = "date";
+    } else {
+      // For desktop, use flatpickr with manual entry allowed
+      flatpickr("#dateOfBirth", {
+        dateFormat: "d/m/Y",
+        maxDate: new Date(),
+        allowInput: true
+      });
+    }
 
     // Helper Functions
     function showAlert(message, type) {
