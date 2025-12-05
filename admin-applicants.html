@@ -83,9 +83,9 @@
       background: #d4edda;
       color: #155724;
     }
-    .badge-external-approved {
-      background: #d1ecf1;
-      color: #0c5460;
+    .badge-sent-processing {
+      background: #e2d5f1;
+      color: #5a3d8a;
     }
     .badge-rejected {
       background: #f8d7da;
@@ -174,12 +174,35 @@
     }
     @keyframes spinner { to { transform: rotate(360deg); } }
     
-    /* Export Button */
-    .export-section {
+    /* CSV Table Styles */
+    .csv-table {
+      font-size: 0.9rem;
+      width: 100%;
+    }
+    .csv-table th {
       background: #f8f9fa;
-      border-radius: 10px;
-      padding: 15px;
-      margin-bottom: 20px;
+      font-weight: 600;
+      white-space: nowrap;
+      padding: 10px;
+      border: 1px solid #dee2e6;
+    }
+    .csv-table td {
+      padding: 10px;
+      border: 1px solid #dee2e6;
+      word-break: break-word;
+    }
+    
+    /* Sent for processing indicator */
+    .sent-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      background: #e2d5f1;
+      color: #5a3d8a;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      font-weight: 600;
     }
     
     /* Responsive adjustments */
@@ -262,12 +285,6 @@
           </button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="external-approved-tab" data-bs-toggle="tab" data-bs-target="#external-approved" type="button" role="tab">
-            <i class="bi bi-shield-check"></i> Ready to Register
-            <span class="badge bg-primary ms-1" id="externalApprovedCount">0</span>
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
           <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button" role="tab">
             <i class="bi bi-x-circle"></i> Rejected
             <span class="badge bg-danger ms-1" id="rejectedCount">0</span>
@@ -313,19 +330,6 @@
 
         <!-- Paid Tab -->
         <div class="tab-pane fade" id="paid" role="tabpanel">
-          <!-- Export Section -->
-          <div class="export-section">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-              <div>
-                <strong><i class="bi bi-file-earmark-spreadsheet"></i> Export for External Verification</strong>
-                <p class="text-muted mb-0 small">Download CSV of paid applicants for external processing</p>
-              </div>
-              <button class="btn btn-success" id="exportCsvBtn">
-                <i class="bi bi-download"></i> Export CSV
-              </button>
-            </div>
-          </div>
-          
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0">Paid - Awaiting External Verification</h5>
             <div class="input-group" style="max-width: 300px;">
@@ -334,23 +338,6 @@
             </div>
           </div>
           <div id="paidContainer">
-            <div class="text-center py-4">
-              <div class="spinner-border text-primary" role="status"></div>
-              <p class="mt-3 text-muted">Loading applicants...</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- External Approved Tab -->
-        <div class="tab-pane fade" id="external-approved" role="tabpanel">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="mb-0">Ready to Add to Approved List</h5>
-            <div class="input-group" style="max-width: 300px;">
-              <span class="input-group-text"><i class="bi bi-search"></i></span>
-              <input type="text" class="form-control" id="externalApprovedSearch" placeholder="Search...">
-            </div>
-          </div>
-          <div id="externalApprovedContainer">
             <div class="text-center py-4">
               <div class="spinner-border text-primary" role="status"></div>
               <p class="mt-3 text-muted">Loading applicants...</p>
@@ -396,6 +383,32 @@
     </div>
   </div>
 
+  <!-- View CSV Data Modal -->
+  <div class="modal fade" id="viewCsvModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-secondary text-white">
+          <h5 class="modal-title"><i class="bi bi-table"></i> Applicant Data (CSV Format)</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted small mb-3">Copy this data for external DBS/verification processing</p>
+          <div class="table-responsive">
+            <table class="csv-table" id="csvDataTable">
+              <!-- Content loaded dynamically -->
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-primary" onclick="copyCsvData()">
+            <i class="bi bi-clipboard"></i> Copy to Clipboard
+          </button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Approve Applicant Modal -->
   <div class="modal fade" id="approveModal" tabindex="-1">
     <div class="modal-dialog">
@@ -419,7 +432,7 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
           <button type="button" class="btn btn-success" id="confirmApproveBtn">
-            <i class="bi bi-check-circle"></i> Approve & Send Email
+            <i class="bi bi-check-circle"></i> Approve & Send Payment Link
           </button>
         </div>
       </div>
@@ -451,7 +464,7 @@
     </div>
   </div>
 
-  <!-- Mark as Paid Modal -->
+  <!-- Mark Paid Modal -->
   <div class="modal fade" id="markPaidModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -460,10 +473,10 @@
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <p>Confirm that <strong id="markPaidApplicantName"></strong> has paid the £30 membership fee?</p>
+          <p>Confirm payment received for <strong id="markPaidApplicantName"></strong>?</p>
           <div class="mb-3">
             <label class="form-label">Payment Reference (optional)</label>
-            <input type="text" class="form-control" id="paymentReference" placeholder="Stripe payment ID or reference...">
+            <input type="text" class="form-control" id="paymentReference" placeholder="e.g., Stripe payment ID">
           </div>
         </div>
         <div class="modal-footer">
@@ -476,49 +489,50 @@
     </div>
   </div>
 
-  <!-- Mark External Approved Modal -->
-  <div class="modal fade" id="externalApproveModal" tabindex="-1">
+  <!-- Send for Processing Modal -->
+  <div class="modal fade" id="sendProcessingModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header bg-info text-white">
-          <h5 class="modal-title"><i class="bi bi-shield-check"></i> External Verification Complete</h5>
+        <div class="modal-header bg-purple text-white" style="background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);">
+          <h5 class="modal-title"><i class="bi bi-send"></i> Send for DBS Processing</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <p>Confirm that <strong id="externalApproveApplicantName"></strong> has passed external DBS/ID verification?</p>
-          <p class="text-muted small">This will move them to "Ready to Register" status.</p>
+          <p>Mark <strong id="sendProcessingApplicantName"></strong> as sent for DBS/external processing?</p>
+          <p class="text-muted small">This indicates their details have been submitted for background checks.</p>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-info" id="confirmExternalApproveBtn">
-            <i class="bi bi-shield-check"></i> Confirm Verification
+          <button type="button" class="btn text-white" id="confirmSendProcessingBtn" style="background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);">
+            <i class="bi bi-send"></i> Mark as Sent
           </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Add to Approved List Modal -->
-  <div class="modal fade" id="addToApprovedModal" tabindex="-1">
+  <!-- Verify & Add to Approved Modal -->
+  <div class="modal fade" id="verifyAndApproveModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header bg-primary text-white">
-          <h5 class="modal-title"><i class="bi bi-person-check"></i> Add to Approved List</h5>
+          <h5 class="modal-title"><i class="bi bi-person-check"></i> Verify & Add to Approved List</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <p>You are about to add <strong id="addToApprovedApplicantName"></strong> to the approved members list.</p>
+          <p>You are about to complete the registration for <strong id="verifyAndApproveApplicantName"></strong>.</p>
           <p>This will:</p>
           <ul>
-            <li>Add their email (<span id="addToApprovedEmail"></span>) to the allowed emails list</li>
+            <li>Mark external DBS/ID verification as complete</li>
+            <li>Add their email (<span id="verifyAndApproveEmail"></span>) to the allowed emails list</li>
             <li>Send them an email with registration instructions</li>
             <li>Mark their application as complete</li>
           </ul>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" id="confirmAddToApprovedBtn">
-            <i class="bi bi-person-check"></i> Add & Send Email
+          <button type="button" class="btn btn-primary" id="confirmVerifyAndApproveBtn">
+            <i class="bi bi-person-check"></i> Verify & Add to Approved
           </button>
         </div>
       </div>
@@ -530,59 +544,59 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
     import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-    import { 
-      getFirestore, 
-      collection, 
-      doc, 
-      getDoc, 
-      getDocs, 
-      updateDoc, 
-      setDoc,
-      addDoc,
-      serverTimestamp,
-      query,
-      orderBy 
-    } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { getFirestore, collection, doc, getDoc, getDocs, updateDoc, addDoc, query, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
     import { getStorage, ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
-    import { firebaseConfig } from './firebase-config.js';
 
-    // Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCYu3kLJewbbTKvvupO2be2PObqdB8V_hY",
+      authDomain: "fms-portal-31c49.firebaseapp.com",
+      projectId: "fms-portal-31c49",
+      storageBucket: "fms-portal-31c49.firebasestorage.app",
+      messagingSenderId: "869878739498",
+      appId: "1:869878739498:web:0bb06e36e84cf6fcfe966a"
+    };
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
     const storage = getStorage(app);
 
-    // Global variables
     let allApplicants = {
       pending: [],
       approved_to_pay: [],
       paid: [],
-      external_approved: [],
       rejected: []
     };
     let currentApplicantId = null;
     let currentAdmin = null;
+    let currentCsvData = '';
 
-    // Stripe Payment Link - UPDATE THIS WITH YOUR ACTUAL STRIPE LINK
-    const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/test_fZu7sL9rT2hMaJ38P0grS00';
+    // Store CSV data for copying
+    window.copyCsvData = function() {
+      navigator.clipboard.writeText(currentCsvData).then(() => {
+        showAlert('Data copied to clipboard!', 'success');
+      }).catch(err => {
+        showAlert('Failed to copy: ' + err.message, 'danger');
+      });
+    };
 
-    // DOM Elements
-    const logoutLink = document.getElementById('logoutLink');
-
-    // Helper Functions
-    function showAlert(message, type) {
-      const html = `
+    function showAlert(message, type = 'info') {
+      const alertContainer = document.getElementById('alertContainer');
+      const alertHtml = `
         <div class="alert alert-${type} alert-dismissible fade show" role="alert">
           ${message}
           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>`;
-      document.getElementById('alertContainer').innerHTML = html;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+        </div>
+      `;
+      alertContainer.innerHTML = alertHtml;
+      setTimeout(() => {
+        const alert = alertContainer.querySelector('.alert');
+        if (alert) alert.remove();
+      }, 5000);
     }
 
     function setButtonLoading(buttonId, loading) {
       const btn = document.getElementById(buttonId);
-      if (!btn) return;
       if (loading) {
         btn.classList.add('btn-loading');
         btn.disabled = true;
@@ -626,7 +640,6 @@
           pending: [],
           approved_to_pay: [],
           paid: [],
-          external_approved: [],
           rejected: []
         };
 
@@ -645,14 +658,12 @@
         document.getElementById('pendingCount').textContent = allApplicants.pending.length;
         document.getElementById('approvedToPayCount').textContent = allApplicants.approved_to_pay.length;
         document.getElementById('paidCount').textContent = allApplicants.paid.length;
-        document.getElementById('externalApprovedCount').textContent = allApplicants.external_approved.length;
         document.getElementById('rejectedCount').textContent = allApplicants.rejected.length;
 
         // Display applicants
         displayApplicants('pending', allApplicants.pending);
         displayApplicants('approved_to_pay', allApplicants.approved_to_pay);
         displayApplicants('paid', allApplicants.paid);
-        displayApplicants('external_approved', allApplicants.external_approved);
         displayApplicants('rejected', allApplicants.rejected);
 
       } catch (error) {
@@ -663,9 +674,7 @@
 
     // Display applicants for a status
     function displayApplicants(status, applicants) {
-      const containerId = status === 'approved_to_pay' ? 'approvedToPayContainer' : 
-                          status === 'external_approved' ? 'externalApprovedContainer' : 
-                          `${status}Container`;
+      const containerId = status === 'approved_to_pay' ? 'approvedToPayContainer' : `${status}Container`;
       const container = document.getElementById(containerId);
       
       if (!container) return;
@@ -681,11 +690,17 @@
         const qualification = applicant.qualificationLevel || 'Not specified';
         const submittedDate = formatDate(applicant.submittedAt);
         
+        // For paid applicants, show sent for processing indicator
+        let sentIndicator = '';
+        if (status === 'paid' && applicant.sentForProcessing) {
+          sentIndicator = `<span class="sent-indicator"><i class="bi bi-check-circle-fill"></i> Sent for DBS</span>`;
+        }
+        
         html += `
           <div class="applicant-card" data-id="${applicant.id}" data-name="${name.toLowerCase()}" data-email="${applicant.email.toLowerCase()}">
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
               <div class="applicant-info">
-                <h5>${name}</h5>
+                <h5>${name} ${sentIndicator}</h5>
                 <p><i class="bi bi-envelope"></i> ${applicant.email}</p>
                 <p><i class="bi bi-phone"></i> ${applicant.mobile || 'N/A'}</p>
                 <p><i class="bi bi-mortarboard"></i> ${qualification}</p>
@@ -695,7 +710,7 @@
                 <button class="btn btn-sm btn-outline-primary" onclick="viewApplicant('${applicant.id}')">
                   <i class="bi bi-eye"></i> View
                 </button>
-                ${getActionButtons(status, applicant.id, name)}
+                ${getActionButtons(status, applicant.id, name, applicant.sentForProcessing)}
               </div>
             </div>
           </div>
@@ -706,38 +721,49 @@
     }
 
     // Get action buttons based on status
-    function getActionButtons(status, id, name) {
+    function getActionButtons(status, id, name, sentForProcessing = false) {
+      const escapedName = name.replace(/'/g, "\\'");
+      
       switch (status) {
         case 'pending':
           return `
-            <button class="btn btn-sm btn-success" onclick="openApproveModal('${id}', '${name}')">
+            <button class="btn btn-sm btn-success" onclick="openApproveModal('${id}', '${escapedName}')">
               <i class="bi bi-check-circle"></i> Approve
             </button>
-            <button class="btn btn-sm btn-danger" onclick="openRejectModal('${id}', '${name}')">
+            <button class="btn btn-sm btn-danger" onclick="openRejectModal('${id}', '${escapedName}')">
               <i class="bi bi-x-circle"></i> Reject
             </button>
           `;
         case 'approved_to_pay':
           return `
-            <button class="btn btn-sm btn-success" onclick="openMarkPaidModal('${id}', '${name}')">
+            <button class="btn btn-sm btn-success" onclick="openMarkPaidModal('${id}', '${escapedName}')">
               <i class="bi bi-cash-coin"></i> Mark Paid
             </button>
           `;
         case 'paid':
-          return `
-            <button class="btn btn-sm btn-info" onclick="openExternalApproveModal('${id}', '${name}')">
-              <i class="bi bi-shield-check"></i> Verify Complete
+          let buttons = `
+            <button class="btn btn-sm btn-outline-secondary" onclick="viewCsvData('${id}')">
+              <i class="bi bi-table"></i> CSV Data
             </button>
           `;
-        case 'external_approved':
-          return `
-            <button class="btn btn-sm btn-primary" onclick="openAddToApprovedModal('${id}')">
-              <i class="bi bi-person-check"></i> Add to Approved List
-            </button>
-          `;
+          
+          if (!sentForProcessing) {
+            buttons += `
+              <button class="btn btn-sm text-white" style="background: #7c3aed;" onclick="openSendProcessingModal('${id}', '${escapedName}')">
+                <i class="bi bi-send"></i> Send for Processing
+              </button>
+            `;
+          } else {
+            buttons += `
+              <button class="btn btn-sm btn-primary" onclick="openVerifyAndApproveModal('${id}')">
+                <i class="bi bi-person-check"></i> Verify & Approve
+              </button>
+            `;
+          }
+          return buttons;
         case 'rejected':
           return `
-            <button class="btn btn-sm btn-outline-success" onclick="openApproveModal('${id}', '${name}')">
+            <button class="btn btn-sm btn-outline-success" onclick="openApproveModal('${id}', '${escapedName}')">
               <i class="bi bi-arrow-counterclockwise"></i> Reconsider
             </button>
           `;
@@ -751,35 +777,26 @@
       const applicant = findApplicantById(id);
       if (!applicant) return;
 
-      const name = `${applicant.firstName} ${applicant.surname}`;
-      
-      // Get download URL for qualification document if path exists
-      let docHtml = '';
-      if (applicant.qualificationDocument && applicant.qualificationDocument.path) {
-        try {
-          const storageRef = ref(storage, applicant.qualificationDocument.path);
-          const downloadURL = await getDownloadURL(storageRef);
-          docHtml = `
-            <a href="${downloadURL}" target="_blank" class="doc-link">
-              <i class="bi bi-file-earmark-text"></i> ${applicant.qualificationDocument.fileName || 'View Document'}
-            </a>
-          `;
-        } catch (error) {
-          console.error('Error getting document URL:', error);
-          docHtml = '<span class="text-muted">Error loading document</span>';
-        }
-      } else {
-        docHtml = '<span class="text-muted">No document uploaded</span>';
-      }
-
       const statusBadge = getStatusBadge(applicant.status);
+      
+      // Get document URL if exists
+      let docHtml = '<span class="text-muted">No document uploaded</span>';
+      if (applicant.qualificationDoc) {
+        try {
+          const docRef = ref(storage, applicant.qualificationDoc.path);
+          const docUrl = await getDownloadURL(docRef);
+          docHtml = `<a href="${docUrl}" target="_blank" class="doc-link"><i class="bi bi-file-earmark"></i> ${applicant.qualificationDoc.fileName}</a>`;
+        } catch (error) {
+          docHtml = `<span class="text-muted">Document unavailable</span>`;
+        }
+      }
 
       const html = `
         <div class="row">
           <div class="col-md-6">
             <div class="detail-row">
               <span class="detail-label">Name:</span>
-              <span class="detail-value">${name}</span>
+              <span class="detail-value">${applicant.firstName} ${applicant.surname}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Email:</span>
@@ -817,6 +834,12 @@
           <span class="detail-label">Address:</span>
           <p class="detail-value mb-0">${applicant.address || 'N/A'}</p>
         </div>
+        ${applicant.sentForProcessing ? `
+          <div class="detail-row mt-3">
+            <span class="detail-label">DBS Processing:</span>
+            <span class="sent-indicator"><i class="bi bi-check-circle-fill"></i> Sent for Processing - ${formatDateTime(applicant.sentForProcessingAt)}</span>
+          </div>
+        ` : ''}
         ${applicant.adminNotes && applicant.adminNotes.length > 0 ? `
           <div class="detail-row mt-3">
             <span class="detail-label">Admin Notes:</span>
@@ -831,12 +854,44 @@
       new bootstrap.Modal(document.getElementById('viewApplicantModal')).show();
     };
 
+    // View CSV data for an applicant
+    window.viewCsvData = function(id) {
+      const applicant = findApplicantById(id);
+      if (!applicant) return;
+
+      const headers = ['First Name', 'Surname', 'Email', 'Mobile', 'Date of Birth', 'Address', 'Qualification', 'Applied Date', 'Paid Date'];
+      const values = [
+        applicant.firstName || '',
+        applicant.surname || '',
+        applicant.email || '',
+        applicant.mobile || '',
+        applicant.dateOfBirth || '',
+        (applicant.address || '').replace(/\n/g, ', '),
+        applicant.qualificationLevel || '',
+        formatDate(applicant.submittedAt),
+        formatDate(applicant.paidAt)
+      ];
+
+      // Build table HTML
+      let tableHtml = '<thead><tr>';
+      headers.forEach(h => tableHtml += `<th>${h}</th>`);
+      tableHtml += '</tr></thead><tbody><tr>';
+      values.forEach(v => tableHtml += `<td>${v}</td>`);
+      tableHtml += '</tr></tbody>';
+
+      document.getElementById('csvDataTable').innerHTML = tableHtml;
+
+      // Store CSV string for copying
+      currentCsvData = headers.join(',') + '\n' + values.map(v => `"${v}"`).join(',');
+
+      new bootstrap.Modal(document.getElementById('viewCsvModal')).show();
+    };
+
     function getStatusBadge(status) {
       const badges = {
         'pending': '<span class="status-badge badge-pending">Pending Review</span>',
         'approved_to_pay': '<span class="status-badge badge-approved-to-pay">Awaiting Payment</span>',
         'paid': '<span class="status-badge badge-paid">Paid</span>',
-        'external_approved': '<span class="status-badge badge-external-approved">Ready to Register</span>',
         'rejected': '<span class="status-badge badge-rejected">Rejected</span>'
       };
       return badges[status] || badges['pending'];
@@ -872,20 +927,20 @@
       new bootstrap.Modal(document.getElementById('markPaidModal')).show();
     };
 
-    window.openExternalApproveModal = function(id, name) {
+    window.openSendProcessingModal = function(id, name) {
       currentApplicantId = id;
-      document.getElementById('externalApproveApplicantName').textContent = name;
-      new bootstrap.Modal(document.getElementById('externalApproveModal')).show();
+      document.getElementById('sendProcessingApplicantName').textContent = name;
+      new bootstrap.Modal(document.getElementById('sendProcessingModal')).show();
     };
 
-    window.openAddToApprovedModal = function(id) {
+    window.openVerifyAndApproveModal = function(id) {
+      currentApplicantId = id;
       const applicant = findApplicantById(id);
       if (!applicant) return;
-      
-      currentApplicantId = id;
-      document.getElementById('addToApprovedApplicantName').textContent = `${applicant.firstName} ${applicant.surname}`;
-      document.getElementById('addToApprovedEmail').textContent = applicant.email;
-      new bootstrap.Modal(document.getElementById('addToApprovedModal')).show();
+
+      document.getElementById('verifyAndApproveApplicantName').textContent = `${applicant.firstName} ${applicant.surname}`;
+      document.getElementById('verifyAndApproveEmail').textContent = applicant.email;
+      new bootstrap.Modal(document.getElementById('verifyAndApproveModal')).show();
     };
 
     // Confirm Approve
@@ -900,7 +955,6 @@
         const timestamp = new Date().toLocaleString('en-GB');
         const adminNote = `[${timestamp}] Approved by ${currentAdmin.email}${notes ? ': ' + notes : ''}`;
 
-        // Update applicant status
         await updateDoc(doc(db, 'applicants', currentApplicantId), {
           status: 'approved_to_pay',
           approvedAt: serverTimestamp(),
@@ -908,37 +962,30 @@
           adminNotes: [...(applicant.adminNotes || []), adminNote]
         });
 
-        // Send approval email
+        // Send payment email
         await addDoc(collection(db, 'mail'), {
           to: applicant.email,
           message: {
-            subject: 'FMS Prehospital - Application Approved',
-            text: `Dear ${applicant.firstName},
-
-Congratulations, you have been approved to join the FMS prehospital team.
-
-You can now pay your non-refundable membership application fee. Your fee will include membership of FMS for 3 years and covers both your identity checks, DBS check and set up.
-
-The link is ${STRIPE_PAYMENT_LINK}
-
-Once paid your application will be sent to our membership team for processing and you will hear from them next.
-
-We look forward to you completing this stage and welcoming you to the team.
-
-FMS Prehospital Team Leaders
-prehospital@festival-medical.org`,
-            html: `<p>Dear ${applicant.firstName},</p>
-<p>Congratulations, you have been approved to join the FMS prehospital team.</p>
-<p>You can now pay your non-refundable membership application fee. Your fee will include membership of FMS for 3 years and covers both your identity checks, DBS check and set up.</p>
-<p><strong>The link is <a href="${STRIPE_PAYMENT_LINK}">${STRIPE_PAYMENT_LINK}</a></strong></p>
-<p>Once paid your application will be sent to our membership team for processing and you will hear from them next.</p>
-<p>We look forward to you completing this stage and welcoming you to the team.</p>
-<p>FMS Prehospital Team Leaders<br>prehospital@festival-medical.org</p>`
+            subject: 'FMS Application Approved - Payment Required',
+            html: `<h2>Great News!</h2>
+<p>Dear ${applicant.firstName},</p>
+<p>Your application to join FMS Prehospital has been approved!</p>
+<p>To complete your registration, please pay the £30 membership fee using the link below:</p>
+<p><a href="https://buy.stripe.com/28o4gL2Jb2uN3YsfYZ" style="background:#00a896;color:white;padding:12px 24px;text-decoration:none;border-radius:5px;display:inline-block;">Pay £30 Membership Fee</a></p>
+<p>This fee covers:</p>
+<ul>
+<li>3 years charity membership</li>
+<li>DBS check processing</li>
+<li>ID verification</li>
+<li>Administrative costs</li>
+</ul>
+<p>Once payment is received, we'll begin your background checks.</p>
+<p>Best regards,<br>FMS Prehospital Team</p>`
           }
         });
 
         bootstrap.Modal.getInstance(document.getElementById('approveModal')).hide();
-        showAlert('Applicant approved and email sent!', 'success');
+        showAlert('Applicant approved and payment email sent!', 'success');
         await loadAllApplicants();
 
       } catch (error) {
@@ -1017,134 +1064,95 @@ prehospital@festival-medical.org`,
       }
     });
 
-    // Confirm External Approve
-    document.getElementById('confirmExternalApproveBtn').addEventListener('click', async () => {
-      setButtonLoading('confirmExternalApproveBtn', true);
+    // Confirm Send for Processing
+    document.getElementById('confirmSendProcessingBtn').addEventListener('click', async () => {
+      setButtonLoading('confirmSendProcessingBtn', true);
       
       try {
         const applicant = findApplicantById(currentApplicantId);
         if (!applicant) throw new Error('Applicant not found');
 
         const timestamp = new Date().toLocaleString('en-GB');
-        const adminNote = `[${timestamp}] External verification completed by ${currentAdmin.email}`;
+        const adminNote = `[${timestamp}] Sent for DBS processing by ${currentAdmin.email}`;
 
         await updateDoc(doc(db, 'applicants', currentApplicantId), {
-          status: 'external_approved',
-          externalApprovedAt: serverTimestamp(),
+          sentForProcessing: true,
+          sentForProcessingAt: serverTimestamp(),
+          sentForProcessingBy: currentAdmin.uid,
           adminNotes: [...(applicant.adminNotes || []), adminNote]
         });
 
-        bootstrap.Modal.getInstance(document.getElementById('externalApproveModal')).hide();
-        showAlert('External verification confirmed!', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('sendProcessingModal')).hide();
+        showAlert('Marked as sent for DBS processing!', 'success');
         await loadAllApplicants();
 
       } catch (error) {
-        console.error('Error confirming external approval:', error);
+        console.error('Error marking as sent for processing:', error);
         showAlert('Error: ' + error.message, 'danger');
       } finally {
-        setButtonLoading('confirmExternalApproveBtn', false);
+        setButtonLoading('confirmSendProcessingBtn', false);
       }
     });
 
-    // Confirm Add to Approved List
-    document.getElementById('confirmAddToApprovedBtn').addEventListener('click', async () => {
-      setButtonLoading('confirmAddToApprovedBtn', true);
+    // Confirm Verify & Add to Approved
+    document.getElementById('confirmVerifyAndApproveBtn').addEventListener('click', async () => {
+      setButtonLoading('confirmVerifyAndApproveBtn', true);
       
       try {
         const applicant = findApplicantById(currentApplicantId);
         if (!applicant) throw new Error('Applicant not found');
 
         const timestamp = new Date().toLocaleString('en-GB');
-        const adminNote = `[${timestamp}] Added to approved list by ${currentAdmin.email}`;
+        const adminNote = `[${timestamp}] External verification completed and added to approved list by ${currentAdmin.email}`;
 
-        // Add email to allowed emails list
-        await setDoc(doc(db, 'allowedEmails', applicant.email.toLowerCase()), {
-          allowed: true,
-          addedDate: new Date().toISOString(),
-          addedFrom: 'applicant',
-          applicantId: currentApplicantId
-        });
-
-        // Update applicant status
+        // Update applicant status to completed
         await updateDoc(doc(db, 'applicants', currentApplicantId), {
-          status: 'member',
-          addedToApprovedListAt: serverTimestamp(),
+          status: 'completed',
+          externalApprovedAt: serverTimestamp(),
+          addedToApprovedAt: serverTimestamp(),
+          completedBy: currentAdmin.uid,
           adminNotes: [...(applicant.adminNotes || []), adminNote]
         });
 
-        // Send registration email
+        // Add email to allowed list
+        await addDoc(collection(db, 'allowedEmails'), {
+          email: applicant.email.toLowerCase(),
+          addedAt: serverTimestamp(),
+          addedBy: currentAdmin.uid,
+          applicantId: currentApplicantId,
+          name: `${applicant.firstName} ${applicant.surname}`
+        });
+
+        // Send welcome email
         await addDoc(collection(db, 'mail'), {
           to: applicant.email,
           message: {
-            subject: 'FMS Prehospital - You Can Now Register!',
-            text: `Dear ${applicant.firstName},
-
-Congratulations, you have completed the DBS and ID checks and are now cleared for the FMS Prehospital team.
-
-You now need to register on the Prehospital portal which allows us to carry out the required CQC checks (don't worry, just a few simple questions). Once this is done you can volunteer for events on the portal.
-
-The link is https://portal.fmsprehospital.co.uk/login.html
-
-FMS Prehospital Team Leaders
-prehospital@festival-medical.org`,
-            html: `<p>Dear ${applicant.firstName},</p>
-<p>Congratulations, you have completed the DBS and ID checks and are now cleared for the FMS Prehospital team.</p>
-<p>You now need to register on the Prehospital portal which allows us to carry out the required CQC checks (don't worry, just a few simple questions). Once this is done you can volunteer for events on the portal.</p>
+            subject: 'Welcome to FMS Prehospital - Registration Complete!',
+            html: `<h2>Welcome to FMS Prehospital!</h2>
+<p>Dear ${applicant.firstName},</p>
+<p>Great news! Your background checks are complete and you've been approved to join the FMS Prehospital team.</p>
+<p>You can now register on the FMS Portal to:</p>
+<ul>
+<li>Complete your member profile</li>
+<li>View and sign up for events</li>
+<li>Access team resources</li>
+</ul>
+<p>Once this is done you can volunteer for events on the portal.</p>
 <p><strong>The link is <a href="https://portal.fmsprehospital.co.uk/login.html">https://portal.fmsprehospital.co.uk/login.html</a></strong></p>
 <p>FMS Prehospital Team Leaders<br>prehospital@festival-medical.org</p>`
           }
         });
 
-        bootstrap.Modal.getInstance(document.getElementById('addToApprovedModal')).hide();
-        showAlert('Added to approved list and email sent!', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('verifyAndApproveModal')).hide();
+        showAlert('Verification complete! Added to approved list and welcome email sent!', 'success');
         await loadAllApplicants();
 
       } catch (error) {
-        console.error('Error adding to approved list:', error);
+        console.error('Error completing verification:', error);
         showAlert('Error: ' + error.message, 'danger');
       } finally {
-        setButtonLoading('confirmAddToApprovedBtn', false);
+        setButtonLoading('confirmVerifyAndApproveBtn', false);
       }
-    });
-
-    // Export CSV
-    document.getElementById('exportCsvBtn').addEventListener('click', () => {
-      const paidApplicants = allApplicants.paid;
-      
-      if (paidApplicants.length === 0) {
-        showAlert('No paid applicants to export', 'warning');
-        return;
-      }
-
-      // CSV headers - you can customize these based on what the external source needs
-      const headers = ['First Name', 'Surname', 'Email', 'Mobile', 'Date of Birth', 'Address', 'Qualification', 'Applied Date', 'Paid Date'];
-      
-      const rows = paidApplicants.map(a => [
-        a.firstName || '',
-        a.surname || '',
-        a.email || '',
-        a.mobile || '',
-        a.dateOfBirth || '',
-        (a.address || '').replace(/\n/g, ', '),
-        a.qualificationLevel || '',
-        formatDate(a.submittedAt),
-        formatDate(a.paidAt)
-      ]);
-
-      // Create CSV content
-      let csvContent = headers.join(',') + '\n';
-      rows.forEach(row => {
-        csvContent += row.map(field => `"${field}"`).join(',') + '\n';
-      });
-
-      // Download
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `fms_applicants_paid_${new Date().toISOString().split('T')[0]}.csv`;
-      link.click();
-
-      showAlert(`Exported ${paidApplicants.length} applicants to CSV`, 'success');
     });
 
     // Search functionality
@@ -1154,9 +1162,7 @@ prehospital@festival-medical.org`,
       
       input.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase();
-        const containerId = status === 'approved_to_pay' ? 'approvedToPayContainer' : 
-                            status === 'external_approved' ? 'externalApprovedContainer' : 
-                            `${status}Container`;
+        const containerId = status === 'approved_to_pay' ? 'approvedToPayContainer' : `${status}Container`;
         const container = document.getElementById(containerId);
         const cards = container.querySelectorAll('.applicant-card');
         
@@ -1172,11 +1178,10 @@ prehospital@festival-medical.org`,
     setupSearch('pendingSearch', 'pending');
     setupSearch('approvedToPaySearch', 'approved_to_pay');
     setupSearch('paidSearch', 'paid');
-    setupSearch('externalApprovedSearch', 'external_approved');
     setupSearch('rejectedSearch', 'rejected');
 
     // Logout handler
-    logoutLink.addEventListener('click', async (e) => {
+    document.getElementById('logoutLink').addEventListener('click', async (e) => {
       e.preventDefault();
       try {
         await signOut(auth);
