@@ -177,7 +177,7 @@
       <div class="profile-card form-section">
         <h3 class="section-title"><i class="bi bi-person-badge"></i> Profile Photo</h3>
         
-        <div class="alert alert-info">
+  <div class="alert alert-info" id="photoInfoAlert">
           <i class="bi bi-info-circle"></i> <strong>Required:</strong> Please upload a clear photo of yourself. Ensure no one else is in the photo. Accepted files are JPG, PNG.
         </div>
         
@@ -1087,6 +1087,9 @@ function showInlineConfirmation(message, parentElement, isSubmission = false) {
       uploadPhotoBtn.classList.add('hidden');
       uploadQualDocBtn.classList.add('hidden');
       
+      // Hide photo info alert when not in edit mode
+      document.getElementById('photoInfoAlert').classList.add('hidden');
+      
       // Update helper text to show edit instructions
       document.getElementById('photoHelperText').textContent = 'You can change your image by clicking the Edit Profile button.';
       document.getElementById('qualDocHelperText').textContent = 'You can change your evidence by clicking the Edit Profile button.';
@@ -1145,6 +1148,9 @@ function showInlineConfirmation(message, parentElement, isSubmission = false) {
 // Show upload buttons when in edit mode
       uploadPhotoBtn.classList.remove('hidden');
       uploadQualDocBtn.classList.remove('hidden');
+      
+      // Show photo info alert when in edit mode
+      document.getElementById('photoInfoAlert').classList.remove('hidden');
       
       // Restore helper text to show upload instructions
       document.getElementById('photoHelperText').textContent = 'Click the button to select a photo (max 7.5MB). It will upload automatically.';
