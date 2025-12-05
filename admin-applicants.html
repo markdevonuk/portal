@@ -567,7 +567,7 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
     import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-    import { getFirestore, collection, doc, getDoc, getDocs, updateDoc, addDoc, query, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { getFirestore, collection, doc, getDoc, getDocs, updateDoc, setDoc, addDoc, query, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
     import { getStorage, ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
     import { firebaseConfig } from './firebase-config.js';
 
@@ -1143,11 +1143,11 @@
           adminNotes: [...(applicant.adminNotes || []), adminNote]
         });
 
-        // Add email to allowed list
-        await addDoc(collection(db, 'allowedEmails'), {
-          email: applicant.email.toLowerCase(),
-          addedAt: serverTimestamp(),
-          addedBy: currentAdmin.uid,
+        // Add email to allowed list (email is the document ID)
+        await setDoc(doc(db, 'allowedEmails', applicant.email.toLowerCase()), {
+          allowed: true,
+          addedDate: new Date().toISOString(),
+          addedFrom: 'applicant',
           applicantId: currentApplicantId,
           name: `${applicant.firstName} ${applicant.surname}`
         });
