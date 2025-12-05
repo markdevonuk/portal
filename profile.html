@@ -216,7 +216,8 @@
             <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
             <input type="text" class="form-control" id="dob" name="dob" placeholder="DD/MM/YYYY" required>
           </div>
-          <small class="form-text text-muted">Select your date of birth</small>
+          <small class="form-text text-muted">Enter your date of birth in DD/MM/YYYY format</small>
+          <div class="text-danger small mt-1 hidden" id="dobError"></div>
         </div>
         
         <div class="mb-3">
@@ -375,6 +376,8 @@
             <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
             <input type="text" class="form-control" id="certExpiry" name="certExpiry" placeholder="DD/MM/YYYY">
           </div>
+          <small class="form-text text-muted">Enter the expiry date in DD/MM/YYYY format</small>
+          <div class="text-danger small mt-1 hidden" id="certExpiryError"></div>
         </div>
         
         <!-- Details -->
@@ -515,11 +518,37 @@
       }
     });
     
-// Date validation and auto-correction helper
-    function formatDateInput(input, allowFuture = true) {
+
+  // Date validation and auto-correction helper
+    function formatDateInput(input, allowFuture = true, errorElementId) {
+      const errorElement = document.getElementById(errorElementId);
+      
+      // Track validity on the input itself
+      input.dataset.dateValid = 'false';
+      
+      function showError(message) {
+        errorElement.textContent = message;
+        errorElement.classList.remove('hidden');
+        input.classList.add('is-invalid');
+        input.dataset.dateValid = 'false';
+      }
+      
+      function clearError() {
+        errorElement.textContent = '';
+        errorElement.classList.add('hidden');
+        input.classList.remove('is-invalid');
+        input.dataset.dateValid = 'true';
+      }
+      
       input.addEventListener('blur', function() {
         let value = this.value.trim();
-        if (!value) return;
+        
+        // If empty and required, let HTML5 validation handle it
+        if (!value) {
+          clearError();
+          input.dataset.dateValid = 'false';
+          return;
+        }
         
         // Replace common separators with /
         value = value.replace(/[-.\s]/g, '/');
@@ -544,22 +573,22 @@
           }
           
           // Validate ranges
-          if (month < 1 || month > 12) {
-            showAlert('Invalid month. Please enter a date in DD/MM/YYYY format.', 'warning');
+          if (isNaN(month) || month < 1 || month > 12) {
+            showError('Invalid month. Please use DD/MM/YYYY format.');
             return;
           }
           
           // Days in each month (accounting for leap years)
           const daysInMonth = [31, (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
           
-          if (day < 1 || day > daysInMonth[month - 1]) {
-            showAlert('Invalid day for this month. Please check the date.', 'warning');
+          if (isNaN(day) || day < 1 || day > daysInMonth[month - 1]) {
+            showError('Invalid day for this month. Please check the date.');
             return;
           }
           
           // Check year is reasonable (between 1900 and 2100)
-          if (year < 1900 || year > 2100) {
-            showAlert('Invalid year. Please enter a date in DD/MM/YYYY format.', 'warning');
+          if (isNaN(year) || year < 1900 || year > 2100) {
+            showError('Invalid year. Please use DD/MM/YYYY format.');
             return;
           }
           
@@ -570,13 +599,13 @@
           
           // Check if date is in the future (for DOB)
           if (!allowFuture && dateObj > today) {
-            showAlert('Date of birth cannot be in the future.', 'warning');
+            showError('Date of birth cannot be in the future.');
             return;
           }
           
           // Check if date is in the past (for cert expiry)
           if (allowFuture === 'futureOnly' && dateObj < today) {
-            showAlert('Certificate expiry date cannot be in the past.', 'warning');
+            showError('Expiry date cannot be in the past.');
             return;
           }
           
@@ -585,19 +614,26 @@
           const formattedMonth = month.toString().padStart(2, '0');
           
           this.value = `${formattedDay}/${formattedMonth}/${year}`;
+          clearError();
           
         } else {
-          showAlert('Please enter the date in DD/MM/YYYY format (e.g. 25/12/1990).', 'warning');
+          showError('Please enter the date as DD/MM/YYYY.');
         }
+      });
+      
+      // Also validate on input to clear errors as user types
+      input.addEventListener('input', function() {
+        // Clear the invalid state while typing
+        input.classList.remove('is-invalid');
+        errorElement.classList.add('hidden');
       });
     }
     
     // Apply date formatting to DOB (no future dates allowed)
-    formatDateInput(document.getElementById('dob'), false);
+    formatDateInput(document.getElementById('dob'), false, 'dobError');
     
     // Apply date formatting to cert expiry (only future dates allowed)
-    formatDateInput(document.getElementById('certExpiry'), 'futureOnly');
-  
+    formatDateInput(document.getElementById('certExpiry'), 'futureOnly', 'certExpiryError');
   
 
     // DOM elements
@@ -1451,6 +1487,23 @@ function parseDateString(dateStr) {
 }
 
 saveAsDraftBtn.addEventListener('click', async () => {
+  // Check if DOB is valid (if entered)
+  const dobInput = document.getElementById('dob');
+  if (dobInput.value && dobInput.dataset.dateValid !== 'true') {
+    dobInput.dispatchEvent(new Event('blur'));
+    dobInput.focus();
+    return;
+  }
+  
+  // Check if cert expiry is valid (if visible and entered)
+  const certExpirySection = document.getElementById('certExpirySection');
+  const certExpiryInput = document.getElementById('certExpiry');
+  if (!certExpirySection.classList.contains('hidden') && certExpiryInput.value && certExpiryInput.dataset.dateValid !== 'true') {
+    certExpiryInput.dispatchEvent(new Event('blur'));
+    certExpiryInput.focus();
+    return;
+  }
+  
   setButtonLoading('saveAsDraftBtn', true);
   
   try {
@@ -1510,6 +1563,25 @@ saveAsDraftBtn.addEventListener('click', async () => {
       // Validate form
       if (!profileForm.checkValidity()) {
         profileForm.reportValidity();
+        return;
+      }
+      
+      // Check if DOB is valid
+      const dobInput = document.getElementById('dob');
+      if (dobInput.value && dobInput.dataset.dateValid !== 'true') {
+        // Trigger blur to show error message
+        dobInput.dispatchEvent(new Event('blur'));
+        dobInput.focus();
+        return;
+      }
+      
+      // Check if cert expiry is valid (only if visible)
+      const certExpirySection = document.getElementById('certExpirySection');
+      const certExpiryInput = document.getElementById('certExpiry');
+      if (!certExpirySection.classList.contains('hidden') && certExpiryInput.value && certExpiryInput.dataset.dateValid !== 'true') {
+        // Trigger blur to show error message
+        certExpiryInput.dispatchEvent(new Event('blur'));
+        certExpiryInput.focus();
         return;
       }
       
