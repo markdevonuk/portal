@@ -290,6 +290,12 @@
             <span class="badge bg-danger ms-1" id="rejectedCount">0</span>
           </button>
         </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab">
+            <i class="bi bi-check-circle-fill"></i> Completed
+            <span class="badge bg-secondary ms-1" id="completedCount">0</span>
+          </button>
+        </li>
       </ul>
 
       <!-- Tab Content -->
@@ -355,6 +361,23 @@
             </div>
           </div>
           <div id="rejectedContainer">
+            <div class="text-center py-4">
+              <div class="spinner-border text-primary" role="status"></div>
+              <p class="mt-3 text-muted">Loading applicants...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Completed Tab -->
+        <div class="tab-pane fade" id="completed" role="tabpanel">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Fully Registered Members</h5>
+            <div class="input-group" style="max-width: 300px;">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control" id="completedSearch" placeholder="Search...">
+            </div>
+          </div>
+          <div id="completedContainer">
             <div class="text-center py-4">
               <div class="spinner-border text-primary" role="status"></div>
               <p class="mt-3 text-muted">Loading applicants...</p>
@@ -557,7 +580,8 @@
       pending: [],
       approved_to_pay: [],
       paid: [],
-      rejected: []
+      rejected: [],
+      completed: []
     };
     let currentApplicantId = null;
     let currentAdmin = null;
@@ -632,7 +656,8 @@
           pending: [],
           approved_to_pay: [],
           paid: [],
-          rejected: []
+          rejected: [],
+          completed: []
         };
 
         snapshot.forEach(doc => {
@@ -651,12 +676,14 @@
         document.getElementById('approvedToPayCount').textContent = allApplicants.approved_to_pay.length;
         document.getElementById('paidCount').textContent = allApplicants.paid.length;
         document.getElementById('rejectedCount').textContent = allApplicants.rejected.length;
+        document.getElementById('completedCount').textContent = allApplicants.completed.length;
 
         // Display applicants
         displayApplicants('pending', allApplicants.pending);
         displayApplicants('approved_to_pay', allApplicants.approved_to_pay);
         displayApplicants('paid', allApplicants.paid);
         displayApplicants('rejected', allApplicants.rejected);
+        displayApplicants('completed', allApplicants.completed);
 
       } catch (error) {
         console.error('Error loading applicants:', error);
@@ -688,6 +715,12 @@
           sentIndicator = `<span class="sent-indicator"><i class="bi bi-check-circle-fill"></i> Sent for DBS</span>`;
         }
         
+        // For completed applicants, show completion date
+        let completedInfo = '';
+        if (status === 'completed') {
+          completedInfo = `<p class="mb-0 mt-2"><span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Completed: ${formatDate(applicant.addedToApprovedAt)}</span></p>`;
+        }
+        
         html += `
           <div class="applicant-card" data-id="${applicant.id}" data-name="${name.toLowerCase()}" data-email="${applicant.email.toLowerCase()}">
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
@@ -697,6 +730,7 @@
                 <p><i class="bi bi-phone"></i> ${applicant.mobile || 'N/A'}</p>
                 <p><i class="bi bi-mortarboard"></i> ${qualification}</p>
                 <small class="text-muted">Applied: ${submittedDate}</small>
+                ${completedInfo}
               </div>
               <div class="applicant-actions">
                 <button class="btn btn-sm btn-outline-primary" onclick="viewApplicant('${applicant.id}')">
@@ -759,6 +793,8 @@
               <i class="bi bi-arrow-counterclockwise"></i> Reconsider
             </button>
           `;
+        case 'completed':
+          return ''; // No actions needed for completed applicants
         default:
           return '';
       }
@@ -884,7 +920,8 @@
         'pending': '<span class="status-badge badge-pending">Pending Review</span>',
         'approved_to_pay': '<span class="status-badge badge-approved-to-pay">Awaiting Payment</span>',
         'paid': '<span class="status-badge badge-paid">Paid</span>',
-        'rejected': '<span class="status-badge badge-rejected">Rejected</span>'
+        'rejected': '<span class="status-badge badge-rejected">Rejected</span>',
+        'completed': '<span class="status-badge" style="background:#d1e7dd;color:#155724;">Completed</span>'
       };
       return badges[status] || badges['pending'];
     }
@@ -1171,6 +1208,7 @@
     setupSearch('approvedToPaySearch', 'approved_to_pay');
     setupSearch('paidSearch', 'paid');
     setupSearch('rejectedSearch', 'rejected');
+    setupSearch('completedSearch', 'completed');
 
     // Logout handler
     document.getElementById('logoutLink').addEventListener('click', async (e) => {
