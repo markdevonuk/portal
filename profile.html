@@ -1090,7 +1090,7 @@ function showInlineConfirmation(message, parentElement, isSubmission = false) {
       saveAsDraftBtn.classList.add('hidden');
       submitProfileBtn.classList.add('hidden');
       
-     // Add Edit buttons when the profile is approved or rejected (top and bottom)
+ // Add Edit buttons when the profile is approved or rejected (top and bottom)
       if (profileStatus === 'approved' || profileStatus === 'rejected') {
         // Add Edit button at bottom
         const formActions = document.querySelector('.d-flex.justify-content-between.mb-5');
@@ -1104,21 +1104,23 @@ function showInlineConfirmation(message, parentElement, isSubmission = false) {
           formActions.appendChild(editButton);
         }
         
-        // Add Edit button at top (after profile status)
-        const profileStatus = document.getElementById('profileStatus');
-        if (profileStatus && !document.getElementById('editProfileBtnTop')) {
-          const editButtonTop = document.createElement('button');
-          editButtonTop.type = 'button';
-          editButtonTop.id = 'editProfileBtnTop';
-          editButtonTop.className = 'btn btn-warning mb-3';
-          editButtonTop.innerHTML = '<i class="bi bi-pencil-square"></i> Edit Profile';
-          editButtonTop.addEventListener('click', enableForm);
-          profileStatus.parentNode.insertBefore(editButtonTop, profileStatus.nextSibling);
+        // Add Edit button inside the profile status card
+        const profileStatusCard = document.getElementById('profileStatus');
+        if (profileStatusCard && !document.getElementById('editProfileBtnTop')) {
+          const statusContent = profileStatusCard.querySelector('.d-flex');
+          if (statusContent) {
+            const editButtonTop = document.createElement('button');
+            editButtonTop.type = 'button';
+            editButtonTop.id = 'editProfileBtnTop';
+            editButtonTop.className = 'btn btn-warning ms-3';
+            editButtonTop.innerHTML = '<i class="bi bi-pencil-square"></i> Edit Profile';
+            editButtonTop.addEventListener('click', enableForm);
+            statusContent.appendChild(editButtonTop);
+          }
         }
         
         showAlert(`Your profile status is "${profileStatus}". To make changes, click the "Edit Profile" button.`, 'info');
       }
-    }
 
     // Enable form for editing
     function enableForm() {
