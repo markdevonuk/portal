@@ -1083,15 +1083,16 @@ function showInlineConfirmation(message, parentElement, isSubmission = false) {
         input.setAttribute('disabled', 'disabled');
       });
       
-      // Disable upload buttons
-      uploadPhotoBtn.disabled = true;
-      uploadQualDocBtn.disabled = true;
+   // Hide upload buttons when not in edit mode
+      uploadPhotoBtn.classList.add('hidden');
+      uploadQualDocBtn.classList.add('hidden');
       
       saveAsDraftBtn.classList.add('hidden');
       submitProfileBtn.classList.add('hidden');
       
-      // Add an Edit button when the profile is approved or rejected
+     // Add Edit buttons when the profile is approved or rejected (top and bottom)
       if (profileStatus === 'approved' || profileStatus === 'rejected') {
+        // Add Edit button at bottom
         const formActions = document.querySelector('.d-flex.justify-content-between.mb-5');
         if (!document.getElementById('editProfileBtn')) {
           const editButton = document.createElement('button');
@@ -1101,6 +1102,18 @@ function showInlineConfirmation(message, parentElement, isSubmission = false) {
           editButton.innerHTML = '<i class="bi bi-pencil-square"></i> Edit Profile';
           editButton.addEventListener('click', enableForm);
           formActions.appendChild(editButton);
+        }
+        
+        // Add Edit button at top (after profile status)
+        const profileStatus = document.getElementById('profileStatus');
+        if (profileStatus && !document.getElementById('editProfileBtnTop')) {
+          const editButtonTop = document.createElement('button');
+          editButtonTop.type = 'button';
+          editButtonTop.id = 'editProfileBtnTop';
+          editButtonTop.className = 'btn btn-warning mb-3';
+          editButtonTop.innerHTML = '<i class="bi bi-pencil-square"></i> Edit Profile';
+          editButtonTop.addEventListener('click', enableForm);
+          profileStatus.parentNode.insertBefore(editButtonTop, profileStatus.nextSibling);
         }
         
         showAlert(`Your profile status is "${profileStatus}". To make changes, click the "Edit Profile" button.`, 'info');
@@ -1116,9 +1129,9 @@ function showInlineConfirmation(message, parentElement, isSubmission = false) {
         input.removeAttribute('disabled');
       });
       
-      // Enable upload buttons
-      uploadPhotoBtn.disabled = false;
-      uploadQualDocBtn.disabled = false;
+     // Show upload buttons when in edit mode
+      uploadPhotoBtn.classList.remove('hidden');
+      uploadQualDocBtn.classList.remove('hidden');
       
       saveAsDraftBtn.classList.remove('hidden');
       
@@ -1126,10 +1139,14 @@ function showInlineConfirmation(message, parentElement, isSubmission = false) {
       submitProfileBtn.classList.remove('hidden');
       submitProfileBtn.innerHTML = '<i class="bi bi-send"></i> Resubmit Profile';
       
-      // Remove the edit button
+     // Remove both edit buttons (top and bottom)
       const editButton = document.getElementById('editProfileBtn');
       if (editButton) {
         editButton.remove();
+      }
+      const editButtonTop = document.getElementById('editProfileBtnTop');
+      if (editButtonTop) {
+        editButtonTop.remove();
       }
       
       // Show an alert about resubmission
