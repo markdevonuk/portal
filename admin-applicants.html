@@ -882,25 +882,38 @@
       new bootstrap.Modal(document.getElementById('viewApplicantModal')).show();
     };
 
-    // View CSV data for an applicant
+ // View CSV data for an applicant
     window.viewCsvData = function(id) {
       const applicant = findApplicantById(id);
       if (!applicant) return;
 
-      const headers = ['First Name', 'Surname', 'Email', 'Mobile', 'Date of Birth', 'Address', 'Qualification', 'Applied Date', 'Paid Date'];
+      // New column order: First Name | Surname | DOB | Email | Address | Mobile | Qualification | Blank | Gift Aid | Stripe Ref | Blank | Paid Date
+      const headers = ['First Name', 'Surname', 'DOB', 'Email', 'Address', 'Mobile', 'Qualification', '-', 'Gift Aid', 'Stripe Ref', '-', 'Paid Date'];
+      
+      // Helper function to return '-' for empty values
+      const val = (v) => v ? v : '-';
+      const formatDateOrDash = (timestamp) => {
+        if (!timestamp) return '-';
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      };
+
       const values = [
-        applicant.firstName || '',
-        applicant.surname || '',
-        applicant.email || '',
-        applicant.mobile || '',
-        applicant.dateOfBirth || '',
-        (applicant.address || '').replace(/\n/g, ', '),
-        applicant.qualificationLevel || '',
-        formatDate(applicant.submittedAt),
-        formatDate(applicant.paidAt)
+        val(applicant.firstName),
+        val(applicant.surname),
+        val(applicant.dateOfBirth),
+        val(applicant.email),
+        val((applicant.address || '').replace(/\n/g, ', ')),
+        val(applicant.mobile),
+        val(applicant.qualificationLevel),
+        '-',  // Blank field
+        applicant.giftAid ? 'Yes' : 'No',
+        val(applicant.stripePaymentId),
+        '-',  // Blank field
+        formatDateOrDash(applicant.paidAt)
       ];
 
-      // Build table HTML
+      // Build table HTML - headers row for visual reference only
       let tableHtml = '<thead><tr>';
       headers.forEach(h => tableHtml += `<th>${h}</th>`);
       tableHtml += '</tr></thead><tbody><tr>';
@@ -909,8 +922,8 @@
 
       document.getElementById('csvDataTable').innerHTML = tableHtml;
 
-      // Store CSV string for copying
-      currentCsvData = headers.join(',') + '\n' + values.map(v => `"${v}"`).join(',');
+      // Store CSV string for copying - DATA ONLY (no headers)
+      currentCsvData = values.map(v => `"${v}"`).join(',');
 
       new bootstrap.Modal(document.getElementById('viewCsvModal')).show();
     };
