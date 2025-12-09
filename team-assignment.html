@@ -112,12 +112,16 @@
   margin-top: 8px;
 }
 
+/* UPDATED: Search container styles for proper icon alignment */
 .search-container {
-  position: relative;
   margin-bottom: 20px;
 }
 
-.search-container .form-control {
+.search-input-wrapper {
+  position: relative;
+}
+
+.search-input-wrapper .form-control {
   padding-left: 40px;
 }
 
@@ -128,6 +132,7 @@
   transform: translateY(-50%);
   color: #6c757d;
   z-index: 10;
+  pointer-events: none;
 }
 
 .btn-loading {
@@ -291,35 +296,7 @@
   box-shadow: 0 0 0 0.2rem rgba(0,168,150,.25); 
 }
 
-.btn-outline-primary {
-  color: #00a896;
-  border-color: #00a896;
-}
-
-.btn-outline-primary:hover {
-  background-color: #00a896;
-  border-color: #00a896;
-  color: white;
-}
-
-.btn-outline-danger {
-  color: #dc3545;
-  border-color: #dc3545;
-}
-
-.btn-secondary {
-  background-color: #6c757d;
-  border: none;
-}
-
-.btn-danger {
-  background-color: #dc3545;
-  border: none;
-}
-
-.hidden {
-  display: none !important;
-}
+.hidden { display: none; }
 
 /* Page content transition */
 .page-content {
@@ -329,12 +306,32 @@
 .page-content.loaded {
   opacity: 1;
 }
+
+/* NEW: Unassigned members button styling */
+.unassigned-btn {
+  margin-top: 10px;
+}
+
+.unassigned-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.unassigned-count {
+  font-weight: 500;
+  color: #6c757d;
+}
+
   </style>
 </head>
 <body>
+  <!-- Wrap all content in page-content div for transition -->
   <div class="page-content">
-    <!-- Navigation -->
-   <nav class="navbar navbar-expand-lg navbar-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark">
       <div class="container-fluid">
         <a class="navbar-brand" href="dashboard.html"><i class="bi bi-shield-lock"></i> FMS Prehospital Portal</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -353,8 +350,8 @@
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="team-management.html">
-                <i class="bi bi-people-fill"></i> Team Management
+              <a class="nav-link" href="events.html">
+                <i class="bi bi-calendar-event"></i> Events
               </a>
             </li>
             <li class="nav-item">
@@ -400,10 +397,20 @@
           <!-- Search Member Tab -->
           <div class="tab-pane fade show active" id="search-member" role="tabpanel">
             <div class="option-content">
+              <!-- UPDATED: Wrapped input in search-input-wrapper for proper icon alignment -->
               <div class="search-container">
-                <i class="bi bi-search search-icon"></i>
-                <input type="text" id="memberSearchInput" class="form-control" placeholder="Search by name or email (min. 3 characters)">
+                <div class="search-input-wrapper">
+                  <i class="bi bi-search search-icon"></i>
+                  <input type="text" id="memberSearchInput" class="form-control" placeholder="Search by name or email (min. 3 characters)">
+                </div>
                 <div class="form-text">Type at least 3 characters to search for members</div>
+              </div>
+              
+              <!-- NEW: Show Unassigned Members button -->
+              <div class="unassigned-btn">
+                <button class="btn btn-outline-secondary" id="showUnassignedBtn">
+                  <i class="bi bi-person-exclamation"></i> Show Members Without Teams
+                </button>
               </div>
               
               <div id="memberSearchResults"></div>
@@ -415,6 +422,27 @@
               <div id="memberSearchLoading" class="text-center py-3 hidden">
                 <div class="spinner-border text-primary" role="status"></div>
                 <p class="mt-2 text-muted">Searching members...</p>
+              </div>
+              
+              <!-- NEW: Unassigned members results section -->
+              <div id="unassignedMembersSection" class="hidden">
+                <div class="unassigned-header">
+                  <h5 class="mb-0"><i class="bi bi-person-exclamation text-warning"></i> Members Without Teams</h5>
+                  <span class="unassigned-count" id="unassignedCount"></span>
+                  <button class="btn btn-sm btn-outline-secondary" id="hideUnassignedBtn">
+                    <i class="bi bi-x-lg"></i> Close
+                  </button>
+                </div>
+                <div id="unassignedMembersList"></div>
+              </div>
+              
+              <div id="unassignedMembersLoading" class="text-center py-3 hidden">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 text-muted">Loading unassigned members...</p>
+              </div>
+              
+              <div id="noUnassignedMembers" class="alert alert-success hidden">
+                <i class="bi bi-check-circle"></i> Great! All members have been assigned to at least one team.
               </div>
             </div>
           </div>
@@ -505,37 +533,32 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title"><i class="bi bi-people"></i> Assign Teams</h5>
+            <h5 class="modal-title"><i class="bi bi-people"></i> <span id="memberName"></span></h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <p id="teamSelectionDescription">Select teams for <strong id="memberName"></strong></p>
-            
+            <p id="teamSelectionDescription"></p>
             <div class="team-select-container" id="teamSelectContainer">
-              <div class="text-center py-3">
-                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                <span class="ms-2">Loading teams...</span>
-              </div>
+              <!-- Teams will be populated dynamically -->
             </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             <button type="button" class="btn btn-primary" id="saveTeamsBtn">
-              <i class="bi bi-save"></i> Save Teams
+              <i class="bi bi-check-lg"></i> Save
             </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Refresh Button -->
-    <button class="refresh-btn" id="refreshDataBtn" title="Refresh data">
-      <i class="bi bi-arrow-repeat"></i>
+    <!-- Refresh Button (floating) -->
+    <button class="refresh-btn" id="refreshDataBtn" title="Refresh Data">
+      <i class="bi bi-arrow-clockwise"></i>
     </button>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
     import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
@@ -566,6 +589,15 @@
     const memberSearchResults = document.getElementById('memberSearchResults');
     const memberSearchNoResults = document.getElementById('memberSearchNoResults');
     const memberSearchLoading = document.getElementById('memberSearchLoading');
+    
+    // NEW: DOM Elements - Unassigned Members
+    const showUnassignedBtn = document.getElementById('showUnassignedBtn');
+    const hideUnassignedBtn = document.getElementById('hideUnassignedBtn');
+    const unassignedMembersSection = document.getElementById('unassignedMembersSection');
+    const unassignedMembersList = document.getElementById('unassignedMembersList');
+    const unassignedMembersLoading = document.getElementById('unassignedMembersLoading');
+    const noUnassignedMembers = document.getElementById('noUnassignedMembers');
+    const unassignedCount = document.getElementById('unassignedCount');
     
     // DOM Elements - By Grade Tab
     const gradeSelect = document.getElementById('gradeSelect');
@@ -630,107 +662,64 @@
       }
     }
 
-    // Show alert message
-    function showAlert(message, type) {
-      const html = `
+    // Show alert
+    function showAlert(message, type = 'info') {
+      const alertHtml = `
         <div class="alert alert-${type} alert-dismissible fade show" role="alert">
           ${message}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>`;
-      alertContainer.innerHTML = html;
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      `;
+      alertContainer.innerHTML = alertHtml;
       
+      // Auto-dismiss success alerts after 5 seconds
       if (type === 'success') {
         setTimeout(() => {
-          const alert = document.querySelector('.alert');
+          const alert = alertContainer.querySelector('.alert');
           if (alert) {
-            alert.classList.remove('show');
-            setTimeout(() => alert.remove(), 150);
+            alert.remove();
           }
         }, 5000);
       }
     }
 
-    // Get member's profile status safely
-    function getMemberProfileStatus(memberId) {
-      try {
-        // Get profile data
-        const profile = profilesMap.get(memberId);
-        
-        // FIXED: Look for status at adminUse.status instead of adminReview.status
-        if (profile && profile.adminUse && profile.adminUse.status) {
-          return profile.adminUse.status;
-        }
-        
-        // Default status if not found
-        return 'pending';
-      } catch (error) {
-        console.error(`Error getting status for ${memberId}:`, error);
-        return 'pending';
-      }
-    }
-
-    // Get member's current teams as badges HTML
-    function getTeamBadgesHtml(memberTeams) {
-      if (!memberTeams || memberTeams.length === 0) {
-        return '<small class="text-muted">No teams assigned</small>';
+    // Get team badges HTML
+    function getTeamBadgesHtml(teamIds) {
+      if (!teamIds || teamIds.length === 0) {
+        return '<span class="text-muted small">No teams assigned</span>';
       }
       
-      // Map team IDs to team names
-      const teamNames = memberTeams.map(teamId => {
+      return teamIds.map(teamId => {
         const team = allTeams.find(t => t.id === teamId);
-        return team ? team.name : null;
-      }).filter(teamName => teamName !== null);
-      
-      if (teamNames.length === 0) {
-        return '<small class="text-muted">No teams assigned</small>';
-      }
-      
-      return teamNames.map(name => `<span class="team-badge">${name}</span>`).join('');
+        return team ? `<span class="team-badge">${team.name}</span>` : '';
+      }).join('');
     }
 
-    // Load initial data
+    // Load initial data (teams and members)
     async function loadInitialData() {
+      setButtonLoading(refreshDataBtn, true);
+      
       try {
-        setButtonLoading(refreshDataBtn, true);
+        // Load all teams
+        allTeams = await getAllTeams(db);
         
-        // Load teams
-        allTeams = await getAllTeams();
-        
-        // Populate team select
+        // Populate team select dropdown
         teamSelect.innerHTML = '<option value="">-- Select a team --</option>';
-        for (const team of allTeams) {
+        allTeams.forEach(team => {
           teamSelect.innerHTML += `<option value="${team.id}">${team.name}</option>`;
-        }
-        
-        // Load all users
-        const usersSnapshot = await getDocs(collection(db, 'users'));
-        
-        // Get all profiles
-        const profilesSnapshot = await getDocs(collection(db, 'profiles'));
-        profilesMap.clear();
-        
-        // Store profiles in a Map for quick access
-        profilesSnapshot.forEach(doc => {
-          profilesMap.set(doc.id, doc.data());
         });
         
-        // Process users and their grades
+        // Load all approved members
+        const usersRef = collection(db, 'users');
+        const approvedQuery = query(usersRef, where('profileStatus', '==', 'approved'));
+        const usersSnapshot = await getDocs(approvedQuery);
+        
         allMembers = [];
         usersSnapshot.forEach(doc => {
           const userData = doc.data();
-          const userId = doc.id;
-          
-          // Get profile data if available
-          const profile = profilesMap.get(userId);
-          
-          // Use the safely extracted profile status
-          const status = getMemberProfileStatus(userId);
-          
           allMembers.push({
-            id: userId,
-            ...userData,
-            clinicalGrade: profile?.medicalQualifications?.qualification || 'None (Non-clinical)',
-            profileStatus: status
+            id: doc.id,
+            ...userData
           });
         });
         
@@ -778,6 +767,9 @@
     async function searchMembers(showLoading = true) {
       const searchTerm = memberSearchInput.value.trim().toLowerCase();
       lastSearchTerm = searchTerm;
+      
+      // Hide unassigned section when searching
+      hideUnassignedMembers();
       
       // Require at least 3 characters
       if (searchTerm.length < 3) {
@@ -843,13 +835,100 @@
       // Add event listeners to assign buttons
       document.querySelectorAll('.assign-teams-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          const memberId = btn.dataset.memberId;
-          const memberFullName = btn.dataset.memberName;
+          const memberId = btn.getAttribute('data-member-id');
+          const memberFullName = btn.getAttribute('data-member-name');
           openTeamSelectionModal(memberId, memberFullName);
         });
       });
       
       memberSearchLoading.classList.add('hidden');
+    }
+
+    // NEW: Show unassigned members function
+    async function showUnassignedMembers() {
+      // Clear search results and hide other sections
+      memberSearchInput.value = '';
+      lastSearchTerm = '';
+      memberSearchResults.innerHTML = '';
+      memberSearchNoResults.classList.add('hidden');
+      
+      // Show loading
+      unassignedMembersLoading.classList.remove('hidden');
+      unassignedMembersSection.classList.add('hidden');
+      noUnassignedMembers.classList.add('hidden');
+      
+      try {
+        // Filter members who have no teams or empty teams array
+        const unassignedMembers = allMembers.filter(member => {
+          const teams = member.teams || [];
+          return teams.length === 0;
+        });
+        
+        unassignedMembersLoading.classList.add('hidden');
+        
+        if (unassignedMembers.length === 0) {
+          noUnassignedMembers.classList.remove('hidden');
+          return;
+        }
+        
+        // Update count
+        unassignedCount.textContent = `${unassignedMembers.length} member${unassignedMembers.length !== 1 ? 's' : ''} found`;
+        
+        // Clear and populate list
+        unassignedMembersList.innerHTML = '';
+        
+        for (const member of unassignedMembers) {
+          const memberCard = document.createElement('div');
+          memberCard.className = 'member-card';
+          memberCard.innerHTML = `
+            <div class="member-info">
+              <div class="member-details">
+                <h5 class="mb-1">
+                  ${member.firstName} ${member.surname}
+                  <span class="status-pill status-${member.profileStatus} ms-2">
+                    ${member.profileStatus.charAt(0).toUpperCase() + member.profileStatus.slice(1)}
+                  </span>
+                </h5>
+                <p class="text-muted mb-1">${member.email}</p>
+                <div class="small">Grade: ${member.clinicalGrade || 'Not specified'}</div>
+                <div class="member-teams">
+                  <span class="text-muted small">No teams assigned</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <button class="btn btn-outline-primary btn-sm assign-teams-btn-unassigned" data-member-id="${member.id}" data-member-name="${member.firstName} ${member.surname}">
+                <i class="bi bi-people"></i> Assign Teams
+              </button>
+            </div>
+          `;
+          
+          unassignedMembersList.appendChild(memberCard);
+        }
+        
+        // Add event listeners to assign buttons
+        document.querySelectorAll('.assign-teams-btn-unassigned').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const memberId = btn.getAttribute('data-member-id');
+            const memberFullName = btn.getAttribute('data-member-name');
+            openTeamSelectionModal(memberId, memberFullName);
+          });
+        });
+        
+        unassignedMembersSection.classList.remove('hidden');
+        
+      } catch (error) {
+        console.error('Error loading unassigned members:', error);
+        showAlert('Error loading unassigned members: ' + error.message, 'danger');
+        unassignedMembersLoading.classList.add('hidden');
+      }
+    }
+
+    // NEW: Hide unassigned members section
+    function hideUnassignedMembers() {
+      unassignedMembersSection.classList.add('hidden');
+      noUnassignedMembers.classList.add('hidden');
+      unassignedMembersList.innerHTML = '';
     }
 
     // Load members by grade
@@ -868,54 +947,43 @@
       }
       gradeMembers.classList.add('hidden');
       noGradeMembers.classList.add('hidden');
+      
+      // Reset selections
       selectedMemberIds = [];
+      selectAllMembers.checked = false;
       updateSelectedCount();
       
       // Filter members by grade
-      const filteredMembers = allMembers.filter(member => 
-        member.clinicalGrade === selectedGrade
-      );
+      const filteredMembers = allMembers.filter(member => member.clinicalGrade === selectedGrade);
       
-      // Display results
       if (filteredMembers.length === 0) {
         gradeMembersLoading.classList.add('hidden');
         noGradeMembers.classList.remove('hidden');
         return;
       }
       
-      // Clear previous list
+      // Clear and populate the list
       gradeMembersList.innerHTML = '';
       
-      // Show members
       for (const member of filteredMembers) {
         const memberTeams = member.teams || [];
         
-        // Create member card
         const memberCard = document.createElement('div');
         memberCard.className = 'member-card';
         memberCard.innerHTML = `
-          <div class="d-flex align-items-start w-100">
-            <div class="form-check me-3">
-              <input class="form-check-input member-checkbox" type="checkbox" 
-                    value="${member.id}" id="member-${member.id}">
-              <label class="form-check-label" for="member-${member.id}"></label>
-            </div>
+          <div class="d-flex align-items-start gap-3">
+            <input type="checkbox" class="form-check-input member-checkbox" value="${member.id}">
             <div class="member-details">
-              <h5 class="mb-1">
-                ${member.firstName} ${member.surname}
-                <br><span class="status-pill status-${member.profileStatus} ms-2">
-                  ${member.profileStatus.charAt(0).toUpperCase() + member.profileStatus.slice(1)}
-                </span>
-              </h5>
+              <h5 class="mb-1">${member.firstName} ${member.surname}</h5>
               <p class="text-muted mb-1">${member.email}</p>
               <div class="member-teams">
                 ${getTeamBadgesHtml(memberTeams)}
               </div>
             </div>
           </div>
-          <div class="actions-column">
-            <button class="btn btn-outline-primary btn-sm assign-individual-btn" data-member-id="${member.id}" data-member-name="${member.firstName} ${member.surname}">
-              <i class="bi bi-people"></i> Assign
+          <div>
+            <button class="btn btn-outline-primary btn-sm grade-assign-btn" data-member-id="${member.id}" data-member-name="${member.firstName} ${member.surname}">
+              <i class="bi bi-people"></i> Assign Teams
             </button>
           </div>
         `;
@@ -923,23 +991,26 @@
         gradeMembersList.appendChild(memberCard);
       }
       
-      // Add event listeners to checkboxes
+      // Add event listeners for checkboxes
       document.querySelectorAll('.member-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', () => {
-          if (checkbox.checked) {
-            selectedMemberIds.push(checkbox.value);
+        checkbox.addEventListener('change', (e) => {
+          if (e.target.checked) {
+            if (!selectedMemberIds.includes(e.target.value)) {
+              selectedMemberIds.push(e.target.value);
+            }
           } else {
-            selectedMemberIds = selectedMemberIds.filter(id => id !== checkbox.value);
+            selectedMemberIds = selectedMemberIds.filter(id => id !== e.target.value);
+            selectAllMembers.checked = false;
           }
           updateSelectedCount();
         });
       });
       
-      // Add event listeners to individual assign buttons
-      document.querySelectorAll('.assign-individual-btn').forEach(btn => {
+      // Add event listeners for individual assign buttons
+      document.querySelectorAll('.grade-assign-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          const memberId = btn.dataset.memberId;
-          const memberFullName = btn.dataset.memberName;
+          const memberId = btn.getAttribute('data-member-id');
+          const memberFullName = btn.getAttribute('data-member-name');
           openTeamSelectionModal(memberId, memberFullName);
         });
       });
@@ -948,7 +1019,7 @@
       gradeMembers.classList.remove('hidden');
     }
 
-    // Update selected members count
+    // Update selected count
     function updateSelectedCount() {
       selectedMembersCount.textContent = `${selectedMemberIds.length} member${selectedMemberIds.length !== 1 ? 's' : ''} selected`;
       
@@ -1000,72 +1071,35 @@
       
       // Get members in team
       try {
-        // Get users in this team using the team-service function
-        const membersInTeam = await getUsersInTeam(selectedTeamId);
-        
-        // Merge with profiles to get grades and status
-        const membersWithDetails = [];
-        
-        for (const member of membersInTeam) {
-          // Get member's clinical grade and status from allMembers
-          const fullMemberData = allMembers.find(m => m.id === member.id);
-          
-          if (fullMemberData) {
-            membersWithDetails.push({
-              ...member,
-              clinicalGrade: fullMemberData.clinicalGrade || 'Not specified',
-              profileStatus: fullMemberData.profileStatus
-            });
-          } else {
-            // If not in allMembers, check profile directly
-            const profileStatus = getMemberProfileStatus(member.id);
-            const profile = profilesMap.get(member.id);
-            const clinicalGrade = profile?.medicalQualifications?.qualification || 'Not specified';
-            
-            membersWithDetails.push({
-              ...member,
-              clinicalGrade,
-              profileStatus
-            });
-          }
-        }
-        
-        // Sort by name
-        membersWithDetails.sort((a, b) => {
-          const nameA = `${a.firstName} ${a.surname}`.toLowerCase();
-          const nameB = `${b.firstName} ${b.surname}`.toLowerCase();
-          return nameA.localeCompare(nameB);
+        // Get users in this team using the teams array field
+        const membersInTeam = allMembers.filter(member => {
+          const memberTeams = member.teams || [];
+          return memberTeams.includes(selectedTeamId);
         });
         
-        // Display results
-        if (membersWithDetails.length === 0) {
+        if (membersInTeam.length === 0) {
           teamMembersLoading.classList.add('hidden');
           noTeamMembers.classList.remove('hidden');
           return;
         }
         
-        // Clear previous list
+        // Clear and populate
         teamMembersListContainer.innerHTML = '';
         
-        // Show members
-        for (const member of membersWithDetails) {
-          // Create member card
+        for (const member of membersInTeam) {
           const memberCard = document.createElement('div');
           memberCard.className = 'member-card';
           memberCard.innerHTML = `
-            <div class="member-details">
-              <h5 class="mb-1">
-                ${member.firstName} ${member.surname}
-                <span class="status-pill status-${member.profileStatus} ms-2">
-                  ${member.profileStatus.charAt(0).toUpperCase() + member.profileStatus.slice(1)}
-                </span>
-              </h5>
-              <p class="text-muted mb-1">${member.email}</p>
-              <div class="small">Grade: ${member.clinicalGrade}</div>
+            <div class="member-info">
+              <div class="member-details">
+                <h5 class="mb-1">${member.firstName} ${member.surname}</h5>
+                <p class="text-muted mb-1">${member.email}</p>
+                <div class="small">Grade: ${member.clinicalGrade || 'Not specified'}</div>
+              </div>
             </div>
-            <div class="d-flex align-items-center">
+            <div class="actions-column">
               <button class="btn btn-outline-danger btn-sm remove-from-team-btn" data-member-id="${member.id}">
-                <i class="bi bi-x-circle"></i> Remove
+                <i class="bi bi-person-dash"></i> Remove
               </button>
             </div>
           `;
@@ -1073,10 +1107,10 @@
           teamMembersListContainer.appendChild(memberCard);
         }
         
-        // Add event listeners to remove buttons
+        // Add event listeners for remove buttons
         document.querySelectorAll('.remove-from-team-btn').forEach(btn => {
           btn.addEventListener('click', async () => {
-            const memberId = btn.dataset.memberId;
+            const memberId = btn.getAttribute('data-member-id');
             
             if (confirm(`Remove this member from the team "${team.name}"?`)) {
               await removeFromTeam(memberId, selectedTeamId);
@@ -1145,127 +1179,93 @@
         } else {
           // Bulk assignment mode
           bulkAssignmentMode = true;
-          teamSelectionDescription.innerHTML = `Assign teams to <strong>${selectedMemberIds.length} selected members</strong>`;
-          memberName.textContent = `${selectedMemberIds.length} members`;
-          currentMemberTeams = []; // No preselected teams for bulk assignment
+          currentMemberId = null;
+          memberName.textContent = `${selectedMemberIds.length} Members`;
+          teamSelectionDescription.innerHTML = `Select teams to add for <strong>${selectedMemberIds.length} selected members</strong>`;
+          currentMemberTeams = []; // Don't pre-select any teams for bulk
         }
         
-        // Display loading
-        teamSelectContainer.innerHTML = `
-          <div class="text-center py-3">
-            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-            <span class="ms-2">Loading teams...</span>
-          </div>
-        `;
+        // Populate team checkboxes
+        teamSelectContainer.innerHTML = '';
+        
+        allTeams.forEach(team => {
+          const isChecked = currentMemberTeams.includes(team.id);
+          
+          const teamItem = document.createElement('div');
+          teamItem.className = 'team-select-item';
+          teamItem.innerHTML = `
+            <div class="form-check">
+              <input class="form-check-input team-checkbox" type="checkbox" value="${team.id}" id="team-${team.id}" ${isChecked ? 'checked' : ''}>
+              <label class="form-check-label" for="team-${team.id}">
+                ${team.name}
+              </label>
+            </div>
+          `;
+          
+          teamSelectContainer.appendChild(teamItem);
+        });
         
         teamSelectionModal.show();
         
-        // Create team checkboxes
-        let html = '';
-        
-        if (allTeams.length === 0) {
-          html = `
-            <div class="alert alert-info mb-0">
-              <i class="bi bi-info-circle"></i> No teams available. Please create teams first.
-            </div>
-          `;
-        } else {
-          for (const team of allTeams) {
-            const isChecked = bulkAssignmentMode ? false : currentMemberTeams.includes(team.id);
-            
-            html += `
-              <div class="team-select-item">
-                <div class="form-check">
-                  <input class="form-check-input team-checkbox" type="checkbox" 
-                         id="team-${team.id}" value="${team.id}" 
-                         ${isChecked ? 'checked' : ''}>
-                  <label class="form-check-label" for="team-${team.id}">
-                    ${team.name}
-                    ${team.description ? `<div class="text-muted small">${team.description}</div>` : ''}
-                  </label>
-                </div>
-              </div>
-            `;
-          }
-        }
-        
-        teamSelectContainer.innerHTML = html;
-        
       } catch (error) {
         console.error('Error opening team selection modal:', error);
-        showAlert('Error loading teams: ' + error.message, 'danger');
+        showAlert('Error loading member data: ' + error.message, 'danger');
       }
     }
 
     // Save team assignments
     async function saveTeamAssignments() {
+      setButtonLoading(saveTeamsBtn, true);
+      
       try {
-        setButtonLoading(saveTeamsBtn, true);
-        
         // Get selected teams
-        const selectedTeamIds = Array.from(document.querySelectorAll('.team-checkbox:checked')).map(checkbox => checkbox.value);
+        const selectedTeams = [];
+        document.querySelectorAll('.team-checkbox:checked').forEach(checkbox => {
+          selectedTeams.push(checkbox.value);
+        });
         
         if (bulkAssignmentMode) {
-          // Bulk assignment - add selected teams to all selected members
-          const updatePromises = [];
-          
+          // Bulk update - add selected teams to all selected members
           for (const memberId of selectedMemberIds) {
-            // Get current teams for this member
             const memberRef = doc(db, 'users', memberId);
-            const memberDoc = await getDoc(memberRef);
             
-            if (!memberDoc.exists()) {
-              console.warn(`Member ${memberId} not found, skipping...`);
-              continue;
+            // Add teams using arrayUnion to avoid duplicates
+            for (const teamId of selectedTeams) {
+              await updateDoc(memberRef, {
+                teams: arrayUnion(teamId)
+              });
             }
             
-            const memberData = memberDoc.data();
-            const currentTeams = memberData.teams || [];
-            
-            // Add new teams (only if they're not already assigned)
-            const teamsToAdd = selectedTeamIds.filter(teamId => !currentTeams.includes(teamId));
-            
-            if (teamsToAdd.length > 0) {
-              // Update with arrayUnion to avoid duplicates
-              updatePromises.push(
-                updateDoc(memberRef, {
-                  teams: [...currentTeams, ...teamsToAdd]
-                })
-              );
+            // Update local data
+            const memberIndex = allMembers.findIndex(m => m.id === memberId);
+            if (memberIndex !== -1) {
+              const existingTeams = allMembers[memberIndex].teams || [];
+              allMembers[memberIndex].teams = [...new Set([...existingTeams, ...selectedTeams])];
             }
           }
           
-          if (updatePromises.length > 0) {
-            await Promise.all(updatePromises);
-            showAlert(`Teams assigned to ${updatePromises.length} members successfully.`, 'success');
-          } else {
-            showAlert('No team changes needed.', 'info');
-          }
+          showAlert(`Teams assigned to ${selectedMemberIds.length} members successfully.`, 'success');
           
-          // Reset selection
+          // Reset selections
           selectedMemberIds = [];
-          updateSelectedCount();
           selectAllMembers.checked = false;
-          document.querySelectorAll('.member-checkbox').forEach(checkbox => {
-            checkbox.checked = false;
-          });
+          updateSelectedCount();
           
         } else {
-          // Single member assignment - replace teams
+          // Single member update - set teams exactly as selected
           const memberRef = doc(db, 'users', currentMemberId);
           
-          // Update with the new set of teams
           await updateDoc(memberRef, {
-            teams: selectedTeamIds
+            teams: selectedTeams
           });
           
           // Update local data
           const memberIndex = allMembers.findIndex(m => m.id === currentMemberId);
           if (memberIndex !== -1) {
-            allMembers[memberIndex].teams = selectedTeamIds;
+            allMembers[memberIndex].teams = selectedTeams;
           }
           
-          showAlert('Teams updated successfully.', 'success');
+          showAlert('Team assignments saved successfully.', 'success');
         }
         
         teamSelectionModal.hide();
@@ -1284,6 +1284,10 @@
     // Event Listeners
     memberSearchInput.addEventListener('input', () => searchMembers(true));
     
+    // NEW: Unassigned members button listeners
+    showUnassignedBtn.addEventListener('click', showUnassignedMembers);
+    hideUnassignedBtn.addEventListener('click', hideUnassignedMembers);
+    
     gradeSelect.addEventListener('change', () => loadMembersByGrade(true));
     selectAllMembers.addEventListener('change', handleSelectAll);
     
@@ -1301,6 +1305,9 @@
     document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(tab => {
       tab.addEventListener('shown.bs.tab', (e) => {
         const targetId = e.target.getAttribute('data-bs-target');
+        
+        // Hide unassigned section when changing tabs
+        hideUnassignedMembers();
         
         // Refresh data if needed
         if (targetId === '#search-member' && lastSearchTerm.length >= 3) {
