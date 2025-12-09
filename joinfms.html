@@ -135,6 +135,19 @@
     .back-link:hover {
       text-decoration: underline;
     }
+    /* Welcome video styling */
+    .video-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 25px;
+    }
+    .welcome-video {
+      max-width: 280px;
+      width: 100%;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    }
+    
     /* Green file upload button */
 #qualificationProof::file-selector-button {
   background: linear-gradient(135deg,#00a896 0%,#028090 100%);
@@ -160,6 +173,14 @@
       </div>
 
       <div class="application-body">
+        <!-- Welcome Video -->
+        <div class="video-container">
+          <video class="welcome-video" controls playsinline poster="">
+            <source src="https://firebasestorage.googleapis.com/v0/b/fmsportal-dbfb3.firebasestorage.app/o/intro.mp4?alt=media" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+        </div>
+
         <!-- Alert Container -->
         <div id="alertContainer"></div>
 
@@ -280,13 +301,13 @@
                 <p class="mb-3"><em>I would like FMS to reclaim the tax on any eligible donations or membership subscriptions that I make until further notice. I confirm that I pay at least as much UK income or capital gains tax as will be reclaimed by all charities on my donations in each tax year.</em></p>
                 <div class="d-flex gap-4">
                   <div class="form-check">
-                    <input class="form-check-input" type="radio" name="giftAid" id="giftAidYes" value="yes" checked>
+                    <input class="form-check-input" type="radio" name="giftAid" id="giftAidYes" value="yes">
                     <label class="form-check-label" for="giftAidYes">
                       <strong>Yes</strong>, I am a UK taxpayer and would like FMS to reclaim the tax
                     </label>
                   </div>
                   <div class="form-check">
-                    <input class="form-check-input" type="radio" name="giftAid" id="giftAidNo" value="no">
+                    <input class="form-check-input" type="radio" name="giftAid" id="giftAidNo" value="no" checked>
                     <label class="form-check-label" for="giftAidNo">
                       <strong>No</strong>
                     </label>
