@@ -185,6 +185,69 @@
     margin-bottom: 1.5rem; /* Increase bottom margin on small screens */
   }
 }
+
+/* Team badge styling */
+.team-badge {
+  display: inline-block;
+  padding: 0.3em 0.6em;
+  font-size: 80%;
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.25rem;
+  background-color: #e7f5ff;
+  color: #0c5460;
+  border: 1px solid #b8daff;
+  margin-right: 0.3em;
+  margin-bottom: 0.3em;
+}
+
+.event-teams {
+  margin-top: 8px;
+  margin-bottom: 10px;
+}
+
+.event-teams-label {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-right: 0.5rem;
+}
+
+/* Teams checkbox container in modal */
+.teams-checkbox-container {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  padding: 10px;
+  background-color: #f8f9fa;
+}
+
+.teams-checkbox-container .form-check {
+  padding: 8px 10px 8px 35px;
+  margin-bottom: 5px;
+  background-color: #fff;
+  border-radius: 5px;
+  transition: background-color 0.2s;
+}
+
+.teams-checkbox-container .form-check:hover {
+  background-color: #e9ecef;
+}
+
+.teams-checkbox-container .form-check-input:checked + .form-check-label {
+  font-weight: 600;
+  color: #00a896;
+}
+
+.no-teams-message {
+  color: #6c757d;
+  font-style: italic;
+  text-align: center;
+  padding: 15px;
+}
   </style>
 </head>
 <body>
@@ -300,6 +363,20 @@
             <div class="mb-3">
               <label for="eventDescription" class="form-label">Description</label>
               <textarea class="form-control" id="eventDescription" rows="3"></textarea>
+            </div>
+            
+            <!-- Required Teams Section -->
+            <div class="mb-3">
+              <label class="form-label"><i class="bi bi-people-fill"></i> Required Teams</label>
+              <div class="form-text mb-2">Select which teams are required for this event</div>
+              <div id="teamsCheckboxContainer" class="teams-checkbox-container">
+                <div class="text-center py-3">
+                  <div class="spinner-border spinner-border-sm text-primary" role="status">
+                    <span class="visually-hidden">Loading teams...</span>
+                  </div>
+                  <span class="ms-2 text-muted">Loading teams...</span>
+                </div>
+              </div>
             </div>
           </form>
         </div>
@@ -509,6 +586,7 @@ prehospital@festival-medical.org</textarea>
       serverTimestamp 
     } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
     import { firebaseConfig } from './firebase-config.js';
+    import { getAllTeams } from './teams-service.js';
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -533,6 +611,7 @@ prehospital@festival-medical.org</textarea>
     let currentEvents = [];
     let currentEventId = null;
     let currentEventVolunteers = [];
+    let availableTeams = []; // Store loaded teams
     
     // Helper Functions
     function setButtonLoading(buttonElement, isLoading) {
@@ -596,12 +675,110 @@ prehospital@festival-medical.org</textarea>
       return `${year}-${month}-${day}`;
     }
 
+    // Load teams for the checkbox container
+    async function loadTeamsForModal() {
+      const container = document.getElementById('teamsCheckboxContainer');
+      
+      try {
+        // Show loading state
+        container.innerHTML = `
+          <div class="text-center py-3">
+            <div class="spinner-border spinner-border-sm text-primary" role="status">
+              <span class="visually-hidden">Loading teams...</span>
+            </div>
+            <span class="ms-2 text-muted">Loading teams...</span>
+          </div>
+        `;
+        
+        // Get all teams
+        availableTeams = await getAllTeams();
+        
+        if (availableTeams.length === 0) {
+          container.innerHTML = `
+            <div class="no-teams-message">
+              <i class="bi bi-info-circle"></i> No teams available. 
+              <a href="team-management.html">Create teams first</a>.
+            </div>
+          `;
+          return;
+        }
+        
+        // Build checkboxes HTML
+        let checkboxesHtml = '';
+        availableTeams.forEach(team => {
+          checkboxesHtml += `
+            <div class="form-check">
+              <input class="form-check-input team-checkbox" type="checkbox" 
+                     value="${team.id}" id="team-${team.id}" data-team-name="${team.name}">
+              <label class="form-check-label" for="team-${team.id}">
+                ${team.name}
+                ${team.description ? `<small class="text-muted d-block">${team.description}</small>` : ''}
+              </label>
+            </div>
+          `;
+        });
+        
+        container.innerHTML = checkboxesHtml;
+        
+      } catch (error) {
+        console.error('Error loading teams:', error);
+        container.innerHTML = `
+          <div class="text-danger text-center py-3">
+            <i class="bi bi-exclamation-triangle"></i> Error loading teams: ${error.message}
+          </div>
+        `;
+      }
+    }
+
+    // Get selected team IDs from checkboxes
+    function getSelectedTeamIds() {
+      const checkboxes = document.querySelectorAll('.team-checkbox:checked');
+      return Array.from(checkboxes).map(cb => cb.value);
+    }
+
+    // Set selected teams in checkboxes
+    function setSelectedTeams(teamIds) {
+      // First, uncheck all
+      document.querySelectorAll('.team-checkbox').forEach(cb => {
+        cb.checked = false;
+      });
+      
+      // Then check the ones that should be selected
+      if (teamIds && Array.isArray(teamIds)) {
+        teamIds.forEach(teamId => {
+          const checkbox = document.getElementById(`team-${teamId}`);
+          if (checkbox) {
+            checkbox.checked = true;
+          }
+        });
+      }
+    }
+
+    // Get team names from IDs (for display)
+    function getTeamNames(teamIds) {
+      if (!teamIds || !Array.isArray(teamIds)) return [];
+      
+      return teamIds.map(teamId => {
+        const team = availableTeams.find(t => t.id === teamId);
+        return team ? team.name : null;
+      }).filter(name => name !== null);
+    }
+
     // Load Events
     async function loadEvents() {
       try {
         loadingEvents.classList.remove('hidden');
         eventsList.innerHTML = '';
         noEventsMessage.classList.add('hidden');
+        
+        // Load teams first (needed for displaying team names)
+        if (availableTeams.length === 0) {
+          try {
+            availableTeams = await getAllTeams();
+          } catch (err) {
+            console.warn('Could not load teams:', err);
+          }
+        }
         
         // Get all events
         const eventsQuery = query(
@@ -660,6 +837,20 @@ prehospital@festival-medical.org</textarea>
           const endDate = formatDate(event.endDate);
           const dateDisplay = startDate === endDate ? startDate : `${startDate} - ${endDate}`;
           
+          // Build team badges HTML
+          let teamBadgesHtml = '';
+          if (event.requiredTeams && event.requiredTeams.length > 0) {
+            const teamNames = getTeamNames(event.requiredTeams);
+            if (teamNames.length > 0) {
+              teamBadgesHtml = `
+                <div class="event-teams">
+                  <span class="event-teams-label"><i class="bi bi-people-fill"></i> Teams:</span>
+                  ${teamNames.map(name => `<span class="team-badge">${name}</span>`).join('')}
+                </div>
+              `;
+            }
+          }
+          
           const eventItem = document.createElement('div');
           eventItem.className = 'admin-event-item';
           
@@ -667,6 +858,7 @@ prehospital@festival-medical.org</textarea>
             <div class="row">
               <div class="col-md-8">
                 <h4>${event.name}</h4>
+                ${teamBadgesHtml}
                 <div class="event-location">
                   <i class="bi bi-geo-alt"></i> ${event.location || 'Location TBD'}
                 </div>
@@ -739,7 +931,7 @@ prehospital@festival-medical.org</textarea>
     }
 
     // Open create/edit event modal
-    function openCreateEventModal() {
+    async function openCreateEventModal() {
       // Reset form
       document.getElementById('eventForm').reset();
       document.getElementById('eventId').value = '';
@@ -753,12 +945,18 @@ prehospital@festival-medical.org</textarea>
       document.getElementById('eventStartDate').value = formatDateForInput(today);
       document.getElementById('eventEndDate').value = formatDateForInput(tomorrow);
       
+      // Load teams for selection
+      await loadTeamsForModal();
+      
+      // Clear any previously selected teams
+      setSelectedTeams([]);
+      
       // Show modal
       const modal = new bootstrap.Modal(document.getElementById('eventModal'));
       modal.show();
     }
 
-    function openEditEventModal(eventId) {
+    async function openEditEventModal(eventId) {
       const event = currentEvents.find(e => e.id === eventId);
       
       if (!event) {
@@ -780,6 +978,12 @@ prehospital@festival-medical.org</textarea>
       document.getElementById('eventStartDate').value = formatDateForInput(event.startDate);
       document.getElementById('eventEndDate').value = formatDateForInput(event.endDate);
       
+      // Load teams for selection
+      await loadTeamsForModal();
+      
+      // Set selected teams
+      setSelectedTeams(event.requiredTeams || []);
+      
       // Show modal
       const modal = new bootstrap.Modal(document.getElementById('eventModal'));
       modal.show();
@@ -798,6 +1002,9 @@ prehospital@festival-medical.org</textarea>
         const eventDescription = document.getElementById('eventDescription').value.trim();
         const eventStartDateStr = document.getElementById('eventStartDate').value;
         const eventEndDateStr = document.getElementById('eventEndDate').value;
+        
+        // Get selected teams
+        const selectedTeamIds = getSelectedTeamIds();
         
         if (!eventName) {
           showAlert('Event name is required.', 'danger');
@@ -835,6 +1042,7 @@ prehospital@festival-medical.org</textarea>
           description: eventDescription,
           startDate: Timestamp.fromDate(startDate),
           endDate: Timestamp.fromDate(endDate),
+          requiredTeams: selectedTeamIds, // Add selected teams
           updatedAt: serverTimestamp()
         };
         
