@@ -1,57 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Delete Member Profile - FMS Prehospital Portal</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FMS Admin - Delete Profile/Applicant</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
   <style>
-    body { background:#f8f9fa; min-height:100vh; }
-    .navbar { 
-      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); 
-      box-shadow:0 2px 10px rgba(0,0,0,0.1); 
-    }
-    .navbar-brand { color: #fff !important; }
-    .nav-link { color: rgba(255,255,255,.85) !important; font-weight: 500; }
-    .nav-link:hover { color: #fff !important; }
-    .page-header { 
-      background:linear-gradient(135deg,#dc3545 0%,#c82333 100%); 
-      color:#fff; 
-      border-radius:15px; 
-      padding:30px; 
-      margin:30px 0 20px 0; 
-    }
-    .admin-card { 
-      background:#fff; 
-      border-radius:15px; 
-      box-shadow:0 5px 20px rgba(0,0,0,.08); 
-      padding:30px; 
-      margin:20px 0; 
+    .page-header { margin-bottom: 30px; }
+    .admin-card {
+      background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.08);
     }
     .danger-zone {
       border: 3px solid #dc3545;
       border-radius: 15px;
       padding: 25px;
-      background: #fff5f5;
+      margin-bottom: 20px;
+      background: linear-gradient(145deg, #fff5f5 0%, #ffe9e9 100%);
     }
-    .btn-danger { 
-      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); 
-      border: none; 
-      font-weight: 600; 
-    }
-    .btn-danger:hover { 
-      transform: translateY(-2px); 
-      box-shadow: 0 5px 15px rgba(220,53,69,.4); 
-    }
-    .form-control:focus { 
-      border-color: #dc3545; 
-      box-shadow: 0 0 0 0.2rem rgba(220,53,69,.25); 
-    }
-    .btn-loading { position: relative; pointer-events: none; opacity: .7; }
-    .btn-loading::after { 
-      content:""; position:absolute; width:16px; height:16px; top:50%; left:50%; 
-      margin:-8px 0 0 -8px; border:2px solid #fff; border-radius:50%; 
+    .btn-loading .spinner { display: inline-block; }
+    .btn-loading .btn-text { display: none; }
+    .spinner { display: none; width: 1rem; height: 1rem; border: 2px solid #fff; border-radius:50%; 
       border-top-color:transparent; animation:spinner .6s linear infinite; 
     }
     @keyframes spinner { to { transform: rotate(360deg); } }
@@ -132,13 +106,36 @@
       margin: 20px 0;
       text-align: center;
     }
+    /* Badge styles for search results */
+    .badge-member {
+      background-color: #0d6efd;
+      color: white;
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 8px;
+    }
+    .badge-applicant {
+      background-color: #fd7e14;
+      color: white;
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 8px;
+    }
+    /* Status badge styles */
+    .applicant-status-badge {
+      font-size: 0.85rem;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
   </style>
 </head>
 <body>
   <nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container-fluid">
       <a class="navbar-brand" href="dashboard.html">
-        <i class="bi bi-exclamation-triangle-fill"></i> FMS Admin - Delete Profile
+        <i class="bi bi-exclamation-triangle-fill"></i> FMS Admin - Delete Profile/Applicant
       </a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
@@ -168,9 +165,9 @@
   <div class="container">
     <div class="page-header">
       <h1 class="mb-2">
-        <i class="bi bi-exclamation-octagon-fill"></i> Delete Member Profile
+        <i class="bi bi-exclamation-octagon-fill"></i> Delete Member or Applicant
       </h1>
-      <p class="mb-0">DANGER: Permanently remove a member and all associated data</p>
+      <p class="mb-0">DANGER: Permanently remove a member or applicant and all associated data</p>
     </div>
 
     <div id="alertContainer"></div>
@@ -181,16 +178,14 @@
       <h3 class="mt-3 text-danger">CRITICAL WARNING</h3>
       <p class="mb-0">This action is <strong>PERMANENT and IRREVERSIBLE</strong>. It will delete:</p>
       <ul class="mt-3 mb-0" style="list-style: none; padding: 0;">
-        <li><i class="bi bi-x-circle-fill text-danger"></i> Member's user account (they cannot log in)</li>
-        <li><i class="bi bi-x-circle-fill text-danger"></i> Complete profile data</li>
-        <li><i class="bi bi-x-circle-fill text-danger"></i> All event volunteer assignments</li>
-        <li><i class="bi bi-x-circle-fill text-danger"></i> All associated documents</li>
+        <li><i class="bi bi-x-circle-fill text-danger"></i> <strong>For Members:</strong> User account, profile data, event assignments, documents</li>
+        <li><i class="bi bi-x-circle-fill text-danger"></i> <strong>For Applicants:</strong> Complete application record</li>
       </ul>
     </div>
 
     <!-- Search Section -->
     <div class="admin-card">
-      <h4 class="mb-3"><i class="bi bi-search"></i> Search for Member</h4>
+      <h4 class="mb-3"><i class="bi bi-search"></i> Search for Member or Applicant</h4>
       <div class="search-container">
         <input 
           type="text" 
@@ -202,18 +197,18 @@
           <!-- Search results will appear here -->
         </div>
       </div>
-      <small class="form-text text-muted">Type at least 3 characters to start searching</small>
+      <small class="form-text text-muted">Type at least 3 characters to start searching. Results show both members and applicants.</small>
     </div>
 
-    <!-- Member Details Section (Hidden initially) -->
+    <!-- Details Section (Hidden initially) -->
     <div id="memberDetailsSection" class="hidden">
       <div class="danger-zone">
         <h4 class="text-danger mb-3">
-          <i class="bi bi-person-x-fill"></i> Selected Member
+          <i class="bi bi-person-x-fill"></i> <span id="selectedTypeLabel">Selected Member</span>
         </h4>
         
         <div id="memberDetailsContainer">
-          <!-- Member details will be loaded here -->
+          <!-- Details will be loaded here -->
         </div>
 
         <!-- Warning and Confirmation Section -->
@@ -225,7 +220,7 @@
           <div class="form-check">
             <input class="form-check-input" type="checkbox" id="firstConfirmCheck">
             <label class="form-check-label" for="firstConfirmCheck">
-              I understand this will permanently delete all data for this member
+              I understand this will permanently delete all data for this person
             </label>
           </div>
         </div>
@@ -235,8 +230,8 @@
             <h5 class="text-danger">
               <i class="bi bi-shield-x-fill"></i> Final Confirmation Required
             </h5>
-            <p class="mb-3">Type the member's <strong>FULL NAME</strong> exactly as shown above to confirm deletion:</p>
-            <p class="mb-3"><strong>Member Name: <span id="confirmNameDisplay" class="text-danger"></span></strong></p>
+            <p class="mb-3">Type the person's <strong>FULL NAME</strong> exactly as shown above to confirm deletion:</p>
+            <p class="mb-3"><strong>Name: <span id="confirmNameDisplay" class="text-danger"></span></strong></p>
             <input 
               type="text" 
               class="form-control" 
@@ -251,7 +246,7 @@
               <i class="bi bi-x-circle"></i> Cancel
             </button>
             <button type="button" class="btn btn-danger" id="deleteBtn" disabled>
-              <i class="bi bi-trash-fill"></i> DELETE MEMBER PERMANENTLY
+              <i class="bi bi-trash-fill"></i> DELETE PERMANENTLY
             </button>
           </div>
         </div>
@@ -285,6 +280,7 @@
     const searchResults = document.getElementById('searchResults');
     const memberDetailsSection = document.getElementById('memberDetailsSection');
     const memberDetailsContainer = document.getElementById('memberDetailsContainer');
+    const selectedTypeLabel = document.getElementById('selectedTypeLabel');
     const firstConfirmCheck = document.getElementById('firstConfirmCheck');
     const secondConfirmSection = document.getElementById('secondConfirmSection');
     const confirmNameDisplay = document.getElementById('confirmNameDisplay');
@@ -297,8 +293,10 @@
     // Store data
     let users = [];
     let profiles = [];
-    let selectedMember = null;
-    let selectedMemberFullName = '';
+    let applicants = [];
+    let selectedRecord = null;
+    let selectedRecordFullName = '';
+    let selectedRecordType = ''; // 'member' or 'applicant'
 
     // Set button loading state
     function setButtonLoading(buttonId, isLoading) {
@@ -333,9 +331,21 @@
       }
     }
 
-    // Load all users and profiles
-    async function loadUsersAndProfiles() {
+    // Format date for display
+    function formatDate(timestamp) {
+      if (!timestamp) return 'N/A';
+      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      return date.toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      });
+    }
+
+    // Load all users, profiles, and applicants
+    async function loadAllData() {
       try {
+        // Load users
         const usersQuery = query(collection(db, 'users'));
         const usersSnapshot = await getDocs(usersQuery);
         users = [];
@@ -346,6 +356,7 @@
           });
         });
 
+        // Load profiles
         const profilesQuery = query(collection(db, 'profiles'));
         const profilesSnapshot = await getDocs(profilesQuery);
         profiles = [];
@@ -356,10 +367,21 @@
           });
         });
 
-        console.log(`Loaded ${users.length} users and ${profiles.length} profiles`);
+        // Load applicants
+        const applicantsQuery = query(collection(db, 'applicants'));
+        const applicantsSnapshot = await getDocs(applicantsQuery);
+        applicants = [];
+        applicantsSnapshot.forEach(doc => {
+          applicants.push({
+            id: doc.id,
+            ...doc.data()
+          });
+        });
+
+        console.log(`Loaded ${users.length} users, ${profiles.length} profiles, and ${applicants.length} applicants`);
       } catch (error) {
         console.error('Error loading data:', error);
-        showAlert('Error loading member data: ' + error.message, 'danger');
+        showAlert('Error loading data: ' + error.message, 'danger');
       }
     }
 
@@ -373,6 +395,7 @@
         return;
       }
 
+      // Search members (users)
       const filteredUsers = users.filter(user => {
         const firstName = (user.firstName || '').toLowerCase();
         const surname = (user.surname || '').toLowerCase();
@@ -383,29 +406,61 @@
                email.includes(searchTerm);
       });
 
-      if (filteredUsers.length === 0) {
-        searchResults.innerHTML = '<div class="search-item text-muted">No members found</div>';
+      // Search applicants
+      const filteredApplicants = applicants.filter(applicant => {
+        const firstName = (applicant.firstName || '').toLowerCase();
+        const surname = (applicant.surname || '').toLowerCase();
+        const email = (applicant.email || '').toLowerCase();
+        
+        return firstName.includes(searchTerm) || 
+               surname.includes(searchTerm) || 
+               email.includes(searchTerm);
+      });
+
+      if (filteredUsers.length === 0 && filteredApplicants.length === 0) {
+        searchResults.innerHTML = '<div class="search-item text-muted">No members or applicants found</div>';
         searchResults.classList.add('show');
         return;
       }
 
-      searchResults.innerHTML = filteredUsers.map(user => {
+      let resultsHtml = '';
+
+      // Add member results
+      filteredUsers.forEach(user => {
         const fullName = `${user.firstName || ''} ${user.surname || ''}`.trim();
-        return `
-          <div class="search-item" data-user-id="${user.id}">
-            <strong>${fullName}</strong><br>
+        resultsHtml += `
+          <div class="search-item" data-type="member" data-id="${user.id}">
+            <strong>${fullName}</strong><span class="badge-member">MEMBER</span><br>
             <small class="text-muted">${user.email || 'No email'}</small>
           </div>
         `;
-      }).join('');
+      });
 
+      // Add applicant results
+      filteredApplicants.forEach(applicant => {
+        const fullName = `${applicant.firstName || ''} ${applicant.surname || ''}`.trim();
+        const statusText = applicant.status ? ` (${applicant.status.replace('_', ' ')})` : '';
+        resultsHtml += `
+          <div class="search-item" data-type="applicant" data-id="${applicant.id}">
+            <strong>${fullName}</strong><span class="badge-applicant">APPLICANT</span><br>
+            <small class="text-muted">${applicant.email || 'No email'}${statusText}</small>
+          </div>
+        `;
+      });
+
+      searchResults.innerHTML = resultsHtml;
       searchResults.classList.add('show');
 
       // Add click handlers to search items
-      document.querySelectorAll('.search-item[data-user-id]').forEach(item => {
+      document.querySelectorAll('.search-item[data-id]').forEach(item => {
         item.addEventListener('click', () => {
-          const userId = item.getAttribute('data-user-id');
-          selectMember(userId);
+          const type = item.getAttribute('data-type');
+          const id = item.getAttribute('data-id');
+          if (type === 'member') {
+            selectMember(id);
+          } else {
+            selectApplicant(id);
+          }
         });
       });
     }
@@ -448,20 +503,22 @@
           }
         });
 
-        // Store selected member data
-        selectedMember = {
+        // Store selected record data
+        selectedRecord = {
           user: user,
           profile: profile,
           volunteerRecords: volunteerRecords
         };
+        selectedRecordType = 'member';
 
-        selectedMemberFullName = `${user.firstName || ''} ${user.surname || ''}`.trim();
-        confirmNameDisplay.textContent = selectedMemberFullName;
+        selectedRecordFullName = `${user.firstName || ''} ${user.surname || ''}`.trim();
+        confirmNameDisplay.textContent = selectedRecordFullName;
+        selectedTypeLabel.textContent = 'Selected Member';
 
         // Display member details
         displayMemberDetails();
 
-        // Show member details section
+        // Show details section
         memberDetailsSection.classList.remove('hidden');
         memberDetailsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
@@ -471,9 +528,53 @@
       }
     }
 
+    // Select an applicant and load their details
+    async function selectApplicant(applicantId) {
+      try {
+        // Clear search
+        searchInput.value = '';
+        searchResults.innerHTML = '';
+        searchResults.classList.remove('show');
+
+        // Reset confirmations
+        firstConfirmCheck.checked = false;
+        secondConfirmSection.classList.add('hidden');
+        confirmNameInput.value = '';
+        deleteBtn.disabled = true;
+
+        // Get applicant data
+        const applicant = applicants.find(a => a.id === applicantId);
+        if (!applicant) {
+          showAlert('Applicant not found', 'danger');
+          return;
+        }
+
+        // Store selected record data
+        selectedRecord = {
+          applicant: applicant
+        };
+        selectedRecordType = 'applicant';
+
+        selectedRecordFullName = `${applicant.firstName || ''} ${applicant.surname || ''}`.trim();
+        confirmNameDisplay.textContent = selectedRecordFullName;
+        selectedTypeLabel.textContent = 'Selected Applicant';
+
+        // Display applicant details
+        displayApplicantDetails();
+
+        // Show details section
+        memberDetailsSection.classList.remove('hidden');
+        memberDetailsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      } catch (error) {
+        console.error('Error selecting applicant:', error);
+        showAlert('Error loading applicant details: ' + error.message, 'danger');
+      }
+    }
+
     // Display member details
     function displayMemberDetails() {
-      const { user, profile, volunteerRecords } = selectedMember;
+      const { user, profile, volunteerRecords } = selectedRecord;
       const fullName = `${user.firstName || ''} ${user.surname || ''}`.trim();
 
       let html = `
@@ -496,7 +597,7 @@
       html += `
             </div>
             <div class="col-md-10">
-              <h4 class="text-danger mb-3">${fullName}</h4>
+              <h4 class="text-danger mb-3">${fullName} <span class="badge bg-primary">MEMBER</span></h4>
               
               <div class="data-section">
                 <div class="data-label">User ID</div>
@@ -542,6 +643,90 @@
       html += `
                 </div>
               </div>
+              
+              <div class="alert alert-danger mt-3 mb-0">
+                <i class="bi bi-exclamation-triangle-fill"></i> <strong>Deleting this member will remove:</strong>
+                <ul class="mb-0 mt-2">
+                  <li>User account (they cannot log in)</li>
+                  ${profile ? '<li>Complete profile data</li>' : ''}
+                  ${volunteerRecords.length > 0 ? `<li>${volunteerRecords.length} event volunteer assignment(s)</li>` : ''}
+                  <li>All associated documents</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      memberDetailsContainer.innerHTML = html;
+    }
+
+    // Display applicant details
+    function displayApplicantDetails() {
+      const { applicant } = selectedRecord;
+      const fullName = `${applicant.firstName || ''} ${applicant.surname || ''}`.trim();
+
+      // Get status badge color
+      let statusColor = 'secondary';
+      switch(applicant.status) {
+        case 'pending': statusColor = 'warning'; break;
+        case 'approved_to_pay': statusColor = 'info'; break;
+        case 'paid': statusColor = 'success'; break;
+        case 'rejected': statusColor = 'danger'; break;
+        case 'completed': statusColor = 'primary'; break;
+      }
+
+      let html = `
+        <div class="member-details-card">
+          <div class="row">
+            <div class="col-md-2 text-center">
+              <div class="profile-photo-placeholder" style="border-color: #fd7e14;">
+                <i class="bi bi-person-plus"></i>
+              </div>
+            </div>
+            <div class="col-md-10">
+              <h4 class="text-danger mb-3">${fullName} <span class="badge bg-warning text-dark">APPLICANT</span></h4>
+              
+              <div class="data-section">
+                <div class="data-label">Applicant ID</div>
+                <div>${applicant.id}</div>
+              </div>
+
+              <div class="data-section">
+                <div class="data-label">Email</div>
+                <div>${applicant.email || 'No email'}</div>
+              </div>
+
+              <div class="data-section">
+                <div class="data-label">Mobile</div>
+                <div>${applicant.mobile || 'Not provided'}</div>
+              </div>
+
+              <div class="data-section">
+                <div class="data-label">Application Status</div>
+                <div><span class="badge bg-${statusColor} applicant-status-badge">${(applicant.status || 'pending').replace('_', ' ').toUpperCase()}</span></div>
+              </div>
+
+              <div class="data-section">
+                <div class="data-label">Qualification Level</div>
+                <div>${applicant.qualificationLevel || 'Not specified'}</div>
+              </div>
+
+              <div class="data-section">
+                <div class="data-label">Application Submitted</div>
+                <div>${formatDate(applicant.submittedAt)}</div>
+              </div>
+
+              ${applicant.rejectionReason ? `
+              <div class="data-section">
+                <div class="data-label">Rejection Reason</div>
+                <div class="text-danger">${applicant.rejectionReason}</div>
+              </div>
+              ` : ''}
+              
+              <div class="alert alert-warning mt-3 mb-0">
+                <i class="bi bi-info-circle-fill"></i> <strong>Note:</strong> Applicants have not yet created a user account. Deleting this applicant will only remove their application record from the system.
+              </div>
             </div>
           </div>
         </div>
@@ -566,7 +751,7 @@
     confirmNameInput.addEventListener('input', () => {
       const inputName = confirmNameInput.value;
       // Must match exactly (case-sensitive)
-      if (inputName === selectedMemberFullName) {
+      if (inputName === selectedRecordFullName) {
         deleteBtn.disabled = false;
       } else {
         deleteBtn.disabled = true;
@@ -582,8 +767,9 @@
 
     // Reset form
     function resetForm() {
-      selectedMember = null;
-      selectedMemberFullName = '';
+      selectedRecord = null;
+      selectedRecordFullName = '';
+      selectedRecordType = '';
       memberDetailsSection.classList.add('hidden');
       firstConfirmCheck.checked = false;
       secondConfirmSection.classList.add('hidden');
@@ -596,17 +782,21 @@
 
     // Handle delete button
     deleteBtn.addEventListener('click', async () => {
-      if (!selectedMember) {
-        showAlert('No member selected', 'danger');
+      if (!selectedRecord) {
+        showAlert('No record selected', 'danger');
         return;
       }
+
+      // Determine what type we're deleting
+      const typeLabel = selectedRecordType === 'member' ? 'member' : 'applicant';
+      const email = selectedRecordType === 'member' ? selectedRecord.user.email : selectedRecord.applicant.email;
 
       // Final confirmation dialog
       const confirmed = confirm(
         `⚠️ FINAL WARNING ⚠️\n\n` +
         `You are about to PERMANENTLY DELETE:\n` +
-        `• ${selectedMemberFullName}\n` +
-        `• Email: ${selectedMember.user.email}\n` +
+        `• ${selectedRecordFullName} (${typeLabel})\n` +
+        `• Email: ${email}\n` +
         `• All associated data\n\n` +
         `This action CANNOT be undone!\n\n` +
         `Click OK to proceed with deletion, or Cancel to abort.`
@@ -619,43 +809,54 @@
       setButtonLoading(deleteBtn, true);
 
       try {
-        const userId = selectedMember.user.id;
+        if (selectedRecordType === 'member') {
+          // Delete member
+          const userId = selectedRecord.user.id;
 
-        // 1. Delete all event volunteer records
-        console.log(`Deleting ${selectedMember.volunteerRecords.length} volunteer records...`);
-        for (const record of selectedMember.volunteerRecords) {
-          await deleteDoc(doc(db, 'eventVolunteers', record.id));
+          // 1. Delete all event volunteer records
+          console.log(`Deleting ${selectedRecord.volunteerRecords.length} volunteer records...`);
+          for (const record of selectedRecord.volunteerRecords) {
+            await deleteDoc(doc(db, 'eventVolunteers', record.id));
+          }
+
+          // 2. Delete profile (if exists)
+          if (selectedRecord.profile) {
+            console.log('Deleting profile...');
+            await deleteDoc(doc(db, 'profiles', userId));
+          }
+
+          // 3. Delete user document
+          console.log('Deleting user document...');
+          await deleteDoc(doc(db, 'users', userId));
+
+          showAlert(
+            `✓ Successfully deleted member ${selectedRecordFullName} and all associated data.\n\n` +
+            `Note: The Firebase Authentication account may still exist and should be deleted manually from the Firebase Console if needed.`,
+            'success'
+          );
+
+        } else {
+          // Delete applicant - much simpler, just one document
+          const applicantId = selectedRecord.applicant.id;
+          
+          console.log('Deleting applicant document...');
+          await deleteDoc(doc(db, 'applicants', applicantId));
+
+          showAlert(
+            `✓ Successfully deleted applicant ${selectedRecordFullName}.`,
+            'success'
+          );
         }
-
-        // 2. Delete profile (if exists)
-        if (selectedMember.profile) {
-          console.log('Deleting profile...');
-          await deleteDoc(doc(db, 'profiles', userId));
-        }
-
-        // 3. Delete user document
-        console.log('Deleting user document...');
-        await deleteDoc(doc(db, 'users', userId));
-
-        // Note: We cannot delete the Firebase Authentication user from the client side
-        // This would need to be done via Admin SDK on the backend
-        // For now, we just delete the Firestore data
-
-        showAlert(
-          `✓ Successfully deleted ${selectedMemberFullName} and all associated data.\n\n` +
-          `Note: The Firebase Authentication account may still exist and should be deleted manually from the Firebase Console if needed.`,
-          'success'
-        );
 
         // Reload data
-        await loadUsersAndProfiles();
+        await loadAllData();
 
         // Reset form
         resetForm();
 
       } catch (error) {
-        console.error('Error deleting member:', error);
-        showAlert('Error deleting member: ' + error.message, 'danger');
+        console.error('Error deleting record:', error);
+        showAlert('Error deleting record: ' + error.message, 'danger');
       } finally {
         setButtonLoading(deleteBtn, false);
       }
@@ -701,7 +902,7 @@
         }
 
         // Load data
-        await loadUsersAndProfiles();
+        await loadAllData();
 
       } catch (error) {
         console.error('Error checking admin status:', error);
