@@ -882,7 +882,7 @@
       new bootstrap.Modal(document.getElementById('viewApplicantModal')).show();
     };
 
- // View CSV data for an applicant
+// View CSV data for an applicant
     window.viewCsvData = function(id) {
       const applicant = findApplicantById(id);
       if (!applicant) return;
@@ -890,7 +890,7 @@
       // New column order: First Name | Surname | DOB | Email | Address | Mobile | Qualification | Blank | Gift Aid | Stripe Ref | Blank | Paid Date
       const headers = ['First Name', 'Surname', 'DOB', 'Email', 'Address', 'Mobile', 'Qualification', '-', 'Gift Aid', 'Stripe Ref', '-', 'Paid Date'];
       
-      // Helper function to return '-' for empty values 
+      // Helper function to return '-' for empty values
       const val = (v) => v ? v : '-';
       const formatDateOrDash = (timestamp) => {
         if (!timestamp) return '-';
@@ -922,8 +922,9 @@
 
       document.getElementById('csvDataTable').innerHTML = tableHtml;
 
-      // Store CSV string for copying - DATA ONLY (no headers)
-      currentCsvData = values.map(v => `"${v}"`).join(',');
+      // Store TAB-SEPARATED string for copying - DATA ONLY (no headers)
+      // Using tabs (\t) so Excel recognises each value as a separate cell when pasting
+      currentCsvData = values.join('\t');
 
       new bootstrap.Modal(document.getElementById('viewCsvModal')).show();
     };
