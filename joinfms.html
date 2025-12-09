@@ -165,20 +165,12 @@
 
         <!-- Application Form -->
         <div id="applicationFormContainer">
-          <!-- Initial Information Box -->
+          <!-- CHANGED: Combined Before You Begin section (replaces old Before You Begin + Important Information) -->
           <div class="info-box">
             <h5><i class="bi bi-info-circle"></i> Before You Begin</h5>
-            <p>Thank you for your interest in joining FMS in the pre-hospital team. In order to complete this application you will need:</p>
-            <ul>
-              <li><strong>(a)</strong> Proof of your qualification (ID card, certificate, etc)</li>
-              <li><strong>(b)</strong> Be a UK resident and happy to complete a DBS check</li>
-            </ul>
-            <p class="mb-0 mt-3"><strong>Please DO NOT continue without the above.</strong></p>
-          </div>
-
-          <div class="info-box warning">
-            <h5><i class="bi bi-exclamation-triangle"></i> Important Information</h5>
-            <p class="mb-0">On acceptance of your application (which may take weeks as we only approve when a place becomes available), you will be required to pay a <strong>£30 fee</strong> which covers 3 years membership of the charity, your ID and DBS checks and admin required to onboard you.</p>
+            <p>Thank you for your interest in joining FMS in the pre-hospital team.</p>
+            <p>You must be a UK resident and happy to complete a DBS check to continue.</p>
+            <p class="mb-0">On acceptance of your application (which may take weeks as we only approve when a place becomes available), you will be required to pay a <strong>£30 fee</strong>, which covers 3 years membership of the charity, your ID and DBS checks.</p>
           </div>
 
           <form id="applicationForm">
@@ -221,16 +213,13 @@
               <small class="form-text text-muted">Enter your date of birth</small>
             </div>
 
-            <!-- Volunteering Disclaimer -->
+            <!-- CHANGED: Combined Please Note section (includes volunteering disclaimer + data protection) -->
             <div class="section-divider">
               <div class="info-box">
                 <h5><i class="bi bi-megaphone"></i> Please Note</h5>
-                <p class="mb-0">Being a member of Festival Medical Services does not guarantee a place to volunteer at any specific event. All applications and requests to volunteer are considered on the grounds of qualifications and availability to volunteer at events throughout the season.</p>
+                <p>Being a member of Festival Medical Services does not guarantee a place to volunteer at any specific event. All applications and requests to volunteer are considered on the grounds of qualifications and availability to volunteer at events throughout the season.</p>
+                <p class="mb-0">By submitting your personal information, you give FMS permission to process, screen and store your data for recruitment, ID and DBS checks. Your personal information cannot be submitted without your approval. Your data will not be shared with any other parties except as set out herein. By submitting this application, you hereby agree to these terms and conditions and permit FMS to retain your data and contact details and to notify you of further internal opportunities and events. Unsuccessful applications will be deleted. For further information, please review our <a href="https://www.festival-medical.org" target="_blank">data protection policy</a>.</p>
               </div>
-
-              <p class="form-text mb-4">
-                By submitting your personal information, you give FMS permission to process, screen and store your data for the purposes of recruitment, ID and DBS checks. Your personal information cannot be submitted without your approval. Your data will not be shared with any other parties except as set out herein. By submitting this application, you hereby agree to these terms and conditions and give FMS permission to retain your data and contact details and to notify you of further internal opportunities and events. Applications that are unsuccessful will be deleted. For further information, please review our <a href="https://www.festival-medical.org" target="_blank">data protection policy</a>.
-              </p>
             </div>
 
             <!-- Qualification Section -->
@@ -272,7 +261,7 @@
             <div class="mb-3" id="qualificationUploadSection">
               <label for="qualificationProof" class="form-label required-label">Upload Proof of Qualification</label>
               <input type="file" class="form-control" id="qualificationProof" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
-              <div class="file-info">Please upload a screenshot of HCPC/GMC/NMC registration, your certificate or ID card.  Accepted formats: PDF, Word, JPG, PNG (Max 7.5MB)</div>
+              <div class="file-info">Please upload a screenshot of HCPC/GMC/NMC registration, your certificate or ID card. Accepted formats: PDF, Word, JPG, PNG (Max 7.5MB)</div>
               <div class="progress-container hidden" id="uploadProgressContainer">
                 <div class="progress">
                   <div class="progress-bar bg-success" id="uploadProgressBar" role="progressbar" style="width: 0%"></div>
@@ -281,10 +270,29 @@
               </div>
             </div>
 
-            <!-- DBS/Qualifications Note -->
-            <div class="info-box warning mt-4">
-              <h5><i class="bi bi-shield-check"></i> DBS & Qualifications</h5>
-              <p class="mb-0">Please note that on successful completion of your DBS check we will ask you for full proof of qualifications including copies of certificates, ID etc. If you are unable to supply this you will not be able to volunteer for any events and your membership fee will not be refunded. <strong>Please only continue if you agree to this.</strong></p>
+            <!-- REMOVED: DBS/Qualifications Note section has been removed as requested -->
+
+            <!-- Gift Aid Section -->
+            <div class="section-divider">
+              <div class="info-box">
+                <h5><i class="bi bi-gift"></i> Gift Aid</h5>
+                <p>Gift aid raises more funds for the FMS charity without costing you a penny more. If you are a UK taxpayer we can reclaim the tax on your membership subscriptions. All we need is for you to indicate Yes below.</p>
+                <p class="mb-3"><em>I would like FMS to reclaim the tax on any eligible donations or membership subscriptions that I make until further notice. I confirm that I pay at least as much UK income or capital gains tax as will be reclaimed by all charities on my donations in each tax year.</em></p>
+                <div class="d-flex gap-4">
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="giftAid" id="giftAidYes" value="yes">
+                    <label class="form-check-label" for="giftAidYes">
+                      <strong>Yes</strong>, I am a UK taxpayer and would like FMS to reclaim the tax
+                    </label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="giftAid" id="giftAidNo" value="no" checked>
+                    <label class="form-check-label" for="giftAidNo">
+                      <strong>No</strong>
+                    </label>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- Agreement Checkbox -->
@@ -314,7 +322,7 @@
             <i class="bi bi-check-circle success-icon"></i>
             <h3>Application Submitted!</h3>
             <p class="text-muted">Thank you for your application to join the FMS Prehospital Team.</p>
-            <p>We will review your application and contact you at the email address provided. Please note that this process may take several weeks as we only approve applications when places become available.</p>
+            <p>Please note that this process may take several weeks as we only approve applications when places become available.</p>
             <p><strong>What happens next?</strong></p>
             <p class="text-muted">If your application is successful, you will receive an email with instructions to pay the £30 membership fee and complete the onboarding process.</p>
             <a href="index.html" class="btn btn-primary mt-3">
@@ -477,6 +485,7 @@ qualificationLevel.addEventListener('change', () => {
         const dateOfBirth = document.getElementById('dateOfBirth').value.trim();
         const qualification = qualificationLevel.value;
         const agreeTerms = document.getElementById('agreeTerms').checked;
+        const giftAid = document.querySelector('input[name="giftAid"]:checked').value === 'yes';
 
         // Validation
         if (!firstName || !surname || !email || !mobile || !address || !dateOfBirth || !qualification) {
@@ -521,6 +530,7 @@ if (!nonClinicalRoles.includes(qualification)) {
           dateOfBirth,
           qualificationLevel: qualification,
           qualificationDocument,
+          giftAid,
           status: 'pending',
           submittedAt: serverTimestamp(),
           adminNotes: [],
