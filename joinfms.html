@@ -141,11 +141,20 @@
       justify-content: center;
       margin-bottom: 25px;
     }
+    .video-wrapper {
+      text-align: center;
+    }
     .welcome-video {
       max-width: 280px;
       width: 100%;
       border-radius: 15px;
       box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    }
+    .video-caption {
+      margin-top: 10px;
+      font-size: 0.95rem;
+      color: #028090;
+      font-weight: 500;
     }
     
     /* Green file upload button */
@@ -175,10 +184,13 @@
       <div class="application-body">
         <!-- Welcome Video -->
         <div class="video-container">
-          <video class="welcome-video" controls playsinline poster="">
-            <source src="https://firebasestorage.googleapis.com/v0/b/fmsportal-dbfb3.firebasestorage.app/o/intro.mp4?alt=media" type="video/mp4">
-            Your browser does not support the video tag.
-          </video>
+          <div class="video-wrapper">
+            <video class="welcome-video" controls playsinline poster="">
+              <source src="https://firebasestorage.googleapis.com/v0/b/fmsportal-dbfb3.firebasestorage.app/o/intro.mp4?alt=media" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+            <p class="video-caption">Donna, Prehospital Membership</p>
+          </div>
         </div>
 
         <!-- Alert Container -->
@@ -307,7 +319,7 @@
                     </label>
                   </div>
                   <div class="form-check">
-                    <input class="form-check-input" type="radio" name="giftAid" id="giftAidNo" value="no">
+                    <input class="form-check-input" type="radio" name="giftAid" id="giftAidNo" value="no" checked>
                     <label class="form-check-label" for="giftAidNo">
                       <strong>No</strong>
                     </label>
