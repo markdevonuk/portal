@@ -1,31 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FMS Admin - Delete Profile/Applicant</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Delete Member/Applicant - FMS Prehospital Portal</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="styles.css" rel="stylesheet">
   <style>
-    .page-header { margin-bottom: 30px; }
-    .admin-card {
-      background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
-      border-radius: 15px;
-      padding: 25px;
-      margin-bottom: 20px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    body { background:#f8f9fa; min-height:100vh; }
+    .navbar { 
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); 
+      box-shadow:0 2px 10px rgba(0,0,0,0.1); 
+    }
+    .navbar-brand { color: #fff !important; }
+    .nav-link { color: rgba(255,255,255,.85) !important; font-weight: 500; }
+    .nav-link:hover { color: #fff !important; }
+    .page-header { 
+      background:linear-gradient(135deg,#dc3545 0%,#c82333 100%); 
+      color:#fff; 
+      border-radius:15px; 
+      padding:30px; 
+      margin:30px 0 20px 0; 
+    }
+    .admin-card { 
+      background:#fff; 
+      border-radius:15px; 
+      box-shadow:0 5px 20px rgba(0,0,0,.08); 
+      padding:30px; 
+      margin:20px 0; 
     }
     .danger-zone {
       border: 3px solid #dc3545;
       border-radius: 15px;
       padding: 25px;
-      margin-bottom: 20px;
-      background: linear-gradient(145deg, #fff5f5 0%, #ffe9e9 100%);
+      background: #fff5f5;
     }
-    .btn-loading .spinner { display: inline-block; }
-    .btn-loading .btn-text { display: none; }
-    .spinner { display: none; width: 1rem; height: 1rem; border: 2px solid #fff; border-radius:50%; 
+    .btn-danger { 
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); 
+      border: none; 
+      font-weight: 600; 
+    }
+    .btn-danger:hover { 
+      transform: translateY(-2px); 
+      box-shadow: 0 5px 15px rgba(220,53,69,.4); 
+    }
+    .form-control:focus { 
+      border-color: #dc3545; 
+      box-shadow: 0 0 0 0.2rem rgba(220,53,69,.25); 
+    }
+    .btn-loading { position: relative; pointer-events: none; opacity: .7; }
+    .btn-loading::after { 
+      content:""; position:absolute; width:16px; height:16px; top:50%; left:50%; 
+      margin:-8px 0 0 -8px; border:2px solid #fff; border-radius:50%; 
       border-top-color:transparent; animation:spinner .6s linear infinite; 
     }
     @keyframes spinner { to { transform: rotate(360deg); } }
@@ -135,7 +161,7 @@
   <nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container-fluid">
       <a class="navbar-brand" href="dashboard.html">
-        <i class="bi bi-exclamation-triangle-fill"></i> FMS Admin - Delete Profile/Applicant
+        <i class="bi bi-exclamation-triangle-fill"></i> FMS Admin - Delete Profile
       </a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
@@ -200,7 +226,7 @@
       <small class="form-text text-muted">Type at least 3 characters to start searching. Results show both members and applicants.</small>
     </div>
 
-    <!-- Details Section (Hidden initially) -->
+    <!-- Member Details Section (Hidden initially) -->
     <div id="memberDetailsSection" class="hidden">
       <div class="danger-zone">
         <h4 class="text-danger mb-3">
@@ -208,7 +234,7 @@
         </h4>
         
         <div id="memberDetailsContainer">
-          <!-- Details will be loaded here -->
+          <!-- Member details will be loaded here -->
         </div>
 
         <!-- Warning and Confirmation Section -->
