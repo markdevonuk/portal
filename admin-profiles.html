@@ -337,17 +337,14 @@
       <div class="tab-content" id="profileTabContent">
         <!-- Pending Profiles Tab -->
         <div class="tab-pane fade show active" id="pending-profiles" role="tabpanel" aria-labelledby="pending-tab">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="mb-0">Profiles Awaiting Review</h4>
-            <div class="input-group" style="max-width: 300px;">
-              <span class="input-group-text"><i class="bi bi-search"></i></span>
-              <input type="text" class="form-control" id="pendingSearchInput" placeholder="Search profiles...">
-            </div>
+          <div class="mb-3 mt-3">
+            <input type="text" class="form-control" id="pendingSearchInput" placeholder="Search by name, email or qualification...">
           </div>
-          
           <div id="pendingProfilesContainer">
             <div class="text-center py-4">
-              <div class="spinner-border text-primary" role="status"></div>
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
               <p class="mt-3 text-muted">Loading profiles...</p>
             </div>
           </div>
@@ -355,17 +352,14 @@
         
         <!-- Approved Profiles Tab -->
         <div class="tab-pane fade" id="approved-profiles" role="tabpanel" aria-labelledby="approved-tab">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="mb-0">Approved Profiles</h4>
-            <div class="input-group" style="max-width: 300px;">
-              <span class="input-group-text"><i class="bi bi-search"></i></span>
-              <input type="text" class="form-control" id="approvedSearchInput" placeholder="Search profiles...">
-            </div>
+          <div class="mb-3 mt-3">
+            <input type="text" class="form-control" id="approvedSearchInput" placeholder="Search by name, email or qualification...">
           </div>
-          
           <div id="approvedProfilesContainer">
             <div class="text-center py-4">
-              <div class="spinner-border text-primary" role="status"></div>
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
               <p class="mt-3 text-muted">Loading profiles...</p>
             </div>
           </div>
@@ -373,17 +367,14 @@
         
         <!-- Rejected Profiles Tab -->
         <div class="tab-pane fade" id="rejected-profiles" role="tabpanel" aria-labelledby="rejected-tab">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="mb-0">Rejected Profiles</h4>
-            <div class="input-group" style="max-width: 300px;">
-              <span class="input-group-text"><i class="bi bi-search"></i></span>
-              <input type="text" class="form-control" id="rejectedSearchInput" placeholder="Search profiles...">
-            </div>
+          <div class="mb-3 mt-3">
+            <input type="text" class="form-control" id="rejectedSearchInput" placeholder="Search by name, email or qualification...">
           </div>
-          
           <div id="rejectedProfilesContainer">
             <div class="text-center py-4">
-              <div class="spinner-border text-primary" role="status"></div>
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
               <p class="mt-3 text-muted">Loading profiles...</p>
             </div>
           </div>
@@ -453,6 +444,7 @@
       doc, 
       getDoc,
       updateDoc,
+      addDoc,
       serverTimestamp
     } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
     import { getStorage, ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
@@ -486,33 +478,17 @@
     const alertContainer = document.getElementById('alertContainer');
     const logoutLink = document.getElementById('logoutLink');
     
-    // Store current admin info
-    let currentAdmin = null;
-    
-    // Store current profile being viewed
-    let currentProfileId = null;
-    let currentProfileStatus = null;
-
-    // Store all profiles by status for filtering
+    // Global variables
     let allProfiles = {
       pending: [],
       approved: [],
       rejected: []
     };
+    let currentProfileId = null;
+    let currentProfileStatus = null;
+    let currentAdmin = null;
 
-    // Helper Functions
-    function setButtonLoading(id, loading) {
-      const btn = document.getElementById(id);
-      if (!btn) return;
-      if (loading) {
-        btn.classList.add('btn-loading');
-        btn.disabled = true;
-      } else {
-        btn.classList.remove('btn-loading');
-        btn.disabled = false;
-      }
-    }
-
+    // Show an alert message
     function showAlert(message, type) {
       const html = `
         <div class="alert alert-${type} alert-dismissible fade show" role="alert">
@@ -526,111 +502,81 @@
           const alert = document.querySelector('.alert');
           if (alert) {
             alert.classList.remove('show');
-            setTimeout(() => alert.remove(), 150);
+            setTimeout(() => alertContainer.innerHTML = '', 150);
           }
-        }, 5000);
+        }, 3000);
       }
     }
 
-    // Format date from Firestore timestamp
+    // Set button loading state
+    function setButtonLoading(buttonId, isLoading) {
+      const button = document.getElementById(buttonId);
+      if (!button) return;
+      
+      if (isLoading) {
+        button.classList.add('btn-loading');
+        button.disabled = true;
+      } else {
+        button.classList.remove('btn-loading');
+        button.disabled = false;
+      }
+    }
+
+    // Format a date
     function formatDate(timestamp) {
-      if (!timestamp) return 'N/A';
+      if (!timestamp) return 'Unknown';
       
       let date;
-      if (timestamp.seconds) {
-        // Firestore timestamp
-        date = new Date(timestamp.seconds * 1000);
-      } else if (timestamp.toDate) {
-        // Firestore timestamp object with toDate method
+      if (timestamp.toDate) {
         date = timestamp.toDate();
       } else if (timestamp instanceof Date) {
-        // JavaScript Date object
         date = timestamp;
       } else {
-        // Try to parse as string or number
-        try {
-          date = new Date(timestamp);
-        } catch (e) {
-          return 'N/A';
-        }
-      }
-      
-      if (isNaN(date.getTime())) {
-        return 'N/A';
+        date = new Date(timestamp);
       }
       
       return date.toLocaleDateString('en-GB', {
-        day: '2-digit',
+        day: 'numeric',
         month: 'short',
         year: 'numeric'
-      }) + ' ' + date.toLocaleTimeString('en-GB', { 
-        hour: '2-digit', 
-        minute: '2-digit'
       });
     }
     
-    // Check if file is an image
-    function isImageFile(fileName) {
-      if (!fileName) return false;
-      const extension = fileName.split('.').pop().toLowerCase();
-      return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension);
-    }
-
-    // Check if file is a document
-    function isDocFile(fileName) {
-      if (!fileName) return false;
-      const extension = fileName.split('.').pop().toLowerCase();
-      return ['pdf', 'doc', 'docx'].includes(extension);
-    }
-
-    // Get file icon based on extension
+    // Get file icon based on name
     function getFileIcon(fileName) {
-      if (!fileName) return 'bi-file-earmark';
-      const extension = fileName.split('.').pop().toLowerCase();
-      if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension)) {
-        return 'bi-file-earmark-image';
-      } else if (extension === 'pdf') {
-        return 'bi-file-earmark-pdf';
-      } else if (['doc', 'docx'].includes(extension)) {
-        return 'bi-file-earmark-word';
-      } else {
-        return 'bi-file-earmark';
-      }
-    }
-
-    // Format file size
-    function formatFileSize(bytes) {
-      if (!bytes) return 'Unknown size';
-      if (bytes < 1024) {
-        return bytes + ' B';
-      } else if (bytes < 1024 * 1024) {
-        return (bytes / 1024).toFixed(1) + ' KB';
-      } else {
-        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-      }
+      const ext = fileName.split('.').pop().toLowerCase();
+      const iconMap = {
+        'pdf': 'bi-file-earmark-pdf',
+        'jpg': 'bi-file-earmark-image',
+        'jpeg': 'bi-file-earmark-image',
+        'png': 'bi-file-earmark-image',
+        'gif': 'bi-file-earmark-image',
+        'doc': 'bi-file-earmark-word',
+        'docx': 'bi-file-earmark-word'
+      };
+      return iconMap[ext] || 'bi-file-earmark';
     }
     
     // Preview document
     function previewDocument(url, name, type) {
-      // Set document title
-      document.getElementById('documentPreviewModalLabel').textContent = name || 'Document';
-      
       // Set download button
       downloadDocBtn.href = url;
-      downloadDocBtn.setAttribute('download', name || 'document');
+      downloadDocBtn.setAttribute('download', name);
       
-      // Clear previous content
-      documentPreviewContent.innerHTML = '';
+      // Set modal title
+      document.getElementById('documentPreviewModalLabel').textContent = name;
       
-      // Check if it's an image
-      if (type && type.startsWith('image/')) {
+      // Determine content type and render preview
+      const ext = name.split('.').pop().toLowerCase();
+      
+      if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext) || type === 'image') {
         // Image preview
         documentPreviewContent.innerHTML = `
           <div class="text-center">
-            <img src="${url}" class="img-fluid" alt="${name}" style="max-height: 60vh;">
+            <img src="${url}" alt="${name}" style="max-width: 100%; max-height: 70vh; border-radius: 10px;">
           </div>
         `;
-      } else if (type === 'application/pdf') {
+      } else if (ext === 'pdf' || type === 'pdf') {
         // PDF preview
         documentPreviewContent.innerHTML = `
           <div class="ratio ratio-16x9" style="height: 60vh;">
@@ -739,46 +685,46 @@ allProfiles.rejected.sort((a, b) => {
         displayProfiles('pending', allProfiles.pending);
         displayProfiles('approved', allProfiles.approved);
         displayProfiles('rejected', allProfiles.rejected);
-        
       } catch (error) {
         console.error('Error loading profiles:', error);
         showAlert('Error loading profiles: ' + error.message, 'danger');
       }
     }
 
-    // Display profiles by status
+    // Display profiles in the appropriate container
     function displayProfiles(status, profiles) {
-      const container = document.getElementById(`${status}ProfilesContainer`);
+      let container;
+      switch (status) {
+        case 'pending':
+          container = pendingProfilesContainer;
+          break;
+        case 'approved':
+          container = approvedProfilesContainer;
+          break;
+        case 'rejected':
+          container = rejectedProfilesContainer;
+          break;
+      }
       
       if (profiles.length === 0) {
-        container.innerHTML = `<div class="alert alert-info">No ${status} profiles found</div>`;
+        container.innerHTML = `
+          <div class="text-center py-4">
+            <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+            <p class="mt-3 text-muted">No ${status} profiles</p>
+          </div>
+        `;
         return;
       }
       
       let html = '';
-      
       profiles.forEach(profile => {
-        const userName = `${profile.userInfo.firstName} ${profile.userInfo.surname}`;
-        const qualification = profile.medicalQualifications?.qualification || 'Not specified';
-        const submittedDate = formatDate(profile.submission?.submittedAt);
-        const hasPhoto = profile.profilePhotoURL ? true : false;
-        
         html += `
           <div class="profile-card">
             <div class="profile-info">
-              <div class="user-info">
-                ${hasPhoto ? 
-                  `<div class="user-avatar"><img src="${profile.profilePhotoURL}" alt="${userName}" width="50" height="50" style="object-fit: cover;"></div>` : 
-                  `<div class="user-avatar bg-light text-muted d-flex align-items-center justify-content-center"><i class="bi bi-person"></i></div>`
-                }
-                <div class="profile-details">
-                  <h5>${userName}</h5>
-                  <p>
-                    <i class="bi bi-envelope"></i> ${profile.userInfo.email}<br>
-                    <i class="bi bi-mortarboard"></i> ${qualification}
-                  </p>
-                  <small class="text-muted">Submitted: ${submittedDate}</small>
-                </div>
+              <div class="profile-details">
+                <h5>${profile.userInfo.firstName} ${profile.userInfo.surname}</h5>
+                <p><i class="bi bi-envelope"></i> ${profile.userInfo.email || 'No email'}</p>
+                <p><i class="bi bi-briefcase-fill"></i> ${profile.medicalQualifications?.qualification || 'Not specified'}</p>
               </div>
               <div class="profile-actions">
                 <span class="${status}-badge">
@@ -870,8 +816,9 @@ async function openProfileModal(userId) {
         </div>
         <div class="col-md-9">
           <h4>${userData.firstName || ''} ${userData.surname || ''}</h4>
-          <p class="text-muted"><i class="bi bi-envelope"></i> ${userData.email || 'No email available'}</p>
-          <div class="${currentProfileStatus}-badge d-inline-block px-3 py-1 mt-2">
+          <p class="text-muted mb-1"><i class="bi bi-envelope"></i> ${userData.email || 'No email available'}</p>
+          <p class="text-muted mb-2"><i class="bi bi-telephone"></i> ${userData.mobile || 'No mobile provided'}</p>
+          <div class="profile-status ${currentProfileStatus}-badge d-inline-block px-3 py-1">
             <i class="bi bi-${currentProfileStatus === 'pending' ? 'hourglass-split' : (currentProfileStatus === 'approved' ? 'check-circle' : 'x-circle')}"></i> 
             ${currentProfileStatus.charAt(0).toUpperCase() + currentProfileStatus.slice(1)}
           </div>
@@ -879,143 +826,98 @@ async function openProfileModal(userId) {
       </div>
       
       <div class="profile-section">
-        <h5><i class="bi bi-person-fill"></i> Personal Details</h5>
+        <h5><i class="bi bi-person-badge"></i> Personal Details</h5>
         <div class="row">
           <div class="col-md-6 mb-2">
             <span class="profile-label">Date of Birth:</span>
-            <span>${profile.personalDetails && profile.personalDetails.DOB ? formatDate(profile.personalDetails.DOB) : 'Not provided'}</span>
+            <span>${profile.personalDetails?.DOB ? formatDate(profile.personalDetails.DOB) : 'Not provided'}</span>
           </div>
           <div class="col-md-6 mb-2">
             <span class="profile-label">Emergency Contact:</span>
-            <span>${profile.personalDetails && profile.personalDetails.emergencyContact ? profile.personalDetails.emergencyContact : 'Not provided'}</span>
+            <span>${profile.personalDetails?.emergencyContact || 'Not provided'}</span>
           </div>
         </div>
       </div>
       
       <div class="profile-section">
-        <h5><i class="bi bi-car-front-fill"></i> Driving Details</h5>
+        <h5><i class="bi bi-car-front"></i> Driving Information</h5>
         <div class="row">
+          <div class="col-md-6 mb-2">
+            <span class="profile-label">DL Number:</span>
+            <span>${profile.driving?.dlNumber || 'Not provided'}</span>
+          </div>
           <div class="col-md-6 mb-2">
             <span class="profile-label">C1 Classification:</span>
-            <span>${profile.driving && profile.driving.c1Classification ? 'Yes' : 'No'}</span>
+            <span>${profile.driving?.c1Classification ? 'Yes' : 'No'}</span>
           </div>
           <div class="col-md-6 mb-2">
-            <span class="profile-label">Driving License Number:</span>
-            <span>${profile.driving && profile.driving.dlNumber ? profile.driving.dlNumber : 'Not provided'}</span>
-          </div>
-          
-          <div class="col-md-6 mb-2">
-            <span class="profile-label">License Points:</span>
-            <span>${profile.driving && profile.driving.points ? profile.driving.points : 'Not provided'}</span>
+            <span class="profile-label">Points:</span>
+            <span>${profile.driving?.points || '0'}</span>
           </div>
         </div>
       </div>
       
       <div class="profile-section">
-        <h5><i class="bi bi-award"></i> Qualifications</h5>
+        <h5><i class="bi bi-award"></i> Medical Qualifications</h5>
         <div class="row">
           <div class="col-md-6 mb-2">
-            <span class="profile-label">Main Qualification:</span>
-            <span>${profile.medicalQualifications && profile.medicalQualifications.qualification ? profile.medicalQualifications.qualification : 'Not provided'}</span>
+            <span class="profile-label">Qualification:</span>
+            <span>${profile.medicalQualifications?.qualification || 'Not provided'}</span>
           </div>
-    `;
-    
-    // Conditionally show appropriate registration based on qualification
-    const qualification = profile.medicalQualifications && profile.medicalQualifications.qualification ? profile.medicalQualifications.qualification : '';
-    
-    if (['Paramedic', 'Paramedic (Specialist)', 'Paramedic (HART)', 
-         'Paramedic (Critical care)', 'Paramedic (in Primary Care)', 
-         'Paramedic (CTM/OO)'].includes(qualification)) {
-      html += `
           <div class="col-md-6 mb-2">
-            <span class="profile-label">HCPC Registration:</span>
-            <span>${profile.medicalQualifications && profile.medicalQualifications.hcpc ? profile.medicalQualifications.hcpc : 'Not provided'}</span>
+            <span class="profile-label">HCPC Number:</span>
+            <span>${profile.medicalQualifications?.hcpc || 'Not provided'}</span>
           </div>
-      `;
-    } else if (['Doctor', 'Doctor (Critical Care/BASICS/Merit)', 
-                'Doctor (with FREC/PHTLS or similar)'].includes(qualification)) {
-      html += `
           <div class="col-md-6 mb-2">
-            <span class="profile-label">GMC Registration:</span>
-            <span>${profile.medicalQualifications && profile.medicalQualifications.gmc ? profile.medicalQualifications.gmc : 'Not provided'}</span>
+            <span class="profile-label">GMC Number:</span>
+            <span>${profile.medicalQualifications?.gmc || 'Not provided'}</span>
           </div>
-      `;
-    } else if (['Nurse', 'Nurse (Ambulance Nurse)', 
-                'Nurse (with FREC/PHTLS or similar)'].includes(qualification)) {
-      html += `
           <div class="col-md-6 mb-2">
-            <span class="profile-label">NMC Registration:</span>
-            <span>${profile.medicalQualifications && profile.medicalQualifications.nmc ? profile.medicalQualifications.nmc : 'Not provided'}</span>
+            <span class="profile-label">NMC Number:</span>
+            <span>${profile.medicalQualifications?.nmc || 'Not provided'}</span>
           </div>
-      `;
-    }
-    
-    // Certificate Expiry if applicable
-    if (['FREC 3 (or similar level 3 certification)', 'FREC 4', 'PHTLS', 'Nurse (with FREC/PHTLS or similar)']
-         .includes(qualification)) {
-      html += `
           <div class="col-md-6 mb-2">
-            <span class="profile-label">Certificate Expiry:</span>
-            <span>${profile.medicalQualifications && profile.medicalQualifications.certExpiry ? formatDate(profile.medicalQualifications.certExpiry) : 'Not provided'}</span>
+            <span class="profile-label">Cert Expiry:</span>
+            <span>${profile.medicalQualifications?.certExpiry ? formatDate(profile.medicalQualifications.certExpiry) : 'Not provided'}</span>
           </div>
-      `;
-    }
-    
-    // Complete the qualifications section
-    html += `
-          <div class="col-12">
-            <span class="profile-label">Details:</span>
-            <p class="mt-1">${profile.medicalQualifications && profile.medicalQualifications.details ? profile.medicalQualifications.details : 'Not provided'}</p>
+          <div class="col-12 mb-2">
+            <span class="profile-label">Other Details:</span>
+            <span>${profile.medicalQualifications?.details || 'None provided'}</span>
           </div>
         </div>
-      </div>
     `;
     
-    // Add qualification document section
-    html += `
-      <div class="profile-section">
-        <h5><i class="bi bi-file-earmark-text"></i> Qualification Documents</h5>
-    `;
-    
+    // Add qualification document if exists
     if (profile.qualificationDocURL) {
-      const docName = profile.qualificationDocName || 'Document';
-      const docType = profile.qualificationDocType || 'application/octet-stream';
-      const docSize = profile.qualificationDocSize || 0;
-      
       html += `
         <div class="doc-preview">
-          <i class="bi ${getFileIcon(docName)} doc-preview-icon"></i>
+          <i class="bi ${getFileIcon(profile.qualificationDocName || 'document')} doc-preview-icon"></i>
           <div class="doc-preview-info">
-            <div class="fw-bold">${docName}</div>
-            <small class="text-muted">${formatFileSize(docSize)}</small>
+            <strong>${profile.qualificationDocName || 'Qualification Document'}</strong>
+            <br><small class="text-muted">Click to preview</small>
           </div>
           <div class="doc-preview-actions">
-            <button type="button" class="btn btn-sm btn-primary view-doc-btn" 
+            <button class="btn btn-outline-primary btn-sm view-doc-btn" 
                     data-url="${profile.qualificationDocURL}" 
-                    data-name="${docName}"
-                    data-type="${docType}">
+                    data-name="${profile.qualificationDocName || 'document'}"
+                    data-type="${profile.qualificationDocType || 'unknown'}">
               <i class="bi bi-eye"></i> View
             </button>
           </div>
         </div>
       `;
-    } else {
-      html += `
-        <div class="alert alert-info">
-          <i class="bi bi-info-circle"></i> No qualification documents uploaded
-        </div>
-      `;
     }
     
+    html += `</div>`;
+    
+    // Add submission info
     html += `
-      </div>
-      
       <div class="profile-section">
-        <h5><i class="bi bi-clock-history"></i> Submission Details</h5>
+        <h5><i class="bi bi-send"></i> Submission Info</h5>
         <div class="row">
           <div class="col-md-6 mb-2">
             <span class="profile-label">Agreed to Terms:</span>
-            <span>${profile.submission && profile.submission.agreedToTerms ? 'Yes' : 'No'}</span>
+            <span>${profile.submission?.agreedToTerms ? 'Yes' : 'No'}</span>
           </div>
           <div class="col-md-6 mb-2">
             <span class="profile-label">Submitted Date:</span>
@@ -1253,11 +1155,41 @@ async function openProfileModal(userId) {
           await reviewProfile(currentProfileId, status, note);
         }
         
+        // Send approval email if approved
+        if (status === 'approved') {
+          try {
+            // Get user's email and first name from users collection
+            const userDoc = await getDoc(doc(db, 'users', currentProfileId));
+            if (userDoc.exists()) {
+              const userData = userDoc.data();
+              const userEmail = userData.email;
+              const firstName = userData.firstName || 'Member';
+              
+              // Send approval notification email
+              await addDoc(collection(db, 'mail'), {
+                to: userEmail,
+                message: {
+                  subject: 'FMS Profile Approved',
+                  html: `<p>Dear ${firstName},</p>
+<p>Congratulations, your FMS profile has been reviewed and approved by a Team Leader, allowing you to return to the web app at <a href="https://portal.fmsprehospital.co.uk/">https://portal.fmsprehospital.co.uk/</a> and sign in to view available events and volunteer for those you are interested in attending.</p>
+<p>You can also edit your profile if needed (for example, if you update your main qualification).</p>
+<p>The prehospital team look forward to seeing you at an event very soon.</p>
+<p>Prehospital Team Leaders<br>prehospital@festival-medical.org</p>`
+                }
+              });
+              console.log('Approval email sent to:', userEmail);
+            }
+          } catch (emailError) {
+            console.error('Error sending approval email:', emailError);
+            // Don't fail the whole operation if email fails
+          }
+        }
+        
         // Hide modal
         profileModal.hide();
         
         // Show success message
-        showAlert(`Profile ${status} successfully!`, 'success');
+        showAlert(`Profile ${status} successfully!${status === 'approved' ? ' Notification email sent.' : ''}`, 'success');
         
         // Reload profiles
         await loadAllProfiles();

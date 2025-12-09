@@ -50,58 +50,67 @@
     }
     @keyframes spinner { to { transform: rotate(360deg); } }
     .hidden { display: none; }
-    .section-title {
-      border-bottom: 2px solid #00a896;
-      padding-bottom: 10px;
-      margin-bottom: 20px;
-      color: #028090;
-    }
     .form-section {
-      margin-bottom: 30px;
-    }
-    .profile-status {
-      padding: 15px;
-      border-radius: 10px;
-    }
-    .status-pending { background: #fff3cd; color: #856404; }
-    .status-approved { background: #d1e7dd; color: #155724; }
-    .status-rejected { background: #f8d7da; color: #721c24; }
-    .form-check-input:checked {
-      background-color: #00a896;
-      border-color: #00a896;
-    }
-    .profile-notes {
-      background: #f8f9fa;
-      border-radius: 5px;
-      padding: 15px;
-      margin-top: 15px;
-      font-style: italic;
-      white-space: pre-line;
-    }
-    .user-info {
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,.08);
+      padding: 25px;
       margin-bottom: 20px;
+    }
+    .section-title {
+      color: #00a896;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e9ecef;
     }
     .profile-photo {
-      width: 150px;
-      height: 150px;
+      width: 120px;
+      height: 120px;
       object-fit: cover;
       border-radius: 10px;
       border: 3px solid #00a896;
-      margin: 0 auto 15px;
-      display: block;
     }
     .profile-photo-placeholder {
-      width: 150px;
-      height: 150px;
+      width: 120px;
+      height: 120px;
       border-radius: 10px;
       border: 3px solid #e9ecef;
-      margin: 0 auto 15px;
       display: flex;
       align-items: center;
       justify-content: center;
       background: #f8f9fa;
       color: #adb5bd;
-      font-size: 2.5rem;
+      font-size: 2rem;
+    }
+    .user-info {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .profile-status {
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .status-pending {
+      background: #fff3cd;
+      color: #856404;
+    }
+    .status-approved {
+      background: #d1e7dd;
+      color: #155724;
+    }
+    .status-rejected {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    .profile-notes {
+      background: #f8f9fa;
+      border-radius: 5px;
+      padding: 15px;
+      margin-top: 10px;
+      font-style: italic;
+      white-space: pre-line;
     }
     .doc-preview {
       display: flex;
@@ -167,140 +176,104 @@
       <!-- User Info Section -->
       <div class="user-info" id="userInfoSection">
         <div class="text-center py-4">
-          <div class="spinner-border text-primary" role="status"></div>
-          <p class="mt-3 text-muted">Loading user information...</p>
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-3 text-muted">Loading profile...</p>
         </div>
       </div>
-
+      
       <!-- Profile Form -->
       <form id="profileForm">
         <!-- Personal Details Section -->
         <div class="form-section">
-          <h3 class="section-title"><i class="bi bi-person-fill"></i> Personal Details</h3>
+          <h3 class="section-title"><i class="bi bi-person-badge"></i> Personal Details</h3>
           
-          <div class="mb-3">
-            <label class="form-label">Date of birth <span class="text-danger">*</span></label>
-            <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Date of Birth <span class="text-danger">*</span></label>
               <input type="text" class="form-control" id="dob" name="dob" placeholder="DD/MM/YYYY" required>
             </div>
-            <small class="form-text text-muted">Select date of birth</small>
-          </div>
-          
-          <div class="mb-3">
-            <label class="form-label">Emergency contact <span class="text-danger">*</span></label>
-            <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-telephone"></i></span>
-              <input type="text" class="form-control" id="emergencyContact" name="emergencyContact" placeholder="Name & phone number" required>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Emergency Contact <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="emergencyContact" name="emergencyContact" placeholder="Name and phone number" required>
             </div>
-            <small class="form-text text-muted">Provide a name and contact number</small>
           </div>
         </div>
         
-        <!-- Driving Details Section -->
+        <!-- Driving Section -->
         <div class="form-section">
-          <h3 class="section-title"><i class="bi bi-car-front-fill"></i> Driving Details</h3>
-          <div class="alert alert-info">
-            <i class="bi bi-info-circle"></i> Optional, but required to drive FMS vehicles. By completing, user agrees that FMS can carry out driving licence checks.
-          </div>
+          <h3 class="section-title"><i class="bi bi-car-front"></i> Driving Information</h3>
           
-          <div class="mb-3">
-            <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" id="c1Classification" name="c1Classification">
-              <label class="form-check-label" for="c1Classification">Has a C1 classification on driving licence</label>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Driving Licence Number</label>
+              <input type="text" class="form-control" id="dlNumber" name="dlNumber" placeholder="DL number">
             </div>
-          </div>
-          
-          <div class="mb-3">
-            <label class="form-label">Driving licence number</label>
-            <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-credit-card-2-front"></i></span>
-              <input type="text" class="form-control" id="dlNumber" name="dlNumber" placeholder="e.g. SMITH601014ABCDE">
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Points</label>
+              <input type="text" class="form-control" id="points" name="points" placeholder="0">
             </div>
-          </div>
-          
-        
-          
-          <div class="mb-3">
-            <label class="form-label">Licence points</label>
-            <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-exclamation-triangle"></i></span>
-              <input type="text" class="form-control" id="points" name="points" placeholder="e.g. 0, 3, etc.">
+            <div class="col-md-3 mb-3">
+              <label class="form-label d-block">&nbsp;</label>
+              <div class="form-check mt-2">
+                <input type="checkbox" class="form-check-input" id="c1Classification" name="c1Classification">
+                <label class="form-check-label" for="c1Classification">C1 Classification</label>
+              </div>
             </div>
           </div>
         </div>
         
         <!-- Medical Qualifications Section -->
         <div class="form-section">
-          <h3 class="section-title"><i class="bi bi-award"></i> Qualifications</h3>
+          <h3 class="section-title"><i class="bi bi-award"></i> Medical Qualifications</h3>
           
-          <div class="mb-4">
-            <label class="form-label">Main qualification <span class="text-danger">*</span></label>
-            <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-mortarboard"></i></span>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Qualification <span class="text-danger">*</span></label>
               <select class="form-select" id="qualification" name="qualification" required>
-                <option value="">Select main qualification</option>
-  <option value="Make Ready">Make Ready (with no clinical certification)</option>
-  <option value="Medcomms">Medcomms (with no clinical certification)</option>
-  <option value="Non Clinical">Non Clinical (other)</option>
-                <option value="AAP">AAP</option>
-                <option value="CFR">CFR</option>
-                <option value="Doctor">Doctor</option>
-                <option value="Doctor (Critical Care/BASICS/Merit)">Doctor (Critical Care/BASICS/Merit)</option>
-                <option value="Doctor (with FREC/PHTLS or similar)">Doctor (with FREC/PHTLS or similar)</option>
-                <option value="EAA">EAA</option>
-                <option value="ECA">ECA</option>
-                <option value="FREC 3 (or similar level 3 certification)">FREC 3 (or similar level 3 certification)</option>
-                <option value="FREC 4">FREC 4</option>
-                <option value="Nurse">Nurse</option>
-                <option value="Nurse (Ambulance Nurse)">Nurse (Ambulance Nurse)</option>
-                <option value="Nurse (with FREC/PHTLS or similar)">Nurse (with FREC/PHTLS or similar)</option>
+                <option value="">Select qualification...</option>
                 <option value="Paramedic">Paramedic</option>
-                <option value="Paramedic (Critical care)">Paramedic (Critical care)</option>
-                <option value="Paramedic (CTM/OO)">Paramedic (CTM/OO)</option>
-                <option value="Paramedic (HART)">Paramedic (HART)</option>
-                <option value="Paramedic (in Primary Care)">Paramedic (in Primary Care)</option>
-                <option value="Paramedic (Specialist)">Paramedic (Specialist)</option>
-                <option value="PHTLS">PHTLS</option>
-                <option value="Student Paramedic (Year 2)">Student Paramedic (Year 2)</option>
-                <option value="Student Paramedic (Year 3)">Student Paramedic (Year 3)</option>
+                <option value="Doctor">Doctor</option>
+                <option value="Nurse">Nurse</option>
                 <option value="Technician">Technician</option>
+                <option value="ECA">ECA</option>
+                <option value="CFR">CFR</option>
+                <option value="Make Ready">Make Ready</option>
+                <option value="Medcomms">Medcomms</option>
+                <option value="Non-Clinical">Non-Clinical</option>
               </select>
             </div>
           </div>
           
-          <!-- HCPC Registration (conditional) -->
-          <div class="mb-3 hidden" id="hcpcSection">
-            <label class="form-label">HCPC Registration <span class="text-danger">*</span></label>
-            <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-card-text"></i></span>
-              <input type="text" class="form-control" id="hcpc" name="hcpc" placeholder="HCPC registration number">
+          <!-- HCPC -->
+          <div class="row" id="hcpcSection">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">HCPC Number</label>
+              <input type="text" class="form-control" id="hcpc" name="hcpc" placeholder="HCPC registration">
             </div>
           </div>
           
-          <!-- GMC Registration (conditional) -->
-          <div class="mb-3 hidden" id="gmcSection">
-            <label class="form-label">GMC Registration <span class="text-danger">*</span></label>
-            <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-card-text"></i></span>
-              <input type="text" class="form-control" id="gmc" name="gmc" placeholder="GMC registration number">
+          <!-- GMC -->
+          <div class="row" id="gmcSection">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">GMC Number</label>
+              <input type="text" class="form-control" id="gmc" name="gmc" placeholder="GMC registration">
             </div>
           </div>
           
-          <!-- NMC Registration (conditional) -->
-          <div class="mb-3 hidden" id="nmcSection">
-            <label class="form-label">NMC Registration <span class="text-danger">*</span></label>
-            <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-card-text"></i></span>
-              <input type="text" class="form-control" id="nmc" name="nmc" placeholder="NMC registration number">
+          <!-- NMC -->
+          <div class="row" id="nmcSection">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">NMC Number</label>
+              <input type="text" class="form-control" id="nmc" name="nmc" placeholder="NMC registration">
             </div>
           </div>
           
-          <!-- Certificate Expiry (conditional) -->
-          <div class="mb-3 hidden" id="certExpirySection">
-            <label class="form-label">Certificate expiry date <span class="text-danger">*</span></label>
-            <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+          <!-- Cert Expiry -->
+          <div class="row" id="certExpirySection">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Certificate Expiry Date</label>
               <input type="text" class="form-control" id="certExpiry" name="certExpiry" placeholder="DD/MM/YYYY">
             </div>
           </div>
@@ -362,9 +335,11 @@
     import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
     import { 
       getFirestore, 
+      collection,
       doc, 
       getDoc, 
-      updateDoc, 
+      updateDoc,
+      addDoc,
       serverTimestamp 
     } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
     import { getStorage, ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
@@ -411,223 +386,110 @@
     let currentProfile = null;
     let currentUser = null;
 
-    // Initialize Flatpickr date pickers
-    flatpickr("#dob", {
-      dateFormat: "d/m/Y",
-      maxDate: new Date() // Can't select future dates
-    });
-    
-    flatpickr("#certExpiry", {
-      dateFormat: "d/m/Y",
-      minDate: new Date() // Can't select past dates
-    });
-    
-// Check if this is a mobile device
-const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-// Initialize date fields based on device type
-if (isMobile) {
-  // For mobile devices, use native date inputs
-  const dobInput = document.getElementById('dob');
-  const certExpiryInput = document.getElementById('certExpiry');
-  
-  dobInput.type = "date";
-  certExpiryInput.type = "date";
-  
-  // Disable flatpickr for mobile
-  dobInput.classList.add('native-date-input');
-  certExpiryInput.classList.add('native-date-input');
-} else {
-  // For desktop, use flatpickr
-  flatpickr("#dob", {
-    dateFormat: "d/m/Y",
-    maxDate: new Date() // Can't select future dates
-  });
-  
-  flatpickr("#certExpiry", {
-    dateFormat: "d/m/Y",
-    minDate: new Date() // Can't select past dates
-  });
-}
-
-    // Helper Functions
-    function setButtonLoading(id, loading) {
-      const btn = document.getElementById(id);
-      if (!btn) return;
-      if (loading) {
-        btn.classList.add('btn-loading');
-        btn.disabled = true;
-      } else {
-        btn.classList.remove('btn-loading');
-        btn.disabled = false;
-      }
-    }
-
+    // Show an alert message
     function showAlert(message, type) {
+      const alertContainer = document.getElementById('alertContainer');
       const html = `
         <div class="alert alert-${type} alert-dismissible fade show" role="alert">
           ${message}
           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>`;
-      document.getElementById('alertContainer').innerHTML = html;
+      alertContainer.innerHTML = html;
       
       if (type === 'success') {
         setTimeout(() => {
           const alert = document.querySelector('.alert');
           if (alert) {
             alert.classList.remove('show');
-            setTimeout(() => alert.remove(), 150);
+            setTimeout(() => alertContainer.innerHTML = '', 150);
           }
-        }, 5000);
+        }, 3000);
       }
     }
 
-    // Format date from Firestore timestamp
+    // Set button loading state
+    function setButtonLoading(buttonId, isLoading) {
+      const button = document.getElementById(buttonId);
+      if (!button) return;
+      
+      if (isLoading) {
+        button.classList.add('btn-loading');
+        button.disabled = true;
+      } else {
+        button.classList.remove('btn-loading');
+        button.disabled = false;
+      }
+    }
+
+    // Format a date
     function formatDate(timestamp) {
       if (!timestamp) return '';
       
       let date;
-      if (timestamp.seconds) {
-        // Firestore timestamp
-        date = new Date(timestamp.seconds * 1000);
-      } else if (timestamp.toDate) {
-        // Firestore timestamp object with toDate method
+      if (timestamp.toDate) {
         date = timestamp.toDate();
       } else if (timestamp instanceof Date) {
-        // JavaScript Date object
         date = timestamp;
       } else {
-        // Try to parse as string or number
-        try {
-          date = new Date(timestamp);
-        } catch (e) {
-          return '';
-        }
+        date = new Date(timestamp);
       }
       
-      if (isNaN(date.getTime())) {
-        return '';
-      }
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
       
-      return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+      return `${day}/${month}/${year}`;
     }
     
-    // Format date for display
-    function formatDisplayDate(timestamp) {
-      if (!timestamp) return 'N/A';
-      
-      let date;
-      if (timestamp.seconds) {
-        // Firestore timestamp
-        date = new Date(timestamp.seconds * 1000);
-      } else if (timestamp.toDate) {
-        // Firestore timestamp object with toDate method
-        date = timestamp.toDate();
-      } else if (timestamp instanceof Date) {
-        // JavaScript Date object
-        date = timestamp;
-      } else {
-        // Try to parse as string or number
-        try {
-          date = new Date(timestamp);
-        } catch (e) {
-          return 'N/A';
-        }
-      }
-      
-      if (isNaN(date.getTime())) {
-        return 'N/A';
-      }
-      
-      return date.toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      }) + ' ' + date.toLocaleTimeString('en-GB', { 
-        hour: '2-digit', 
-        minute: '2-digit'
-      });
-    }
-
     // Parse date string to Date object
     function parseDateString(dateStr) {
       if (!dateStr) return null;
       
-      // Parse UK format date (DD/MM/YYYY)
+      // Handle DD/MM/YYYY format
       const parts = dateStr.split('/');
-      if (parts.length !== 3) return null;
+      if (parts.length === 3) {
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const year = parseInt(parts[2], 10);
+        return new Date(year, month, day);
+      }
       
-      const day = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1; // Months are 0-based
-      const year = parseInt(parts[2], 10);
-      
-      return new Date(year, month, day);
+      return null;
     }
     
-    // Check if file is an image
-    function isImageFile(fileName) {
-      if (!fileName) return false;
-      const extension = fileName.split('.').pop().toLowerCase();
-      return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension);
-    }
-
-    // Get file icon based on extension
-    function getFileIcon(fileName) {
-      if (!fileName) return 'bi-file-earmark';
-      const extension = fileName.split('.').pop().toLowerCase();
-      if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension)) {
-        return 'bi-file-earmark-image';
-      } else if (extension === 'pdf') {
-        return 'bi-file-earmark-pdf';
-      } else if (['doc', 'docx'].includes(extension)) {
-        return 'bi-file-earmark-word';
-      } else {
-        return 'bi-file-earmark';
-      }
-    }
-
-    // Show/hide registration fields based on qualification
-    qualification.addEventListener('change', function() {
-      const value = this.value;
+    // Show/hide qualification fields based on selection
+    function updateQualificationFields() {
+      const qual = qualification.value;
       
-      // Reset all sections to hidden
+      // Hide all by default
       hcpcSection.classList.add('hidden');
       gmcSection.classList.add('hidden');
       nmcSection.classList.add('hidden');
       certExpirySection.classList.add('hidden');
       
-      // Remove required attribute from all registration inputs
-      document.getElementById('hcpc').removeAttribute('required');
-      document.getElementById('gmc').removeAttribute('required');
-      document.getElementById('nmc').removeAttribute('required');
-      document.getElementById('certExpiry').removeAttribute('required');
-      
-      // Show appropriate sections based on qualification
-      if (['Paramedic', 'Paramedic (Specialist)', 'Paramedic (HART)', 
-           'Paramedic (Critical care)', 'Paramedic (in Primary Care)', 
-           'Paramedic (CTM/OO)'].includes(value)) {
-        hcpcSection.classList.remove('hidden');
-        document.getElementById('hcpc').setAttribute('required', 'required');
-      } else if (['Doctor', 'Doctor (Critical Care/BASICS/Merit)', 
-                  'Doctor (with FREC/PHTLS or similar)'].includes(value)) {
-        gmcSection.classList.remove('hidden');
-        document.getElementById('gmc').setAttribute('required', 'required');
-      } else if (['Nurse', 'Nurse (Ambulance Nurse)', 
-                  'Nurse (with FREC/PHTLS or similar)'].includes(value)) {
-        nmcSection.classList.remove('hidden');
-        document.getElementById('nmc').setAttribute('required', 'required');
-        
-        if (value === 'Nurse (with FREC/PHTLS or similar)') {
+      // Show relevant fields based on qualification
+      switch (qual) {
+        case 'Paramedic':
+        case 'Technician':
+          hcpcSection.classList.remove('hidden');
+          break;
+        case 'Doctor':
+          gmcSection.classList.remove('hidden');
+          break;
+        case 'Nurse':
+          nmcSection.classList.remove('hidden');
+          break;
+        case 'ECA':
+        case 'CFR':
           certExpirySection.classList.remove('hidden');
-          document.getElementById('certExpiry').setAttribute('required', 'required');
-        }
-      } else if (['FREC 3 (or similar level 3 certification)', 'FREC 4', 'PHTLS'].includes(value)) {
-        certExpirySection.classList.remove('hidden');
-        document.getElementById('certExpiry').setAttribute('required', 'required');
+          break;
       }
-    });
-
-    // Load user profile data
+    }
+    
+    // Add event listener for qualification change
+    qualification.addEventListener('change', updateQualificationFields);
+    
+    // Load user profile
     async function loadUserProfile() {
       if (!userId) {
         showAlert('No user ID provided. Please go back to the profiles page.', 'danger');
@@ -703,82 +565,29 @@ if (isMobile) {
       if (!currentProfile) return;
       
       // Personal Details
-if (currentProfile.personalDetails) {
-  if (currentProfile.personalDetails.DOB) {
-    const dobInput = document.getElementById('dob');
-    
-    // Convert timestamp to date string
-    let date;
-    if (currentProfile.personalDetails.DOB.seconds) {
-      date = new Date(currentProfile.personalDetails.DOB.seconds * 1000);
-    } else {
-      date = new Date(currentProfile.personalDetails.DOB);
-    }
-    
-    // Format differently based on input type (date for mobile, text for desktop)
-    if (dobInput.type === 'date') {
-      // YYYY-MM-DD format for native date inputs on mobile
-      const year = date.getFullYear();
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const day = date.getDate().toString().padStart(2, '0');
-      dobInput.value = `${year}-${month}-${day}`;
-    } else {
-      // DD/MM/YYYY format for flatpickr on desktop
-      dobInput.value = formatDate(currentProfile.personalDetails.DOB);
-    }
-  }
-  document.getElementById('emergencyContact').value = currentProfile.personalDetails.emergencyContact || '';
-}
+      document.getElementById('dob').value = formatDate(currentProfile.personalDetails?.DOB);
+      document.getElementById('emergencyContact').value = currentProfile.personalDetails?.emergencyContact || '';
       
-      // Driving Details
-      if (currentProfile.driving) {
-        document.getElementById('c1Classification').checked = currentProfile.driving.c1Classification || false;
-        document.getElementById('dlNumber').value = currentProfile.driving.dlNumber || '';
-        document.getElementById('points').value = currentProfile.driving.points || '';
-      }
+      // Driving
+      document.getElementById('dlNumber').value = currentProfile.driving?.dlNumber || '';
+      document.getElementById('points').value = currentProfile.driving?.points || '';
+      document.getElementById('c1Classification').checked = currentProfile.driving?.c1Classification || false;
       
       // Medical Qualifications
-      if (currentProfile.medicalQualifications) {
-        document.getElementById('qualification').value = currentProfile.medicalQualifications.qualification || '';
-        document.getElementById('hcpc').value = currentProfile.medicalQualifications.hcpc || '';
-        document.getElementById('gmc').value = currentProfile.medicalQualifications.gmc || '';
-        document.getElementById('nmc').value = currentProfile.medicalQualifications.nmc || '';
-        document.getElementById('details').value = currentProfile.medicalQualifications.details || '';
-        
-       if (currentProfile.medicalQualifications.certExpiry) {
-  const certExpiryInput = document.getElementById('certExpiry');
-  
-  // Convert timestamp to date string
-  let date;
-  if (currentProfile.medicalQualifications.certExpiry.seconds) {
-    date = new Date(currentProfile.medicalQualifications.certExpiry.seconds * 1000);
-  } else {
-    date = new Date(currentProfile.medicalQualifications.certExpiry);
-  }
-  
-  // Format differently based on input type (date for mobile, text for desktop)
-  if (certExpiryInput.type === 'date') {
-    // YYYY-MM-DD format for native date inputs on mobile
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    certExpiryInput.value = `${year}-${month}-${day}`;
-  } else {
-    // DD/MM/YYYY format for flatpickr on desktop
-    certExpiryInput.value = formatDate(currentProfile.medicalQualifications.certExpiry);
-  }
-}
-        
-        // Trigger change event to show/hide appropriate fields
-        qualification.dispatchEvent(new Event('change'));
-      }
+      document.getElementById('qualification').value = currentProfile.medicalQualifications?.qualification || '';
+      document.getElementById('hcpc').value = currentProfile.medicalQualifications?.hcpc || '';
+      document.getElementById('gmc').value = currentProfile.medicalQualifications?.gmc || '';
+      document.getElementById('nmc').value = currentProfile.medicalQualifications?.nmc || '';
+      document.getElementById('details').value = currentProfile.medicalQualifications?.details || '';
+      document.getElementById('certExpiry').value = formatDate(currentProfile.medicalQualifications?.certExpiry);
+      
+      // Update visible fields based on qualification
+      updateQualificationFields();
     }
     
     // Display existing notes
     function displayExistingNotes() {
-      if (!currentProfile) return;
-      
-      if (currentProfile.adminUse && currentProfile.adminUse.notes) {
+      if (currentProfile.adminUse?.notes) {
         existingNotesSection.innerHTML = `
           <div class="profile-notes">${currentProfile.adminUse.notes}</div>
         `;
@@ -914,7 +723,37 @@ if (currentProfile.personalDetails) {
         // Update profile status
         await reviewProfile(userId, status, updatedNotes);
         
-        showAlert(`Profile ${status} successfully!`, 'success');
+        // Send approval email if approved
+        if (status === 'approved') {
+          try {
+            // Get user's email and first name from users collection
+            const userDoc = await getDoc(doc(db, 'users', userId));
+            if (userDoc.exists()) {
+              const userData = userDoc.data();
+              const userEmail = userData.email;
+              const firstName = userData.firstName || 'Member';
+              
+              // Send approval notification email
+              await addDoc(collection(db, 'mail'), {
+                to: userEmail,
+                message: {
+                  subject: 'FMS Profile Approved',
+                  html: `<p>Dear ${firstName},</p>
+<p>Congratulations, your FMS profile has been reviewed and approved by a Team Leader, allowing you to return to the web app at <a href="https://portal.fmsprehospital.co.uk/">https://portal.fmsprehospital.co.uk/</a> and sign in to view available events and volunteer for those you are interested in attending.</p>
+<p>You can also edit your profile if needed (for example, if you update your main qualification).</p>
+<p>The prehospital team look forward to seeing you at an event very soon.</p>
+<p>Prehospital Team Leaders<br>prehospital@festival-medical.org</p>`
+                }
+              });
+              console.log('Approval email sent to:', userEmail);
+            }
+          } catch (emailError) {
+            console.error('Error sending approval email:', emailError);
+            // Don't fail the whole operation if email fails
+          }
+        }
+        
+        showAlert(`Profile ${status} successfully!${status === 'approved' ? ' Notification email sent.' : ''}`, 'success');
         
         // Redirect back to profiles page after a delay
         setTimeout(() => {
