@@ -104,6 +104,35 @@
       margin-bottom: 20px;
       color: #495057;
     }
+    
+    /* Team badge styling */
+    .team-badge {
+      display: inline-block;
+      padding: 0.3em 0.6em;
+      font-size: 80%;
+      font-weight: 600;
+      line-height: 1;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: baseline;
+      border-radius: 0.25rem;
+      background-color: #e7f5ff;
+      color: #0c5460;
+      border: 1px solid #b8daff;
+      margin-right: 0.3em;
+      margin-bottom: 0.3em;
+    }
+
+    .event-teams {
+      margin-top: 8px;
+      margin-bottom: 12px;
+    }
+
+    .event-teams-label {
+      font-size: 0.85rem;
+      color: #6c757d;
+      margin-right: 0.5rem;
+    }
   </style>
 </head>
 <body>
@@ -205,6 +234,7 @@
         <div class="modal-body">
           <div id="volunteerEventDetails">
             <h4 id="volunteerEventName"></h4>
+            <div id="volunteerEventTeams" class="event-teams"></div>
             <div class="mb-3">
               <i class="bi bi-geo-alt"></i> <span id="volunteerEventLocation"></span>
             </div>
@@ -282,6 +312,7 @@
       serverTimestamp 
     } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
     import { firebaseConfig } from './firebase-config.js';
+    import { getAllTeams } from './teams-service.js';
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -303,6 +334,7 @@
     let currentUser = null;
     let userProfile = null;
     let isAdmin = false;
+    let availableTeams = []; // Store loaded teams
 
     // Helper Functions
     function setButtonLoading(buttonElement, isLoading) {
@@ -342,10 +374,42 @@
       });
     }
 
+    // Get team names from IDs (for display)
+    function getTeamNames(teamIds) {
+      if (!teamIds || !Array.isArray(teamIds)) return [];
+      
+      return teamIds.map(teamId => {
+        const team = availableTeams.find(t => t.id === teamId);
+        return team ? team.name : null;
+      }).filter(name => name !== null);
+    }
+
+    // Build team badges HTML
+    function buildTeamBadgesHtml(requiredTeams) {
+      if (!requiredTeams || requiredTeams.length === 0) return '';
+      
+      const teamNames = getTeamNames(requiredTeams);
+      if (teamNames.length === 0) return '';
+      
+      return `
+        <div class="event-teams">
+          <span class="event-teams-label"><i class="bi bi-people-fill"></i> Teams:</span>
+          ${teamNames.map(name => `<span class="team-badge">${name}</span>`).join('')}
+        </div>
+      `;
+    }
+
     // Load Events
     async function loadEvents() {
       try {
         if (!currentUser) return;
+        
+        // Load teams first (needed for displaying team names)
+        try {
+          availableTeams = await getAllTeams();
+        } catch (err) {
+          console.warn('Could not load teams:', err);
+        }
         
         await loadMyEvents();
         await loadAvailableEvents();
@@ -418,6 +482,9 @@
           const endDate = event.endDate?.toDate ? formatDate(event.endDate.toDate()) : 'TBD';
           const dateDisplay = startDate === endDate ? startDate : `${startDate} - ${endDate}`;
           
+          // Build team badges HTML
+          const teamBadgesHtml = buildTeamBadgesHtml(event.requiredTeams);
+          
           const eventCard = document.createElement('div');
           eventCard.className = 'col-md-6 mb-4';
           
@@ -433,6 +500,7 @@
                   <h4>${event.name}</h4>
                 </div>
               </div>
+              ${teamBadgesHtml}
               <div class="event-location">
                 <i class="bi bi-geo-alt"></i> ${event.location || 'Location TBD'}
               </div>
@@ -541,6 +609,9 @@
           const endDate = event.endDate?.toDate ? formatDate(event.endDate.toDate()) : 'TBD';
           const dateDisplay = startDate === endDate ? startDate : `${startDate} - ${endDate}`;
           
+          // Build team badges HTML
+          const teamBadgesHtml = buildTeamBadgesHtml(event.requiredTeams);
+          
           const eventCard = document.createElement('div');
           eventCard.className = 'col-md-6 mb-4';
           
@@ -552,6 +623,7 @@
                   <h4>${event.name}</h4>
                 </div>
               </div>
+              ${teamBadgesHtml}
               <div class="event-location">
                 <i class="bi bi-geo-alt"></i> ${event.location || 'Location TBD'}
               </div>
@@ -612,6 +684,22 @@
         document.getElementById('volunteerEventId').value = eventId;
         document.getElementById('volunteerEventName').textContent = event.name;
         document.getElementById('volunteerEventLocation').textContent = event.location || 'Location TBD';
+        
+        // Add team badges to modal
+        const teamsContainer = document.getElementById('volunteerEventTeams');
+        if (event.requiredTeams && event.requiredTeams.length > 0) {
+          const teamNames = getTeamNames(event.requiredTeams);
+          if (teamNames.length > 0) {
+            teamsContainer.innerHTML = `
+              <span class="event-teams-label"><i class="bi bi-people-fill"></i> Teams:</span>
+              ${teamNames.map(name => `<span class="team-badge">${name}</span>`).join('')}
+            `;
+          } else {
+            teamsContainer.innerHTML = '';
+          }
+        } else {
+          teamsContainer.innerHTML = '';
+        }
         
         const startDate = event.startDate?.toDate ? formatDate(event.startDate.toDate()) : 'TBD';
         const endDate = event.endDate?.toDate ? formatDate(event.endDate.toDate()) : 'TBD';
