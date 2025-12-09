@@ -320,7 +320,6 @@
             // Driving details
             c1Classification: driving.c1Classification ? 'Yes' : 'No',
             drivingLicence: driving.dlNumber || '',
-            niNumber: driving.niNumber || '',
             licencePoints: driving.points || '',
             
             // Medical qualifications
@@ -347,7 +346,7 @@
         const headers = [
           'User ID', 'First Name', 'Surname', 'Email', 'Mobile', '2FA Enabled', 'Admin User', 'Created Date',
           'Date of Birth', 'Emergency Contact',
-          'C1 Classification', 'Driving Licence', 'NI Number', 'Licence Points',
+          'C1 Classification', 'Driving Licence', 'Licence Points',
           'Qualification', 'HCPC Number', 'GMC Number', 'NMC Number', 'Certificate Expiry', 'Details',
           'Agreed to Terms', 'Submission Date',
           'Status', 'Review Date', 'Reviewed By', 'Admin Notes'
@@ -357,7 +356,7 @@
         const keys = [
           'userId', 'firstName', 'surname', 'email', 'mobile', 'has2FA', 'isAdmin', 'createdAt',
           'dateOfBirth', 'emergencyContact',
-          'c1Classification', 'drivingLicence', 'niNumber', 'licencePoints',
+          'c1Classification', 'drivingLicence', 'licencePoints',
           'qualification', 'hcpc', 'gmc', 'nmc', 'certExpiry', 'details',
           'agreedToTerms', 'submittedAt',
           'status', 'reviewedAt', 'reviewedBy', 'notes'

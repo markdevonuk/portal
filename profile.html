@@ -252,14 +252,7 @@
           </div>
         </div>
         
-        <div class="mb-3">
-          <label class="form-label">Your National Insurance number</label>
-          <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-shield"></i></span>
-            <input type="text" class="form-control" id="niNumber" name="niNumber" placeholder="e.g. AB123456C">
-          </div>
-          <small class="form-text text-muted">Used for driving licence checks online</small>
-        </div>
+       
         
         <div class="mb-3">
           <label class="form-label">How many points do you have on your licence</label>
@@ -1371,7 +1364,6 @@ if (profile.personalDetails.DOB) {
             
             document.getElementById('c1Classification').checked = profile.driving.c1Classification || false;
             document.getElementById('dlNumber').value = profile.driving.dlNumber || '';
-            document.getElementById('niNumber').value = profile.driving.niNumber || '';
             document.getElementById('points').value = profile.driving.points || '';
           }
           
@@ -1518,7 +1510,6 @@ saveAsDraftBtn.addEventListener('click', async () => {
     const driving = {
       c1Classification: document.getElementById('c1Classification').checked,
       dlNumber: document.getElementById('dlNumber').value,
-      niNumber: document.getElementById('niNumber').value,
       points: document.getElementById('points').value
     };
     
@@ -1616,7 +1607,6 @@ saveAsDraftBtn.addEventListener('click', async () => {
           driving: {
             c1Classification: document.getElementById('c1Classification').checked,
             dlNumber: document.getElementById('dlNumber').value,
-            niNumber: document.getElementById('niNumber').value,
             points: document.getElementById('points').value
           },
           medicalQualifications: {
