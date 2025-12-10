@@ -807,17 +807,17 @@
 
       const statusBadge = getStatusBadge(applicant.status);
       
-      // Get document URL if exists
-      let docHtml = '<span class="text-muted">No document uploaded</span>';
-      if (applicant.qualificationDoc) {
-        try {
-          const docRef = ref(storage, applicant.qualificationDoc.path);
-          const docUrl = await getDownloadURL(docRef);
-          docHtml = `<a href="${docUrl}" target="_blank" class="doc-link"><i class="bi bi-file-earmark"></i> ${applicant.qualificationDoc.fileName}</a>`;
-        } catch (error) {
-          docHtml = `<span class="text-muted">Document unavailable</span>`;
-        }
-      }
+   // Get document URL if exists
+let docHtml = '<span class="text-muted">No document uploaded</span>';
+if (applicant.qualificationDocument) {
+  try {
+    const docRef = ref(storage, applicant.qualificationDocument.path);
+    const docUrl = await getDownloadURL(docRef);
+    docHtml = `<a href="${docUrl}" target="_blank" class="doc-link"><i class="bi bi-file-earmark"></i> ${applicant.qualificationDocument.fileName}</a>`;
+  } catch (error) {
+    docHtml = `<span class="text-muted">Document unavailable</span>`;
+  }
+}
 
       const html = `
         <div class="row">
