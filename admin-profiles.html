@@ -634,11 +634,12 @@
           const profileWithUser = {
             ...profileData,
             userId: userId,
-            userInfo: {
-              firstName: userData.firstName || '',
-              surname: userData.surname || '',
-              email: userData.email || ''
-            }
+          userInfo: {
+  		firstName: userData.firstName || '',
+  		surname: userData.surname || '',
+  		email: userData.email || '',
+  		mobile: userData.mobile || ''
+		}
           };
           
           // Only show profiles that have been submitted
@@ -724,8 +725,9 @@ allProfiles.rejected.sort((a, b) => {
               <div class="profile-details">
                 <h5>${profile.userInfo.firstName} ${profile.userInfo.surname}</h5>
                 <p><i class="bi bi-envelope"></i> ${profile.userInfo.email || 'No email'}</p>
-                <p><i class="bi bi-briefcase-fill"></i> ${profile.medicalQualifications?.qualification || 'Not specified'}</p>
-              </div>
+<p><i class="bi bi-telephone"></i> ${profile.userInfo.mobile || 'No mobile'}</p>
+<p><i class="bi bi-briefcase-fill"></i> ${profile.medicalQualifications?.qualification || 'Not specified'}</p>
+</div>
               <div class="profile-actions">
                 <span class="${status}-badge">
                   <i class="bi bi-${status === 'pending' ? 'hourglass-split' : (status === 'approved' ? 'check-circle' : 'x-circle')}"></i> 
