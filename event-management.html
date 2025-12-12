@@ -1360,7 +1360,7 @@ volunteerItem.dataset.name = volunteer.name || '';
 volunteerItem.dataset.grade = volunteer.grade || '';
 volunteerItem.dataset.email = volunteer.email || '';
 volunteerItem.dataset.teams = (volunteer.teams || []).join(',');
-volunteerItem.dataset.selected = volunteer.selected ?
+volunteerItem.dataset.selected = volunteer.selected ? 'true' : 'false';
             
             volunteerItem.innerHTML = `
               <div class="row align-items-center">
