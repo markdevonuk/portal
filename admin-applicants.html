@@ -691,7 +691,7 @@
       }
     }
 
-    // Display applicants for a status
+   // Display applicants for a status
     function displayApplicants(status, applicants) {
       const containerId = status === 'approved_to_pay' ? 'approvedToPayContainer' : `${status}Container`;
       const container = document.getElementById(containerId);
@@ -703,8 +703,104 @@
         return;
       }
 
+      // Special handling for paid applicants - split into two sections
+      if (status === 'paid') {
+        // Separate into two groups
+        const actionRequired = applicants.filter(a => !a.sentForProcessing);
+        const awaitingApproval = applicants.filter(a => a.sentForProcessing);
+        
+        // Sort each group alphabetically by surname, then first name
+        const sortByName = (a, b) => {
+          const surnameA = (a.surname || '').toLowerCase();
+          const surnameB = (b.surname || '').toLowerCase();
+          if (surnameA !== surnameB) return surnameA.localeCompare(surnameB);
+          const firstA = (a.firstName || '').toLowerCase();
+          const firstB = (b.firstName || '').toLowerCase();
+          return firstA.localeCompare(firstB);
+        };
+        
+        actionRequired.sort(sortByName);
+        awaitingApproval.sort(sortByName);
+        
+        let html = '';
+        
+        // Action Required section
+        html += `<h6 class="mt-3 mb-3 text-danger"><i class="bi bi-exclamation-circle-fill"></i> Action Required <span class="badge bg-danger">${actionRequired.length}</span></h6>`;
+        if (actionRequired.length === 0) {
+          html += `<div class="alert alert-success mb-4"><i class="bi bi-check-circle"></i> All paid applicants have been sent for DBS processing</div>`;
+        } else {
+          actionRequired.forEach(applicant => {
+            html += renderApplicantCard(applicant, status);
+          });
+        }
+        
+        // Awaiting Approval section
+        html += `<hr class="my-4">`;
+        html += `<h6 class="mb-3 text-purple" style="color: #7c3aed;"><i class="bi bi-hourglass-split"></i> Awaiting Approval <span class="badge" style="background-color: #7c3aed;">${awaitingApproval.length}</span></h6>`;
+        if (awaitingApproval.length === 0) {
+          html += `<div class="alert alert-info"><i class="bi bi-info-circle"></i> No applicants currently awaiting external verification</div>`;
+        } else {
+          awaitingApproval.forEach(applicant => {
+            html += renderApplicantCard(applicant, status);
+          });
+        }
+        
+        container.innerHTML = html;
+        return;
+      }
+
+      // Standard rendering for other statuses
       let html = '';
       applicants.forEach(applicant => {
+        html += renderApplicantCard(applicant, status);
+      });
+
+      container.innerHTML = html;
+    }
+
+    // Helper function to render a single applicant card
+    function renderApplicantCard(applicant, status) {
+      const name = `${applicant.firstName} ${applicant.surname}`;
+      const qualification = applicant.qualificationLevel || 'Not specified';
+      const submittedDate = formatDate(applicant.submittedAt);
+      
+      // For paid applicants, show sent for processing indicator
+      let sentIndicator = '';
+      if (status === 'paid' && applicant.sentForProcessing) {
+        sentIndicator = `<span class="sent-indicator"><i class="bi bi-check-circle-fill"></i> Sent for DBS</span>`;
+      }
+      
+      // For completed applicants, show completion date
+      let completedInfo = '';
+      if (status === 'completed') {
+        completedInfo = `<p class="mb-0 mt-2"><span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Completed: ${formatDate(applicant.addedToApprovedAt)}</span></p>`;
+      }
+      
+      return `
+        <div class="applicant-card" data-id="${applicant.id}" data-name="${name.toLowerCase()}" data-email="${applicant.email.toLowerCase()}">
+          <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div class="applicant-info">
+              <h5>${name} ${sentIndicator}</h5>
+              <p><i class="bi bi-envelope"></i> ${applicant.email}</p>
+              <p><i class="bi bi-phone"></i> ${applicant.mobile || 'N/A'}</p>
+              <p><i class="bi bi-mortarboard"></i> ${qualification}</p>
+              <small class="text-muted">Applied: ${submittedDate}</small>
+              ${completedInfo}
+            </div>
+            <div class="applicant-actions">
+              <button class="btn btn-sm btn-outline-primary" onclick="viewApplicant('${applicant.id}')">
+                <i class="bi bi-eye"></i> View
+              </button>
+              ${getActionButtons(status, applicant.id, name, applicant.sentForProcessing)}
+            </div>
+          </div>
+        </div>
+      `;
+    } 
+    
+    
+    
+    
         const name = `${applicant.firstName} ${applicant.surname}`;
         const qualification = applicant.qualificationLevel || 'Not specified';
         const submittedDate = formatDate(applicant.submittedAt);
