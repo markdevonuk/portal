@@ -741,7 +741,7 @@
             allMembers.push({
               ...usersData[userId],
               visibleStatus: status,
-              clinicalGrade: profileData.clinicalGrade || profileData.mainQualification || '',
+              clinicalGrade: profileData.medicalQualifications?.qualification || '',
               teams: usersData[userId].teams || []
             });
           }
