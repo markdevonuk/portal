@@ -429,17 +429,12 @@
               <span class="input-group-text"><i class="bi bi-search"></i></span>
               <input type="text" class="form-control" id="volunteerSearchInput" placeholder="Search volunteers...">
               <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">Filter</button>
-              <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="#" data-filter="all">All Volunteers</a></li>
-                <li><a class="dropdown-item" href="#" data-filter="selected">Selected Only</a></li>
-                <li><a class="dropdown-item" href="#" data-filter="pending">Pending Only</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="#" data-filter="paramedics">Paramedics</a></li>
-                <li><a class="dropdown-item" href="#" data-filter="doctors">Doctors</a></li>
-                <li><a class="dropdown-item" href="#" data-filter="nurses">Nurses</a></li>
-                <li><a class="dropdown-item" href="#" data-filter="emt">EMTs/Technicians</a></li>
-                <li><a class="dropdown-item" href="#" data-filter="firstaid">First Aiders</a></li>
-              </ul>
+             <ul class="dropdown-menu dropdown-menu-end" id="volunteerFilterMenu">
+  <li><a class="dropdown-item" href="#" data-filter="all">All Volunteers</a></li>
+  <li><a class="dropdown-item" href="#" data-filter="selected">Selected Only</a></li>
+  <li><a class="dropdown-item" href="#" data-filter="pending">Pending Only</a></li>
+  <!-- Team filters will be added dynamically -->
+</ul>
             </div>
           </div>
           
@@ -753,6 +748,83 @@ prehospital@festival-medical.org</textarea>
         });
       }
     }
+// Populate team filters in the dropdown based on event's required teams
+function populateTeamFilters(eventId) {
+  const event = currentEvents.find(e => e.id === eventId);
+  const filterMenu = document.getElementById('volunteerFilterMenu');
+  
+  if (!filterMenu || !event) return;
+  
+  // Remove any existing team filter items (keep first 3 static items)
+  const items = filterMenu.querySelectorAll('li');
+  items.forEach((item, index) => {
+    if (index > 2) { // Keep All, Selected, Pending
+      item.remove();
+    }
+  });
+  
+  // Check if event has required teams
+  if (event.requiredTeams && event.requiredTeams.length > 0) {
+    // Add divider
+    const divider = document.createElement('li');
+    divider.innerHTML = '<hr class="dropdown-divider">';
+    filterMenu.appendChild(divider);
+    
+    // Add team filter options
+    event.requiredTeams.forEach(teamId => {
+      const team = availableTeams.find(t => t.id === teamId);
+      if (team) {
+        const li = document.createElement('li');
+        li.innerHTML = `<a class="dropdown-item" href="#" data-filter="team" data-team-id="${teamId}">${team.name}</a>`;
+        filterMenu.appendChild(li);
+      }
+    });
+    
+    // Re-attach click listeners for new items
+    attachFilterListeners();
+  }
+}
+
+// Attach filter click listeners (called after populating filters)
+function attachFilterListeners() {
+  document.querySelectorAll('#volunteerFilterMenu .dropdown-item').forEach(item => {
+    // Remove existing listener to avoid duplicates
+    item.replaceWith(item.cloneNode(true));
+  });
+  
+  document.querySelectorAll('#volunteerFilterMenu .dropdown-item').forEach(item => {
+    item.addEventListener('click', e => {
+      e.preventDefault();
+      const filter = e.target.dataset.filter;
+      const teamId = e.target.dataset.teamId;
+      
+      document.querySelectorAll('.volunteer-item').forEach(volItem => {
+        const isSelected = volItem.dataset.selected === 'true';
+        const volunteerTeams = volItem.dataset.teams || '';
+        
+        switch (filter) {
+          case 'all':
+            volItem.classList.remove('hidden');
+            break;
+          case 'selected':
+            volItem.classList.toggle('hidden', !isSelected);
+            break;
+          case 'pending':
+            volItem.classList.toggle('hidden', isSelected);
+            break;
+          case 'team':
+            // Check if volunteer is in this team
+            const teamsArray = volunteerTeams.split(',');
+            volItem.classList.toggle('hidden', !teamsArray.includes(teamId));
+            break;
+          default:
+            volItem.classList.remove('hidden');
+        }
+      });
+    });
+  });
+}
+
 
     // Get team names from IDs (for display)
     function getTeamNames(teamIds) {
@@ -1157,13 +1229,16 @@ prehospital@festival-medical.org</textarea>
         safeUpdateElement('selectedVolunteers', element => { element.textContent = '0'; });
         safeUpdateElement('pendingVolunteers', element => { element.textContent = '0'; });
         
-        // Show modal before loading volunteers
-        const modal = new bootstrap.Modal(document.getElementById('volunteerManageModal'));
-        modal.show();
-        
-        // Load volunteers for this event
-        await loadEventVolunteers(eventId);
-        
+       // Populate team filters for this event
+populateTeamFilters(eventId);
+
+// Show modal before loading volunteers
+const modal = new bootstrap.Modal(document.getElementById('volunteerManageModal'));
+modal.show();
+
+// Load volunteers for this event
+await loadEventVolunteers(eventId);
+      
       } catch (error) {
         console.error('Error opening manage volunteers modal:', error);
         showAlert('Error loading volunteers: ' + error.message, 'danger');
@@ -1231,18 +1306,22 @@ if (profileDoc.exists()) {
   }
 }
           
-          // Combine data
-          volunteers.push({
-            id: volunteerDoc.id,
-            userId: volunteerData.userId,
-            name: `${userData.firstName || ''} ${userData.surname || ''}`.trim() || userData.email || 'Unknown',
-            email: userData.email || 'Unknown',
-            grade: grade,
-            notes: volunteerData.notes || '',
-            selected: volunteerData.selected || false,
-            volunteeredAt: volunteerData.volunteeredAt,
-            selectedAt: volunteerData.selectedAt
-          });
+        // Get user's teams
+const userTeams = userData.teams || [];
+
+// Combine data
+volunteers.push({
+  id: volunteerDoc.id,
+  userId: volunteerData.userId,
+  name: `${userData.firstName || ''} ${userData.surname || ''}`.trim() || userData.email || 'Unknown',
+  email: userData.email || 'Unknown',
+  grade: grade,
+  teams: userTeams,
+  notes: volunteerData.notes || '',
+  selected: volunteerData.selected || false,
+  volunteeredAt: volunteerData.volunteeredAt,
+  selectedAt: volunteerData.selectedAt
+});
           
           if (volunteerData.selected) {
             selectedCount++;
@@ -1277,10 +1356,11 @@ if (profileDoc.exists()) {
             const volunteerItem = document.createElement('div');
             volunteerItem.className = `volunteer-item ${volunteer.selected ? 'selected' : ''}`;
             volunteerItem.dataset.id = volunteer.id;
-            volunteerItem.dataset.name = volunteer.name || '';
-            volunteerItem.dataset.grade = volunteer.grade || '';
-            volunteerItem.dataset.email = volunteer.email || '';
-            volunteerItem.dataset.selected = volunteer.selected ? 'true' : 'false';
+volunteerItem.dataset.name = volunteer.name || '';
+volunteerItem.dataset.grade = volunteer.grade || '';
+volunteerItem.dataset.email = volunteer.email || '';
+volunteerItem.dataset.teams = (volunteer.teams || []).join(',');
+volunteerItem.dataset.selected = volunteer.selected ?
             
             volunteerItem.innerHTML = `
               <div class="row align-items-center">
@@ -1847,50 +1927,7 @@ async function sendEmails() {
       });
     });
     
-    // Filter volunteers
-    document.querySelectorAll('.dropdown-menu .dropdown-item').forEach(item => {
-      item.addEventListener('click', e => {
-        e.preventDefault();
-        const filter = e.target.dataset.filter;
-        
-        document.querySelectorAll('.volunteer-item').forEach(item => {
-          const grade = item.dataset.grade.toLowerCase();
-          const isSelected = item.dataset.selected === 'true';
-          
-          switch (filter) {
-            case 'all':
-              item.classList.remove('hidden');
-              break;
-            case 'selected':
-              item.classList.toggle('hidden', !isSelected);
-              break;
-            case 'pending':
-              item.classList.toggle('hidden', isSelected);
-              break;
-            case 'paramedics':
-              item.classList.toggle('hidden', !grade.includes('paramedic'));
-              break;
-            case 'doctors':
-              item.classList.toggle('hidden', !grade.includes('doctor'));
-              break;
-            case 'nurses':
-              item.classList.toggle('hidden', !grade.includes('nurse'));
-              break;
-            case 'emt':
-              item.classList.toggle('hidden', 
-                !grade.includes('emt') && 
-                !grade.includes('technician')
-              );
-              break;
-            case 'firstaid':
-              item.classList.toggle('hidden', !grade.includes('first aid'));
-              break;
-            default:
-              item.classList.remove('hidden');
-          }
-        });
-      });
-    });
+
 
     // Initialize
     onAuthStateChanged(auth, async (user) => {
