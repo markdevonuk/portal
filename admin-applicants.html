@@ -691,7 +691,7 @@
       }
     }
 
-   // Display applicants for a status
+    // Display applicants for a status
     function displayApplicants(status, applicants) {
       const containerId = status === 'approved_to_pay' ? 'approvedToPayContainer' : `${status}Container`;
       const container = document.getElementById(containerId);
@@ -796,50 +796,6 @@
           </div>
         </div>
       `;
-    } 
-    
-    
-    
-    
-        const name = `${applicant.firstName} ${applicant.surname}`;
-        const qualification = applicant.qualificationLevel || 'Not specified';
-        const submittedDate = formatDate(applicant.submittedAt);
-        
-        // For paid applicants, show sent for processing indicator
-        let sentIndicator = '';
-        if (status === 'paid' && applicant.sentForProcessing) {
-          sentIndicator = `<span class="sent-indicator"><i class="bi bi-check-circle-fill"></i> Sent for DBS</span>`;
-        }
-        
-        // For completed applicants, show completion date
-        let completedInfo = '';
-        if (status === 'completed') {
-          completedInfo = `<p class="mb-0 mt-2"><span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Completed: ${formatDate(applicant.addedToApprovedAt)}</span></p>`;
-        }
-        
-        html += `
-          <div class="applicant-card" data-id="${applicant.id}" data-name="${name.toLowerCase()}" data-email="${applicant.email.toLowerCase()}">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
-              <div class="applicant-info">
-                <h5>${name} ${sentIndicator}</h5>
-                <p><i class="bi bi-envelope"></i> ${applicant.email}</p>
-                <p><i class="bi bi-phone"></i> ${applicant.mobile || 'N/A'}</p>
-                <p><i class="bi bi-mortarboard"></i> ${qualification}</p>
-                <small class="text-muted">Applied: ${submittedDate}</small>
-                ${completedInfo}
-              </div>
-              <div class="applicant-actions">
-                <button class="btn btn-sm btn-outline-primary" onclick="viewApplicant('${applicant.id}')">
-                  <i class="bi bi-eye"></i> View
-                </button>
-                ${getActionButtons(status, applicant.id, name, applicant.sentForProcessing)}
-              </div>
-            </div>
-          </div>
-        `;
-      });
-
-      container.innerHTML = html;
     }
 
     // Get action buttons based on status
@@ -903,17 +859,17 @@
 
       const statusBadge = getStatusBadge(applicant.status);
       
-   // Get document URL if exists
-let docHtml = '<span class="text-muted">No document uploaded</span>';
-if (applicant.qualificationDocument) {
-  try {
-    const docRef = ref(storage, applicant.qualificationDocument.path);
-    const docUrl = await getDownloadURL(docRef);
-    docHtml = `<a href="${docUrl}" target="_blank" class="doc-link"><i class="bi bi-file-earmark"></i> ${applicant.qualificationDocument.fileName}</a>`;
-  } catch (error) {
-    docHtml = `<span class="text-muted">Document unavailable</span>`;
-  }
-}
+      // Get document URL if exists
+      let docHtml = '<span class="text-muted">No document uploaded</span>';
+      if (applicant.qualificationDocument) {
+        try {
+          const docRef = ref(storage, applicant.qualificationDocument.path);
+          const docUrl = await getDownloadURL(docRef);
+          docHtml = `<a href="${docUrl}" target="_blank" class="doc-link"><i class="bi bi-file-earmark"></i> ${applicant.qualificationDocument.fileName}</a>`;
+        } catch (error) {
+          docHtml = `<span class="text-muted">Document unavailable</span>`;
+        }
+      }
 
       const html = `
         <div class="row">
@@ -978,7 +934,7 @@ if (applicant.qualificationDocument) {
       new bootstrap.Modal(document.getElementById('viewApplicantModal')).show();
     };
 
-// View CSV data for an applicant
+    // View CSV data for an applicant
     window.viewCsvData = function(id) {
       const applicant = findApplicantById(id);
       if (!applicant) return;
