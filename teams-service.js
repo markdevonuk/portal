@@ -20,7 +20,7 @@ import {
 import { firebaseConfig } from './firebase-config.js';
 
 // Initialize Firebase (if not already initialized elsewhere)
-const app = initializeApp(firebaseConfig);
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
 
