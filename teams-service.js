@@ -136,3 +136,153 @@ async function deleteTeam(teamId) {
     // Delete the team document
     await deleteDoc(doc(db, 'teams', teamId));
     
+    // Update all users who are members of this team to remove it from their teams array
+    const usersRef = collection(db, 'users');
+    const usersWithTeamQuery = query(usersRef, where('teams', 'array-contains', teamId));
+    const usersWithTeamSnapshot = await getDocs(usersWithTeamQuery);
+    
+    const updatePromises = [];
+    usersWithTeamSnapshot.forEach(userDoc => {
+      updatePromises.push(
+        updateDoc(doc(db, 'users', userDoc.id), {
+          teams: arrayRemove(teamId)
+        })
+      );
+    });
+    
+    await Promise.all(updatePromises);
+  } catch (error) {
+    console.error("Error deleting team:", error);
+    throw error;
+  }
+}
+
+/**
+ * Get users in a team
+ * @param {string} teamId - The team ID
+ * @returns {Promise<Array>} Array of user objects with IDs
+ */
+async function getUsersInTeam(teamId) {
+  try {
+    const usersRef = collection(db, 'users');
+    const usersQuery = query(usersRef, where('teams', 'array-contains', teamId));
+    const usersSnapshot = await getDocs(usersQuery);
+    
+    const users = [];
+    usersSnapshot.forEach(doc => {
+      users.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+    
+    // Sort users by name
+    users.sort((a, b) => {
+      // First by surname if available
+      if (a.surname && b.surname) {
+        return a.surname.localeCompare(b.surname);
+      }
+      // Then by firstName
+      return a.firstName.localeCompare(b.firstName);
+    });
+    
+    return users;
+  } catch (error) {
+    console.error("Error getting users in team:", error);
+    throw error;
+  }
+}
+
+/**
+ * Add a user to a team
+ * @param {string} userId - The user ID
+ * @param {string} teamId - The team ID
+ * @returns {Promise<void>}
+ */
+async function addUserToTeam(userId, teamId) {
+  try {
+    await updateDoc(doc(db, 'users', userId), {
+      teams: arrayUnion(teamId)
+    });
+  } catch (error) {
+    console.error("Error adding user to team:", error);
+    throw error;
+  }
+}
+
+/**
+ * Remove a user from a team
+ * @param {string} userId - The user ID
+ * @param {string} teamId - The team ID
+ * @returns {Promise<void>}
+ */
+async function removeUserFromTeam(userId, teamId) {
+  try {
+    await updateDoc(doc(db, 'users', userId), {
+      teams: arrayRemove(teamId)
+    });
+  } catch (error) {
+    console.error("Error removing user from team:", error);
+    throw error;
+  }
+}
+
+/**
+ * Get all teams a user belongs to
+ * @param {string} userId - The user ID
+ * @returns {Promise<Array>} Array of team objects with IDs
+ */
+async function getUserTeams(userId) {
+  try {
+    const userRef = doc(db, 'users', userId);
+    const userSnap = await getDoc(userRef);
+    
+    if (!userSnap.exists()) {
+      return [];
+    }
+    
+    const userData = userSnap.data();
+    
+    // If user doesn't have teams array, initialize it
+    if (!userData.teams) {
+      await updateDoc(userRef, {
+        teams: []
+      });
+      return [];
+    }
+    
+    const teamIds = userData.teams || [];
+    
+    if (teamIds.length === 0) {
+      return [];
+    }
+    
+    const teams = [];
+    for (const teamId of teamIds) {
+      const team = await getTeamById(teamId);
+      if (team) {
+        teams.push(team);
+      }
+    }
+    
+    // Sort teams by name
+    teams.sort((a, b) => a.name.localeCompare(b.name));
+    
+    return teams;
+  } catch (error) {
+    console.error("Error getting user teams:", error);
+    throw error;
+  }
+}
+
+export {
+  getAllTeams,
+  getTeamById,
+  createTeam,
+  updateTeam,
+  deleteTeam,
+  getUsersInTeam,
+  addUserToTeam,
+  removeUserFromTeam,
+  getUserTeams
+};
