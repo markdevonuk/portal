@@ -205,6 +205,19 @@
       font-weight: 600;
     }
     
+    /* Reminder sent indicator */
+    .reminder-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      background: #fff3cd;
+      color: #856404;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    
     /* Responsive adjustments */
     @media (max-width: 768px) {
       .nav-tabs .nav-link {
@@ -512,6 +525,86 @@
     </div>
   </div>
 
+  <!-- Send Payment Reminder Modal -->
+  <div class="modal fade" id="sendReminderModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-warning text-dark">
+          <h5 class="modal-title"><i class="bi bi-envelope-exclamation"></i> Send Payment Reminder</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>Send a payment reminder email to <strong id="sendReminderApplicantName"></strong>?</p>
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> This will send an email reminding them to complete their payment or let us know if they no longer wish to proceed.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-warning" id="confirmSendReminderBtn">
+            <i class="bi bi-envelope-exclamation"></i> Send Reminder
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Send Final Notice & Reject Modal -->
+  <div class="modal fade" id="sendFinalNoticeModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title"><i class="bi bi-envelope-x"></i> Send Final Notice & Reject</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>Send final notice and reject application for <strong id="sendFinalNoticeApplicantName"></strong>?</p>
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle"></i> <strong>This action will:</strong>
+            <ul class="mb-0 mt-2">
+              <li>Send a final notice email informing them their application has been rejected</li>
+              <li>Move the application to the Rejected tab</li>
+            </ul>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmSendFinalNoticeBtn">
+            <i class="bi bi-envelope-x"></i> Send Final Notice & Reject
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Simple Reject (No Email) Modal for Awaiting Payment -->
+  <div class="modal fade" id="rejectNoEmailModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-secondary text-white">
+          <h5 class="modal-title"><i class="bi bi-x-circle"></i> Reject Application (No Email)</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>Reject application for <strong id="rejectNoEmailApplicantName"></strong> without sending an email?</p>
+          <div class="mb-3">
+            <label class="form-label">Reason for Rejection <span class="text-danger">*</span></label>
+            <textarea class="form-control" id="rejectNoEmailReason" rows="3" placeholder="Please provide a reason (for records only)..." required></textarea>
+          </div>
+          <div class="alert alert-secondary">
+            <i class="bi bi-info-circle"></i> Use this if the applicant has already informed you they don't wish to proceed.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-dark" id="confirmRejectNoEmailBtn">
+            <i class="bi bi-x-circle"></i> Reject (No Email)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Send for Processing Modal -->
   <div class="modal fade" id="sendProcessingModal" tabindex="-1">
     <div class="modal-dialog">
@@ -770,6 +863,12 @@
         sentIndicator = `<span class="sent-indicator"><i class="bi bi-check-circle-fill"></i> Sent for DBS</span>`;
       }
       
+      // For awaiting payment applicants, show reminder sent indicator
+      let reminderIndicator = '';
+      if (status === 'approved_to_pay' && applicant.paymentReminderSent) {
+        reminderIndicator = `<span class="reminder-indicator"><i class="bi bi-envelope-check"></i> Reminder Sent ${formatDate(applicant.paymentReminderSentAt)}</span>`;
+      }
+      
       // For completed applicants, show completion date
       let completedInfo = '';
       if (status === 'completed') {
@@ -780,7 +879,7 @@
         <div class="applicant-card" data-id="${applicant.id}" data-name="${name.toLowerCase()}" data-email="${applicant.email.toLowerCase()}">
           <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div class="applicant-info">
-              <h5>${name} ${sentIndicator}</h5>
+              <h5>${name} ${sentIndicator} ${reminderIndicator}</h5>
               <p><i class="bi bi-envelope"></i> ${applicant.email}</p>
               <p><i class="bi bi-phone"></i> ${applicant.mobile || 'N/A'}</p>
               <p><i class="bi bi-mortarboard"></i> ${qualification}</p>
@@ -791,7 +890,7 @@
               <button class="btn btn-sm btn-outline-primary" onclick="viewApplicant('${applicant.id}')">
                 <i class="bi bi-eye"></i> View
               </button>
-              ${getActionButtons(status, applicant.id, name, applicant.sentForProcessing)}
+              ${getActionButtons(status, applicant.id, name, applicant.sentForProcessing, applicant.paymentReminderSent)}
             </div>
           </div>
         </div>
@@ -799,7 +898,7 @@
     }
 
     // Get action buttons based on status
-    function getActionButtons(status, id, name, sentForProcessing = false) {
+    function getActionButtons(status, id, name, sentForProcessing = false, paymentReminderSent = false) {
       const escapedName = name.replace(/'/g, "\\'");
       
       switch (status) {
@@ -813,11 +912,36 @@
             </button>
           `;
         case 'approved_to_pay':
-          return `
+          let payButtons = `
             <button class="btn btn-sm btn-success" onclick="openMarkPaidModal('${id}', '${escapedName}')">
               <i class="bi bi-cash-coin"></i> Mark Paid
             </button>
           `;
+          
+          if (!paymentReminderSent) {
+            // Show Send Reminder button if reminder not yet sent
+            payButtons += `
+              <button class="btn btn-sm btn-warning" onclick="openSendReminderModal('${id}', '${escapedName}')">
+                <i class="bi bi-envelope-exclamation"></i> Send Reminder
+              </button>
+            `;
+          } else {
+            // Show Final Notice button if reminder already sent
+            payButtons += `
+              <button class="btn btn-sm btn-danger" onclick="openSendFinalNoticeModal('${id}', '${escapedName}')">
+                <i class="bi bi-envelope-x"></i> Final Notice & Reject
+              </button>
+            `;
+          }
+          
+          // Always show simple reject button
+          payButtons += `
+            <button class="btn btn-sm btn-outline-secondary" onclick="openRejectNoEmailModal('${id}', '${escapedName}')">
+              <i class="bi bi-x-circle"></i> Reject
+            </button>
+          `;
+          
+          return payButtons;
         case 'paid':
           let buttons = `
             <button class="btn btn-sm btn-outline-secondary" onclick="viewCsvData('${id}')">
@@ -914,6 +1038,12 @@
           <span class="detail-label">Address:</span>
           <p class="detail-value mb-0">${applicant.address || 'N/A'}</p>
         </div>
+        ${applicant.paymentReminderSent ? `
+          <div class="detail-row mt-3">
+            <span class="detail-label">Payment Reminder:</span>
+            <span class="reminder-indicator"><i class="bi bi-envelope-check"></i> Sent ${formatDateTime(applicant.paymentReminderSentAt)}</span>
+          </div>
+        ` : ''}
         ${applicant.sentForProcessing ? `
           <div class="detail-row mt-3">
             <span class="detail-label">DBS Processing:</span>
@@ -1020,6 +1150,25 @@
       document.getElementById('markPaidApplicantName').textContent = name;
       document.getElementById('paymentReference').value = '';
       new bootstrap.Modal(document.getElementById('markPaidModal')).show();
+    };
+
+    window.openSendReminderModal = function(id, name) {
+      currentApplicantId = id;
+      document.getElementById('sendReminderApplicantName').textContent = name;
+      new bootstrap.Modal(document.getElementById('sendReminderModal')).show();
+    };
+
+    window.openSendFinalNoticeModal = function(id, name) {
+      currentApplicantId = id;
+      document.getElementById('sendFinalNoticeApplicantName').textContent = name;
+      new bootstrap.Modal(document.getElementById('sendFinalNoticeModal')).show();
+    };
+
+    window.openRejectNoEmailModal = function(id, name) {
+      currentApplicantId = id;
+      document.getElementById('rejectNoEmailApplicantName').textContent = name;
+      document.getElementById('rejectNoEmailReason').value = '';
+      new bootstrap.Modal(document.getElementById('rejectNoEmailModal')).show();
     };
 
     window.openSendProcessingModal = function(id, name) {
@@ -1157,6 +1306,134 @@
         showAlert('Error: ' + error.message, 'danger');
       } finally {
         setButtonLoading('confirmMarkPaidBtn', false);
+      }
+    });
+
+    // Confirm Send Payment Reminder
+    document.getElementById('confirmSendReminderBtn').addEventListener('click', async () => {
+      setButtonLoading('confirmSendReminderBtn', true);
+      
+      try {
+        const applicant = findApplicantById(currentApplicantId);
+        if (!applicant) throw new Error('Applicant not found');
+
+        const timestamp = new Date().toLocaleString('en-GB');
+        const adminNote = `[${timestamp}] Payment reminder sent by ${currentAdmin.email}`;
+
+        // Update applicant to mark reminder as sent
+        await updateDoc(doc(db, 'applicants', currentApplicantId), {
+          paymentReminderSent: true,
+          paymentReminderSentAt: serverTimestamp(),
+          paymentReminderSentBy: currentAdmin.uid,
+          adminNotes: [...(applicant.adminNotes || []), adminNote]
+        });
+
+        // Send reminder email
+        await addDoc(collection(db, 'mail'), {
+          to: applicant.email,
+          message: {
+            subject: 'FMS Application - Payment Reminder',
+            html: `<p>Dear ${applicant.firstName},</p>
+<p>We have sent you the email link to make payment to join Festival Medical Services prehospital team. However we cannot trace this payment going through.</p>
+<p>You can complete this payment here: <a href="https://buy.stripe.com/fZu7sL9rT2hMaJ38P0grS00" style="background:#00a896;color:white;padding:12px 24px;text-decoration:none;border-radius:5px;display:inline-block;">Pay £30 Membership Fee</a></p>
+<p>Could you please either let us know if you do not wish to proceed, in which case we can delete your application and won't need to bother you again. Or arrange payment to join the charity so we can process your membership.</p>
+<p>FMS is a registered charity and all membership fees only cover the administration costs to get you onboard. You can read about the charities we support all around the world by going here <a href="https://www.youtube.com/watch?v=3YZPycAWWEk">https://www.youtube.com/watch?v=3YZPycAWWEk</a></p>
+<p>Many thanks<br>Prehospital Team Leaders<br><a href="mailto:prehospital@festival-medical.org">prehospital@festival-medical.org</a></p>`
+          }
+        });
+
+        bootstrap.Modal.getInstance(document.getElementById('sendReminderModal')).hide();
+        showAlert('Payment reminder email sent!', 'success');
+        await loadAllApplicants();
+
+      } catch (error) {
+        console.error('Error sending reminder:', error);
+        showAlert('Error: ' + error.message, 'danger');
+      } finally {
+        setButtonLoading('confirmSendReminderBtn', false);
+      }
+    });
+
+    // Confirm Send Final Notice & Reject
+    document.getElementById('confirmSendFinalNoticeBtn').addEventListener('click', async () => {
+      setButtonLoading('confirmSendFinalNoticeBtn', true);
+      
+      try {
+        const applicant = findApplicantById(currentApplicantId);
+        if (!applicant) throw new Error('Applicant not found');
+
+        const timestamp = new Date().toLocaleString('en-GB');
+        const adminNote = `[${timestamp}] Final notice sent and application rejected by ${currentAdmin.email}`;
+
+        // Update applicant status to rejected
+        await updateDoc(doc(db, 'applicants', currentApplicantId), {
+          status: 'rejected',
+          rejectedAt: serverTimestamp(),
+          rejectedBy: currentAdmin.uid,
+          rejectionReason: 'No payment received after reminder',
+          finalNoticeSent: true,
+          finalNoticeSentAt: serverTimestamp(),
+          adminNotes: [...(applicant.adminNotes || []), adminNote]
+        });
+
+        // Send final notice email
+        await addDoc(collection(db, 'mail'), {
+          to: applicant.email,
+          message: {
+            subject: 'FMS Application - Final Notice',
+            html: `<p>Dear ${applicant.firstName},</p>
+<p>As we have not heard from you or received payment to join FMS we must regretfully reject your application. If you decide that you would like to reconsider please do email us and we can reinstate your application.</p>
+<p>FMS is a registered charity and all membership fees only cover the administration costs to get you onboard. You can read about the charities we support all around the world by going here <a href="https://www.youtube.com/watch?v=3YZPycAWWEk">https://www.youtube.com/watch?v=3YZPycAWWEk</a></p>
+<p>Many thanks<br>Prehospital Team Leaders<br><a href="mailto:prehospital@festival-medical.org">prehospital@festival-medical.org</a></p>`
+          }
+        });
+
+        bootstrap.Modal.getInstance(document.getElementById('sendFinalNoticeModal')).hide();
+        showAlert('Final notice sent and application rejected', 'success');
+        await loadAllApplicants();
+
+      } catch (error) {
+        console.error('Error sending final notice:', error);
+        showAlert('Error: ' + error.message, 'danger');
+      } finally {
+        setButtonLoading('confirmSendFinalNoticeBtn', false);
+      }
+    });
+
+    // Confirm Reject No Email
+    document.getElementById('confirmRejectNoEmailBtn').addEventListener('click', async () => {
+      const reason = document.getElementById('rejectNoEmailReason').value.trim();
+      if (!reason) {
+        showAlert('Please provide a reason for rejection', 'warning');
+        return;
+      }
+
+      setButtonLoading('confirmRejectNoEmailBtn', true);
+      
+      try {
+        const applicant = findApplicantById(currentApplicantId);
+        if (!applicant) throw new Error('Applicant not found');
+
+        const timestamp = new Date().toLocaleString('en-GB');
+        const adminNote = `[${timestamp}] Rejected (no email) by ${currentAdmin.email}: ${reason}`;
+
+        await updateDoc(doc(db, 'applicants', currentApplicantId), {
+          status: 'rejected',
+          rejectedAt: serverTimestamp(),
+          rejectedBy: currentAdmin.uid,
+          rejectionReason: reason,
+          adminNotes: [...(applicant.adminNotes || []), adminNote]
+        });
+
+        bootstrap.Modal.getInstance(document.getElementById('rejectNoEmailModal')).hide();
+        showAlert('Application rejected', 'success');
+        await loadAllApplicants();
+
+      } catch (error) {
+        console.error('Error rejecting applicant:', error);
+        showAlert('Error: ' + error.message, 'danger');
+      } finally {
+        setButtonLoading('confirmRejectNoEmailBtn', false);
       }
     });
 
