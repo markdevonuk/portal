@@ -19,10 +19,23 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 
-// Initialize Firebase (if not already initialized elsewhere)
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const db = getFirestore(app);
+// SAFE Firebase initialization using try-catch
+// If Firebase is already initialized, this will catch the error and continue
+let app;
+try {
+  app = initializeApp(firebaseConfig);
+} catch (e) {
+  // Firebase already initialized, get the existing app
+  // The error means the app already exists, which is fine
+  if (e.code === 'app/duplicate-app') {
+    // App already exists - we can get Firestore directly
+  } else {
+    throw e; // Re-throw if it's a different error
+  }
+}
+
+const auth = getAuth();
+const db = getFirestore();
 
 /**
  * Get all teams from the database
