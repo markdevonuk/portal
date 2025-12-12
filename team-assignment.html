@@ -709,19 +709,37 @@
           teamSelect.innerHTML += `<option value="${team.id}">${team.name}</option>`;
         });
         
-        // Load all approved members
-        const usersRef = collection(db, 'users');
-        const approvedQuery = query(usersRef, where('profileStatus', '==', 'approved'));
-        const usersSnapshot = await getDocs(approvedQuery);
-        
-        allMembers = [];
-        usersSnapshot.forEach(doc => {
-          const userData = doc.data();
-          allMembers.push({
-            id: doc.id,
-            ...userData
-          });
-        });
+ // Load all users first
+const usersRef = collection(db, 'users');
+const usersSnapshot = await getDocs(usersRef);
+
+const usersData = {};
+usersSnapshot.forEach(doc => {
+  usersData[doc.id] = {
+    id: doc.id,
+    ...doc.data()
+  };
+});
+
+// Load all profiles and filter for approved status
+const profilesRef = collection(db, 'profiles');
+const profilesSnapshot = await getDocs(profilesRef);
+
+allMembers = [];
+profilesSnapshot.forEach(doc => {
+  const profileData = doc.data();
+  const userId = doc.id;
+  const status = profileData.adminUse?.status || 'pending';
+  
+  // Only include approved profiles
+  if (status === 'approved' && usersData[userId]) {
+    allMembers.push({
+      ...usersData[userId],
+      clinicalGrade: profileData.clinicalGrade || profileData.mainQualification || '',
+      teams: usersData[userId].teams || []
+    });
+  }
+});
         
         // Sort members by name
         allMembers.sort((a, b) => {
@@ -1340,7 +1358,7 @@
         window.location.href = 'index.html';
         return;
       }
-      
+    
       try {
         const userDocRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userDocRef);
