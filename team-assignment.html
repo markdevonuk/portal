@@ -578,16 +578,11 @@
     import { firebaseConfig } from './firebase-config.js';
     import { getAllTeams, getUsersInTeam } from './teams-service.js';
 
-// Initialize Firebase (safe initialization - may already be initialized by teams-service.js)
-let app;
-try {
-  app = initializeApp(firebaseConfig);
-} catch (e) {
-  // Firebase already initialized by teams-service.js
-}
-const auth = getAuth();
-const db = getFirestore();
-const storage = getStorage();
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
 
     // DOM Elements - Search Tab
     const memberSearchInput = document.getElementById('memberSearchInput');
