@@ -578,11 +578,16 @@
     import { firebaseConfig } from './firebase-config.js';
     import { getAllTeams, getUsersInTeam } from './teams-service.js';
 
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
+    // Initialize Firebase (safe initialization - may already be initialized by teams-service.js)
+    let app;
+    try {
+      app = initializeApp(firebaseConfig);
+    } catch (e) {
+      // Firebase already initialized by teams-service.js
+    }
+    const auth = getAuth();
+    const db = getFirestore();
+    const storage = getStorage();
 
     // DOM Elements - Search Tab
     const memberSearchInput = document.getElementById('memberSearchInput');
@@ -709,44 +714,48 @@
           teamSelect.innerHTML += `<option value="${team.id}">${team.name}</option>`;
         });
         
- // Load all users first
-const usersRef = collection(db, 'users');
-const usersSnapshot = await getDocs(usersRef);
-
-const usersData = {};
-usersSnapshot.forEach(doc => {
-  usersData[doc.id] = {
-    id: doc.id,
-    ...doc.data()
-  };
-});
-
-// Load all profiles and filter for approved status
-const profilesRef = collection(db, 'profiles');
-const profilesSnapshot = await getDocs(profilesRef);
-
-allMembers = [];
-profilesSnapshot.forEach(doc => {
-  const profileData = doc.data();
-  const userId = doc.id;
-  const status = profileData.adminUse?.status || 'pending';
-  
-  // Only include approved profiles
-  if (status === 'approved' && usersData[userId]) {
-    allMembers.push({
-      ...usersData[userId],
-      clinicalGrade: profileData.clinicalGrade || profileData.mainQualification || '',
-      teams: usersData[userId].teams || []
-    });
-  }
-});
+        // Load all users first
+        const usersRef = collection(db, 'users');
+        const usersSnapshot = await getDocs(usersRef);
+        
+        const usersData = {};
+        usersSnapshot.forEach(doc => {
+          usersData[doc.id] = {
+            id: doc.id,
+            ...doc.data()
+          };
+        });
+        
+        // Load all profiles and filter for approved status
+        const profilesRef = collection(db, 'profiles');
+        const profilesSnapshot = await getDocs(profilesRef);
+        
+        allMembers = [];
+        profilesSnapshot.forEach(doc => {
+          const profileData = doc.data();
+          const userId = doc.id;
+          const status = profileData.adminUse?.status || 'pending';
+          
+          // Only include approved profiles that have a matching user
+          if (status === 'approved' && usersData[userId]) {
+            allMembers.push({
+              ...usersData[userId],
+              visibleStatus: status,
+              clinicalGrade: profileData.clinicalGrade || profileData.mainQualification || '',
+              teams: usersData[userId].teams || []
+            });
+          }
+        });
         
         // Sort members by name
         allMembers.sort((a, b) => {
-          const nameA = `${a.firstName} ${a.surname}`.toLowerCase();
-          const nameB = `${b.firstName} ${b.surname}`.toLowerCase();
+          const nameA = `${a.firstName || ''} ${a.surname || ''}`.toLowerCase();
+          const nameB = `${b.firstName || ''} ${b.surname || ''}`.toLowerCase();
           return nameA.localeCompare(nameB);
         });
+        
+        console.log('Members loaded:', allMembers.length, allMembers);
+        console.log('Teams loaded:', allTeams.length, allTeams);
         
         // Get unique grades from members
         const uniqueGrades = new Set();
@@ -804,8 +813,8 @@ profilesSnapshot.forEach(doc => {
       
       // Filter members based on search term
       const filteredMembers = allMembers.filter(member => {
-        const fullName = `${member.firstName} ${member.surname}`.toLowerCase();
-        const email = member.email.toLowerCase();
+        const fullName = `${member.firstName || ''} ${member.surname || ''}`.toLowerCase();
+        const email = (member.email || '').toLowerCase();
         
         return fullName.includes(searchTerm) || email.includes(searchTerm);
       });
@@ -820,6 +829,7 @@ profilesSnapshot.forEach(doc => {
       // Show results
       for (const member of filteredMembers) {
         const memberTeams = member.teams || [];
+        const status = member.visibleStatus || 'approved';
         
         // Create member card
         const memberCard = document.createElement('div');
@@ -828,12 +838,12 @@ profilesSnapshot.forEach(doc => {
           <div class="member-info">
             <div class="member-details">
               <h5 class="mb-1">
-                ${member.firstName} ${member.surname}
-                <span class="status-pill status-${member.profileStatus} ms-2">
-                  ${member.profileStatus.charAt(0).toUpperCase() + member.profileStatus.slice(1)}
+                ${member.firstName || ''} ${member.surname || ''}
+                <span class="status-pill status-${status} ms-2">
+                  ${status.charAt(0).toUpperCase() + status.slice(1)}
                 </span>
               </h5>
-              <p class="text-muted mb-1">${member.email}</p>
+              <p class="text-muted mb-1">${member.email || ''}</p>
               <div class="small">Grade: ${member.clinicalGrade || 'Not specified'}</div>
               <div class="member-teams">
                 ${getTeamBadgesHtml(memberTeams)}
@@ -841,7 +851,7 @@ profilesSnapshot.forEach(doc => {
             </div>
           </div>
           <div>
-            <button class="btn btn-outline-primary btn-sm assign-teams-btn" data-member-id="${member.id}" data-member-name="${member.firstName} ${member.surname}">
+            <button class="btn btn-outline-primary btn-sm assign-teams-btn" data-member-id="${member.id}" data-member-name="${member.firstName || ''} ${member.surname || ''}">
               <i class="bi bi-people"></i> Assign Teams
             </button>
           </div>
@@ -896,18 +906,20 @@ profilesSnapshot.forEach(doc => {
         unassignedMembersList.innerHTML = '';
         
         for (const member of unassignedMembers) {
+          const status = member.visibleStatus || 'approved';
+          
           const memberCard = document.createElement('div');
           memberCard.className = 'member-card';
           memberCard.innerHTML = `
             <div class="member-info">
               <div class="member-details">
                 <h5 class="mb-1">
-                  ${member.firstName} ${member.surname}
-                  <span class="status-pill status-${member.profileStatus} ms-2">
-                    ${member.profileStatus.charAt(0).toUpperCase() + member.profileStatus.slice(1)}
+                  ${member.firstName || ''} ${member.surname || ''}
+                  <span class="status-pill status-${status} ms-2">
+                    ${status.charAt(0).toUpperCase() + status.slice(1)}
                   </span>
                 </h5>
-                <p class="text-muted mb-1">${member.email}</p>
+                <p class="text-muted mb-1">${member.email || ''}</p>
                 <div class="small">Grade: ${member.clinicalGrade || 'Not specified'}</div>
                 <div class="member-teams">
                   <span class="text-muted small">No teams assigned</span>
@@ -915,7 +927,7 @@ profilesSnapshot.forEach(doc => {
               </div>
             </div>
             <div>
-              <button class="btn btn-outline-primary btn-sm assign-teams-btn-unassigned" data-member-id="${member.id}" data-member-name="${member.firstName} ${member.surname}">
+              <button class="btn btn-outline-primary btn-sm assign-teams-btn-unassigned" data-member-id="${member.id}" data-member-name="${member.firstName || ''} ${member.surname || ''}">
                 <i class="bi bi-people"></i> Assign Teams
               </button>
             </div>
@@ -992,15 +1004,15 @@ profilesSnapshot.forEach(doc => {
           <div class="d-flex align-items-start gap-3">
             <input type="checkbox" class="form-check-input member-checkbox" value="${member.id}">
             <div class="member-details">
-              <h5 class="mb-1">${member.firstName} ${member.surname}</h5>
-              <p class="text-muted mb-1">${member.email}</p>
+              <h5 class="mb-1">${member.firstName || ''} ${member.surname || ''}</h5>
+              <p class="text-muted mb-1">${member.email || ''}</p>
               <div class="member-teams">
                 ${getTeamBadgesHtml(memberTeams)}
               </div>
             </div>
           </div>
           <div>
-            <button class="btn btn-outline-primary btn-sm grade-assign-btn" data-member-id="${member.id}" data-member-name="${member.firstName} ${member.surname}">
+            <button class="btn btn-outline-primary btn-sm grade-assign-btn" data-member-id="${member.id}" data-member-name="${member.firstName || ''} ${member.surname || ''}">
               <i class="bi bi-people"></i> Assign Teams
             </button>
           </div>
@@ -1110,8 +1122,8 @@ profilesSnapshot.forEach(doc => {
           memberCard.innerHTML = `
             <div class="member-info">
               <div class="member-details">
-                <h5 class="mb-1">${member.firstName} ${member.surname}</h5>
-                <p class="text-muted mb-1">${member.email}</p>
+                <h5 class="mb-1">${member.firstName || ''} ${member.surname || ''}</h5>
+                <p class="text-muted mb-1">${member.email || ''}</p>
                 <div class="small">Grade: ${member.clinicalGrade || 'Not specified'}</div>
               </div>
             </div>
@@ -1358,7 +1370,7 @@ profilesSnapshot.forEach(doc => {
         window.location.href = 'index.html';
         return;
       }
-    
+      
       try {
         const userDocRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userDocRef);
@@ -1371,9 +1383,6 @@ profilesSnapshot.forEach(doc => {
         
         // Load initial data
         await loadInitialData();
-        
-        console.log('Members loaded:', allMembers.length, allMembers);
-console.log('Teams loaded:', allTeams.length, allTeams);
         
         // Show page content after everything is loaded
         showPageContent();
