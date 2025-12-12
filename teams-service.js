@@ -20,28 +20,31 @@ import {
 import { firebaseConfig } from './firebase-config.js';
 
 // SAFE Firebase initialization using try-catch
-// If Firebase is already initialized, this will catch the error and continue
 let app;
+let internalDb;
+let internalAuth;
+
 try {
   app = initializeApp(firebaseConfig);
+  internalAuth = getAuth(app);
+  internalDb = getFirestore(app);
 } catch (e) {
-  // Firebase already initialized, get the existing app
-  // The error means the app already exists, which is fine
-  if (e.code === 'app/duplicate-app') {
-    // App already exists - we can get Firestore directly
+  // Firebase already initialized elsewhere
+  if (e.code === 'app/duplicate-app' || e.message.includes('already exists')) {
+    internalAuth = getAuth();
+    internalDb = getFirestore();
   } else {
-    throw e; // Re-throw if it's a different error
+    throw e;
   }
 }
 
-const auth = getAuth();
-const db = getFirestore();
-
 /**
  * Get all teams from the database
+ * @param {Object} [dbParam] - Optional Firestore database instance (uses internal if not provided)
  * @returns {Promise<Array>} Array of team objects with IDs
  */
-async function getAllTeams() {
+async function getAllTeams(dbParam) {
+  const db = dbParam || internalDb;
   try {
     const teamsRef = collection(db, 'teams');
     const teamsSnapshot = await getDocs(teamsRef);
@@ -67,9 +70,11 @@ async function getAllTeams() {
 /**
  * Get a team by ID
  * @param {string} teamId - The team ID
+ * @param {Object} [dbParam] - Optional Firestore database instance
  * @returns {Promise<Object|null>} The team data or null if not found
  */
-async function getTeamById(teamId) {
+async function getTeamById(teamId, dbParam) {
+  const db = dbParam || internalDb;
   try {
     const teamRef = doc(db, 'teams', teamId);
     const teamSnap = await getDoc(teamRef);
@@ -91,9 +96,11 @@ async function getTeamById(teamId) {
 /**
  * Create a new team
  * @param {Object} teamData - Team data (name required)
+ * @param {Object} [dbParam] - Optional Firestore database instance
  * @returns {Promise<string>} The ID of the new team
  */
-async function createTeam(teamData) {
+async function createTeam(teamData, dbParam) {
+  const db = dbParam || internalDb;
   try {
     if (!teamData.name || teamData.name.trim() === '') {
       throw new Error("Team name is required");
@@ -118,9 +125,11 @@ async function createTeam(teamData) {
  * Update an existing team
  * @param {string} teamId - The team ID to update
  * @param {Object} teamData - The updated team data
+ * @param {Object} [dbParam] - Optional Firestore database instance
  * @returns {Promise<void>}
  */
-async function updateTeam(teamId, teamData) {
+async function updateTeam(teamId, teamData, dbParam) {
+  const db = dbParam || internalDb;
   try {
     if (!teamData.name || teamData.name.trim() === '') {
       throw new Error("Team name is required");
@@ -142,9 +151,11 @@ async function updateTeam(teamId, teamData) {
 /**
  * Delete a team
  * @param {string} teamId - The team ID to delete
+ * @param {Object} [dbParam] - Optional Firestore database instance
  * @returns {Promise<void>}
  */
-async function deleteTeam(teamId) {
+async function deleteTeam(teamId, dbParam) {
+  const db = dbParam || internalDb;
   try {
     // Delete the team document
     await deleteDoc(doc(db, 'teams', teamId));
@@ -173,9 +184,11 @@ async function deleteTeam(teamId) {
 /**
  * Get users in a team
  * @param {string} teamId - The team ID
+ * @param {Object} [dbParam] - Optional Firestore database instance
  * @returns {Promise<Array>} Array of user objects with IDs
  */
-async function getUsersInTeam(teamId) {
+async function getUsersInTeam(teamId, dbParam) {
+  const db = dbParam || internalDb;
   try {
     const usersRef = collection(db, 'users');
     const usersQuery = query(usersRef, where('teams', 'array-contains', teamId));
@@ -210,9 +223,11 @@ async function getUsersInTeam(teamId) {
  * Add a user to a team
  * @param {string} userId - The user ID
  * @param {string} teamId - The team ID
+ * @param {Object} [dbParam] - Optional Firestore database instance
  * @returns {Promise<void>}
  */
-async function addUserToTeam(userId, teamId) {
+async function addUserToTeam(userId, teamId, dbParam) {
+  const db = dbParam || internalDb;
   try {
     await updateDoc(doc(db, 'users', userId), {
       teams: arrayUnion(teamId)
@@ -227,9 +242,11 @@ async function addUserToTeam(userId, teamId) {
  * Remove a user from a team
  * @param {string} userId - The user ID
  * @param {string} teamId - The team ID
+ * @param {Object} [dbParam] - Optional Firestore database instance
  * @returns {Promise<void>}
  */
-async function removeUserFromTeam(userId, teamId) {
+async function removeUserFromTeam(userId, teamId, dbParam) {
+  const db = dbParam || internalDb;
   try {
     await updateDoc(doc(db, 'users', userId), {
       teams: arrayRemove(teamId)
@@ -243,9 +260,11 @@ async function removeUserFromTeam(userId, teamId) {
 /**
  * Get all teams a user belongs to
  * @param {string} userId - The user ID
+ * @param {Object} [dbParam] - Optional Firestore database instance
  * @returns {Promise<Array>} Array of team objects with IDs
  */
-async function getUserTeams(userId) {
+async function getUserTeams(userId, dbParam) {
+  const db = dbParam || internalDb;
   try {
     const userRef = doc(db, 'users', userId);
     const userSnap = await getDoc(userRef);
@@ -272,7 +291,7 @@ async function getUserTeams(userId) {
     
     const teams = [];
     for (const teamId of teamIds) {
-      const team = await getTeamById(teamId);
+      const team = await getTeamById(teamId, db);
       if (team) {
         teams.push(team);
       }
