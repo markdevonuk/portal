@@ -1,82 +1,3 @@
-Skip to content
-Navigation Menu
-markdevonuk
-portal
- 
-Type / to search
-Code
-Issues
-Pull requests
-Actions
-Projects
-Wiki
-Security
-2
-Insights
-Settings
-Files
-
-t
-css
-functions
-.DS_Store
-.firebaserc
-.gitignore
-CNAME
-README.md
-admin-allowed-emails.html
-admin-applicants.html
-admin-delete-profile.html
-admin-downloads.html
-admin-edit-profile.html
-admin-profiles.html
-admin-user-management.html
-admin.html
-code.css
-dashboard.html
-edit.txt
-email-test.html
-event-management-email.js
-event-management.html
-events-card.js
-events.html
-firebase-config.js
-firebase.json
-index.html
-joinfms.html
-loader.js
-login.html
-payment-success.html
-profile-service.js
-profile.html
-register.html
-search-members.html
-setup-2fa.html
-team-assignment.html
-team-management.html
-teams-service.js
-verify-2fa.html
-portal
-/teams-service.js
-markdevonuk
-markdevonuk
-Set up teams
-667db82
- · 
-last month
-portal
-/teams-service.js
-
-Code
-
-Blame
-288 lines (255 loc) · 6.68 KB
-Older
-Newer
-markdevonuk
-last month
-
-Set up teams
 // teams-service.js
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
@@ -98,16 +19,32 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
 
-// Initialize Firebase (if not already initialized elsewhere)
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+// SAFE Firebase initialization using try-catch
+let app;
+let internalDb;
+let internalAuth;
+
+try {
+  app = initializeApp(firebaseConfig);
+  internalAuth = getAuth(app);
+  internalDb = getFirestore(app);
+} catch (e) {
+  // Firebase already initialized elsewhere
+  if (e.code === 'app/duplicate-app' || e.message.includes('already exists')) {
+    internalAuth = getAuth();
+    internalDb = getFirestore();
+  } else {
+    throw e;
+  }
+}
 
 /**
  * Get all teams from the database
+ * @param {Object} [dbParam] - Optional Firestore database instance (uses internal if not provided)
  * @returns {Promise<Array>} Array of team objects with IDs
  */
-async function getAllTeams() {
+async function getAllTeams(dbParam) {
+  const db = dbParam || internalDb;
   try {
     const teamsRef = collection(db, 'teams');
     const teamsSnapshot = await getDocs(teamsRef);
@@ -133,9 +70,11 @@ async function getAllTeams() {
 /**
  * Get a team by ID
  * @param {string} teamId - The team ID
+ * @param {Object} [dbParam] - Optional Firestore database instance
  * @returns {Promise<Object|null>} The team data or null if not found
  */
-async function getTeamById(teamId) {
+async function getTeamById(teamId, dbParam) {
+  const db = dbParam || internalDb;
   try {
     const teamRef = doc(db, 'teams', teamId);
     const teamSnap = await getDoc(teamRef);
@@ -157,9 +96,11 @@ async function getTeamById(teamId) {
 /**
  * Create a new team
  * @param {Object} teamData - Team data (name required)
+ * @param {Object} [dbParam] - Optional Firestore database instance
  * @returns {Promise<string>} The ID of the new team
  */
-async function createTeam(teamData) {
+async function createTeam(teamData, dbParam) {
+  const db = dbParam || internalDb;
   try {
     if (!teamData.name || teamData.name.trim() === '') {
       throw new Error("Team name is required");
@@ -184,9 +125,11 @@ async function createTeam(teamData) {
  * Update an existing team
  * @param {string} teamId - The team ID to update
  * @param {Object} teamData - The updated team data
+ * @param {Object} [dbParam] - Optional Firestore database instance
  * @returns {Promise<void>}
  */
-async function updateTeam(teamId, teamData) {
+async function updateTeam(teamId, teamData, dbParam) {
+  const db = dbParam || internalDb;
   try {
     if (!teamData.name || teamData.name.trim() === '') {
       throw new Error("Team name is required");
@@ -208,9 +151,11 @@ async function updateTeam(teamId, teamData) {
 /**
  * Delete a team
  * @param {string} teamId - The team ID to delete
+ * @param {Object} [dbParam] - Optional Firestore database instance
  * @returns {Promise<void>}
  */
-async function deleteTeam(teamId) {
+async function deleteTeam(teamId, dbParam) {
+  const db = dbParam || internalDb;
   try {
     // Delete the team document
     await deleteDoc(doc(db, 'teams', teamId));
@@ -238,4 +183,138 @@ async function deleteTeam(teamId) {
 
 /**
  * Get users in a team
-Blaming portal/teams-service.js at f9103f1f9b48165c9af8a52ecdacc2e5006c4171 · markdevonuk/portal
+ * @param {string} teamId - The team ID
+ * @param {Object} [dbParam] - Optional Firestore database instance
+ * @returns {Promise<Array>} Array of user objects with IDs
+ */
+async function getUsersInTeam(teamId, dbParam) {
+  const db = dbParam || internalDb;
+  try {
+    const usersRef = collection(db, 'users');
+    const usersQuery = query(usersRef, where('teams', 'array-contains', teamId));
+    const usersSnapshot = await getDocs(usersQuery);
+    
+    const users = [];
+    usersSnapshot.forEach(doc => {
+      users.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+    
+    // Sort users by name
+    users.sort((a, b) => {
+      // First by surname if available
+      if (a.surname && b.surname) {
+        return a.surname.localeCompare(b.surname);
+      }
+      // Then by firstName
+      return a.firstName.localeCompare(b.firstName);
+    });
+    
+    return users;
+  } catch (error) {
+    console.error("Error getting users in team:", error);
+    throw error;
+  }
+}
+
+/**
+ * Add a user to a team
+ * @param {string} userId - The user ID
+ * @param {string} teamId - The team ID
+ * @param {Object} [dbParam] - Optional Firestore database instance
+ * @returns {Promise<void>}
+ */
+async function addUserToTeam(userId, teamId, dbParam) {
+  const db = dbParam || internalDb;
+  try {
+    await updateDoc(doc(db, 'users', userId), {
+      teams: arrayUnion(teamId)
+    });
+  } catch (error) {
+    console.error("Error adding user to team:", error);
+    throw error;
+  }
+}
+
+/**
+ * Remove a user from a team
+ * @param {string} userId - The user ID
+ * @param {string} teamId - The team ID
+ * @param {Object} [dbParam] - Optional Firestore database instance
+ * @returns {Promise<void>}
+ */
+async function removeUserFromTeam(userId, teamId, dbParam) {
+  const db = dbParam || internalDb;
+  try {
+    await updateDoc(doc(db, 'users', userId), {
+      teams: arrayRemove(teamId)
+    });
+  } catch (error) {
+    console.error("Error removing user from team:", error);
+    throw error;
+  }
+}
+
+/**
+ * Get all teams a user belongs to
+ * @param {string} userId - The user ID
+ * @param {Object} [dbParam] - Optional Firestore database instance
+ * @returns {Promise<Array>} Array of team objects with IDs
+ */
+async function getUserTeams(userId, dbParam) {
+  const db = dbParam || internalDb;
+  try {
+    const userRef = doc(db, 'users', userId);
+    const userSnap = await getDoc(userRef);
+    
+    if (!userSnap.exists()) {
+      return [];
+    }
+    
+    const userData = userSnap.data();
+    
+    // If user doesn't have teams array, initialize it
+    if (!userData.teams) {
+      await updateDoc(userRef, {
+        teams: []
+      });
+      return [];
+    }
+    
+    const teamIds = userData.teams || [];
+    
+    if (teamIds.length === 0) {
+      return [];
+    }
+    
+    const teams = [];
+    for (const teamId of teamIds) {
+      const team = await getTeamById(teamId, db);
+      if (team) {
+        teams.push(team);
+      }
+    }
+    
+    // Sort teams by name
+    teams.sort((a, b) => a.name.localeCompare(b.name));
+    
+    return teams;
+  } catch (error) {
+    console.error("Error getting user teams:", error);
+    throw error;
+  }
+}
+
+export {
+  getAllTeams,
+  getTeamById,
+  createTeam,
+  updateTeam,
+  deleteTeam,
+  getUsersInTeam,
+  addUserToTeam,
+  removeUserFromTeam,
+  getUserTeams
+};
