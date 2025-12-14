@@ -268,6 +268,14 @@
   #profileTabs .nav-link {
     transition: all 0.3s ease;
   }
+  
+  .last-note {
+  background: #fff8e6;
+  border-left: 3px solid #ffc107;
+  padding: 8px 10px;
+  border-radius: 0 5px 5px 0;
+  margin-top: 10px;
+}
    
     
   </style>
@@ -717,30 +725,47 @@ allProfiles.rejected.sort((a, b) => {
         return;
       }
       
-      let html = '';
-      profiles.forEach(profile => {
-        html += `
-          <div class="profile-card">
-            <div class="profile-info">
-              <div class="profile-details">
-                <h5>${profile.userInfo.firstName} ${profile.userInfo.surname}</h5>
-                <p><i class="bi bi-envelope"></i> ${profile.userInfo.email || 'No email'}</p>
-<p><i class="bi bi-telephone"></i> ${profile.userInfo.mobile || 'No mobile'}</p>
-<p><i class="bi bi-briefcase-fill"></i> ${profile.medicalQualifications?.qualification || 'Not specified'}</p>
-</div>
-              <div class="profile-actions">
-                <span class="${status}-badge">
-                  <i class="bi bi-${status === 'pending' ? 'hourglass-split' : (status === 'approved' ? 'check-circle' : 'x-circle')}"></i> 
-                  ${status.charAt(0).toUpperCase() + status.slice(1)}
-                </span>
-                <button class="btn btn-outline-primary btn-sm view-profile-btn" data-user-id="${profile.userId}">
-                  <i class="bi bi-eye"></i> Review
-                </button>
-              </div>
-            </div>
-          </div>
-        `;
-      });
+let html = '';
+profiles.forEach(profile => {
+  // Get the last note for pending profiles only
+  let lastNoteHtml = '';
+  if (status === 'pending' && profile.adminUse?.notes) {
+    // Get the last note (notes may be separated by line breaks)
+    const notes = profile.adminUse.notes.trim();
+    if (notes) {
+      // Truncate if too long for the card display
+      const truncatedNote = notes.length > 100 ? notes.substring(0, 100) + '...' : notes;
+      lastNoteHtml = `
+        <div class="last-note mt-2">
+          <small class="text-warning"><i class="bi bi-sticky"></i> <strong>Note:</strong> ${truncatedNote}</small>
+        </div>
+      `;
+    }
+  }
+  
+  html += `
+    <div class="profile-card">
+      <div class="profile-info">
+        <div class="profile-details">
+          <h5>${profile.userInfo.firstName} ${profile.userInfo.surname}</h5>
+          <p><i class="bi bi-envelope"></i> ${profile.userInfo.email || 'No email'}</p>
+          <p><i class="bi bi-telephone"></i> ${profile.userInfo.mobile || 'No mobile'}</p>
+          <p><i class="bi bi-briefcase-fill"></i> ${profile.medicalQualifications?.qualification || 'Not specified'}</p>
+          ${lastNoteHtml}
+        </div>
+        <div class="profile-actions">
+          <span class="${status}-badge">
+            <i class="bi bi-${status === 'pending' ? 'hourglass-split' : (status === 'approved' ? 'check-circle' : 'x-circle')}"></i> 
+            ${status.charAt(0).toUpperCase() + status.slice(1)}
+          </span>
+          <button class="btn btn-outline-primary btn-sm view-profile-btn" data-user-id="${profile.userId}">
+            <i class="bi bi-eye"></i> Review
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+});
       
       container.innerHTML = html;
       
