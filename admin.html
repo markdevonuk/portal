@@ -124,6 +124,69 @@
       color: #6c757d;
       font-style: italic;
     }
+    
+    /* Super Admin locked card styling */
+    .admin-card-link.locked {
+      pointer-events: none;
+      cursor: not-allowed;
+    }
+    .admin-card-link.locked .admin-card {
+      opacity: 0.6;
+      position: relative;
+      background: #f8f9fa;
+    }
+    .admin-card-link.locked .admin-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(220, 53, 69, 0.05);
+      border-radius: 15px;
+      z-index: 1;
+    }
+    .admin-card-link.locked .admin-icon {
+      color: #adb5bd;
+    }
+    .lock-overlay {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      z-index: 2;
+      display: none;
+    }
+    .admin-card-link.locked .lock-overlay {
+      display: block;
+    }
+    .lock-overlay i {
+      font-size: 1.5rem;
+      color: #dc3545;
+    }
+    .super-admin-badge {
+      position: absolute;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      display: none;
+    }
+    .admin-card-link.locked .super-admin-badge {
+      display: inline-block;
+    }
+    
+    /* Locked danger card styling */
+    .admin-card-link.locked .danger-card {
+      opacity: 0.6;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-color: #adb5bd;
+    }
+    .admin-card-link.locked .danger-icon {
+      color: #adb5bd;
+    }
+    .admin-card-link.locked .danger-card h3 {
+      color: #6c757d;
+    }
   </style>
 </head>
 <body>
@@ -141,10 +204,10 @@
             </a>
           </li>
           <li class="nav-item">
-  <a class="nav-link" href="events.html">
-    <i class="bi bi-calendar-event"></i> Events
-  </a>
-</li>
+            <a class="nav-link" href="events.html">
+              <i class="bi bi-calendar-event"></i> Events
+            </a>
+          </li>
           <li class="nav-item">
             <a class="nav-link" href="#" id="logoutLink">
               <i class="bi bi-box-arrow-right"></i> Logout
@@ -175,8 +238,10 @@
       <!-- Row 1: Manage Profiles and Applicants -->
       <div class="row">
         <div class="col-md-6 mb-4">
-          <a href="admin-profiles.html" class="admin-card-link">
+          <a href="admin-profiles.html" class="admin-card-link super-admin-only">
             <div class="admin-card text-center">
+              <div class="lock-overlay"><i class="bi bi-lock-fill"></i></div>
+              <span class="badge bg-danger super-admin-badge">Super Admin Only</span>
               <i class="bi bi-person-vcard-fill admin-icon"></i>
               <h3>Manage Profiles</h3>
               <p class="text-muted mb-0">Review submitted profiles</p>
@@ -185,8 +250,10 @@
           </a>
         </div>
         <div class="col-md-6 mb-4">
-          <a href="admin-applicants.html" class="admin-card-link">
+          <a href="admin-applicants.html" class="admin-card-link super-admin-only">
             <div class="admin-card text-center">
+              <div class="lock-overlay"><i class="bi bi-lock-fill"></i></div>
+              <span class="badge bg-danger super-admin-badge">Super Admin Only</span>
               <i class="bi bi-person-plus-fill admin-icon"></i>
               <h3>Applicants</h3>
               <p class="text-muted mb-0">Manage membership applications</p>
@@ -199,8 +266,10 @@
       <!-- Row 2: Team Management -->
       <div class="row">
         <div class="col-md-6 mb-4">
-          <a href="team-management.html" class="admin-card-link">
+          <a href="team-management.html" class="admin-card-link super-admin-only">
             <div class="admin-card text-center">
+              <div class="lock-overlay"><i class="bi bi-lock-fill"></i></div>
+              <span class="badge bg-danger super-admin-badge">Super Admin Only</span>
               <i class="bi bi-people-fill admin-icon"></i>
               <h3>Team Management</h3>
               <p class="text-muted mb-0">Manage teams</p>
@@ -209,8 +278,10 @@
           </a>
         </div>
         <div class="col-md-6 mb-4">
-          <a href="team-assignment.html" class="admin-card-link">
+          <a href="team-assignment.html" class="admin-card-link super-admin-only">
             <div class="admin-card text-center">
+              <div class="lock-overlay"><i class="bi bi-lock-fill"></i></div>
+              <span class="badge bg-danger super-admin-badge">Super Admin Only</span>
               <i class="bi bi-person-plus-fill admin-icon"></i>
              <h3>Team Assignment</h3>
               <p class="text-muted mb-0">Assign teams to members</p>
@@ -247,8 +318,10 @@
       <!-- Row 4: Allowed Emails and Admin Users -->
       <div class="row">
         <div class="col-md-6 mb-4">
-          <a href="admin-allowed-emails.html" class="admin-card-link">
+          <a href="admin-allowed-emails.html" class="admin-card-link super-admin-only">
             <div class="admin-card text-center">
+              <div class="lock-overlay"><i class="bi bi-lock-fill"></i></div>
+              <span class="badge bg-danger super-admin-badge">Super Admin Only</span>
               <i class="bi bi-envelope-check-fill admin-icon"></i>
               <h3>Allowed Emails</h3>
               <p class="text-muted mb-0">Manage registration whitelist</p>
@@ -258,8 +331,10 @@
         </div>
         
         <div class="col-md-6 mb-4">
-          <a href="admin-user-management.html" class="admin-card-link">
+          <a href="admin-user-management.html" class="admin-card-link super-admin-only">
             <div class="admin-card text-center">
+              <div class="lock-overlay"><i class="bi bi-lock-fill"></i></div>
+              <span class="badge bg-danger super-admin-badge">Super Admin Only</span>
               <i class="bi bi-people-fill admin-icon"></i>
               <h3>Admin Users</h3>
               <p class="text-muted mb-0">Manage administrator permissions</p>
@@ -330,8 +405,10 @@
       <!-- DANGER ZONE - Delete Profile -->
       <div class="row">
         <div class="col-md-12 mb-4">
-          <a href="admin-delete-profile.html" class="admin-card-link">
+          <a href="admin-delete-profile.html" class="admin-card-link super-admin-only">
             <div class="danger-card text-center">
+              <div class="lock-overlay"><i class="bi bi-lock-fill"></i></div>
+              <span class="badge bg-danger super-admin-badge">Super Admin Only</span>
               <i class="bi bi-exclamation-octagon-fill danger-icon"></i>
               <h3>⚠️ Delete Member Profile</h3>
               <p class="text-muted mb-0">DANGER: Permanently remove members</p>
@@ -531,23 +608,22 @@
 
     // Open modal with members of a specific qualification
     window.openQualificationModal = async function(qualification) {
+      // Show modal
+      qualificationModal.show();
+      
       // Reset modal state
+      modalQualificationName.textContent = qualification;
       modalLoading.style.display = 'block';
       modalContent.style.display = 'none';
       modalNoMembers.style.display = 'none';
       modalTableBody.innerHTML = '';
-      modalQualificationName.textContent = qualification;
       modalMemberCount.textContent = '';
-      
-      // Show modal
-      qualificationModal.show();
       
       try {
         // Filter profiles by qualification
-        const matchingProfiles = allApprovedProfiles.filter(profile => {
-          const profileQual = profile.medicalQualifications?.qualification || 'Unknown';
-          return profileQual === qualification;
-        });
+        const matchingProfiles = allApprovedProfiles.filter(p => 
+          (p.medicalQualifications?.qualification || 'Unknown') === qualification
+        );
         
         if (matchingProfiles.length === 0) {
           modalLoading.style.display = 'none';
@@ -555,46 +631,40 @@
           return;
         }
         
-        // Build member data with event participation
-        const members = [];
-        
-        for (const profile of matchingProfiles) {
+        // Build member data with events
+        const members = matchingProfiles.map(profile => {
           const user = allUsers[profile.userId] || {};
-          const fullName = `${user.firstName || ''} ${user.surname || ''}`.trim() || 'Unknown';
-          const grade = profile.medicalQualifications?.qualification || 'Unknown';
-          const email = user.email || 'No email';
-          const telephone = user.mobile || 'No phone';
+          const firstName = profile.personalDetails?.firstName || user.firstName || '';
+          const surname = profile.personalDetails?.surname || user.surname || '';
+          const fullName = `${firstName} ${surname}`.trim() || 'Unknown';
           
-          // Get events this member has volunteered for
-          const memberVolunteers = allVolunteers.filter(v => v.userId === profile.userId);
-          const events = memberVolunteers.map(v => {
+          // Get events for this user
+          const userVolunteers = allVolunteers.filter(v => v.userId === profile.userId);
+          const events = userVolunteers.map(v => {
             const event = allEvents[v.eventId];
-            if (!event) return null;
-            return {
+            return event ? {
               name: event.name || 'Unknown Event',
-              selected: v.selected || false
-            };
+              selected: v.selected === true
+            } : null;
           }).filter(e => e !== null);
           
-          members.push({
+          return {
             fullName,
-            grade,
-            email,
-            telephone,
+            grade: profile.medicalQualifications?.qualification || 'N/A',
+            email: user.email || profile.personalDetails?.email || 'N/A',
+            telephone: user.mobile || profile.personalDetails?.phone || 'N/A',
             events
-          });
-        }
+          };
+        });
         
-        // Sort alphabetically by name
+        // Sort by name
         members.sort((a, b) => a.fullName.localeCompare(b.fullName));
         
-        // Build table rows
+        // Build table HTML
         let tableHtml = '';
         members.forEach(member => {
-          let eventsHtml = '';
-          if (member.events.length === 0) {
-            eventsHtml = '<span class="no-events">No events</span>';
-          } else {
+          let eventsHtml = '<span class="no-events">No events</span>';
+          if (member.events.length > 0) {
             eventsHtml = member.events.map(e => {
               const badgeClass = e.selected ? 'selected' : 'volunteered';
               const icon = e.selected ? 'check-circle-fill' : 'hourglass-split';
@@ -651,6 +721,22 @@
           unauthorizedMsg.classList.add('hidden');
           loadQuickStats();
           loadQualificationStats();
+          
+          // Check for super admin access
+          const userData = userDoc.data();
+          const superAdminCards = document.querySelectorAll('.super-admin-only');
+          
+          if (userData.isSuperAdmin === true) {
+            // Super admin - unlock all cards
+            superAdminCards.forEach(card => {
+              card.classList.remove('locked');
+            });
+          } else {
+            // Regular admin - lock super admin cards
+            superAdminCards.forEach(card => {
+              card.classList.add('locked');
+            });
+          }
         } else {
           adminContent.classList.add('hidden');
           unauthorizedMsg.classList.remove('hidden');
