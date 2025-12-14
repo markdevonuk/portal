@@ -78,6 +78,52 @@
     
     .unauthorized { text-align: center; padding: 60px 20px; }
     .hidden { display: none; }
+    
+    /* Clickable stat styling */
+    .stat-clickable {
+      cursor: pointer;
+      transition: all 0.2s ease;
+      padding: 10px;
+      border-radius: 10px;
+    }
+    .stat-clickable:hover {
+      background: #f0f9f8;
+      transform: scale(1.05);
+    }
+    .stat-clickable h3 {
+      text-decoration: underline;
+      text-decoration-style: dotted;
+      text-underline-offset: 4px;
+    }
+    
+    /* Modal table styling */
+    .member-table {
+      font-size: 0.9rem;
+    }
+    .member-table th {
+      background: #f8f9fa;
+      position: sticky;
+      top: 0;
+    }
+    .event-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      margin: 2px;
+    }
+    .event-badge.selected {
+      background: #d1e7dd;
+      color: #155724;
+    }
+    .event-badge.volunteered {
+      background: #fff3cd;
+      color: #856404;
+    }
+    .no-events {
+      color: #6c757d;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -260,11 +306,12 @@
         </div>
       </div>
 
-      <!-- Qualification Stats - NEW SECTION -->
+      <!-- Qualification Stats -->
       <div class="row">
         <div class="col-md-12">
           <div class="admin-card">
             <h4 class="mb-3"><i class="bi bi-mortarboard-fill"></i> Approved Members by Qualification</h4>
+            <p class="text-muted small mb-3"><i class="bi bi-hand-index"></i> Click on a number to view members with that qualification</p>
             <div id="qualificationStatsLoading" class="text-center py-3">
               <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
@@ -301,6 +348,53 @@
   </div>
   </div>
 
+  <!-- Qualification Members Modal -->
+  <div class="modal fade" id="qualificationModal" tabindex="-1" aria-labelledby="qualificationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="qualificationModalLabel">
+            <i class="bi bi-people-fill"></i> Members - <span id="modalQualificationName"></span>
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="modalLoading" class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 text-muted">Loading member details...</p>
+          </div>
+          <div id="modalContent" style="display: none;">
+            <div class="table-responsive">
+              <table class="table table-hover member-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Grade</th>
+                    <th>Email</th>
+                    <th>Telephone</th>
+                    <th>Events</th>
+                  </tr>
+                </thead>
+                <tbody id="modalTableBody">
+                  <!-- Member rows will be inserted here -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div id="modalNoMembers" class="text-center text-muted py-4" style="display: none;">
+            <i class="bi bi-info-circle"></i> No members found with this qualification
+          </div>
+        </div>
+        <div class="modal-footer">
+          <span id="modalMemberCount" class="me-auto text-muted"></span>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   
   <script type="module">
@@ -316,6 +410,21 @@
     const logoutLink = document.getElementById('logoutLink');
     const adminContent = document.getElementById('adminContent');
     const unauthorizedMsg = document.getElementById('unauthorizedMsg');
+    
+    // Modal elements
+    const qualificationModal = new bootstrap.Modal(document.getElementById('qualificationModal'));
+    const modalQualificationName = document.getElementById('modalQualificationName');
+    const modalLoading = document.getElementById('modalLoading');
+    const modalContent = document.getElementById('modalContent');
+    const modalNoMembers = document.getElementById('modalNoMembers');
+    const modalTableBody = document.getElementById('modalTableBody');
+    const modalMemberCount = document.getElementById('modalMemberCount');
+    
+    // Store data for modal lookups
+    let allApprovedProfiles = [];
+    let allUsers = {};
+    let allEvents = {};
+    let allVolunteers = [];
 
     // Load quick stats
     async function loadQuickStats() {
@@ -337,7 +446,7 @@
       }
     }
 
-    // Load qualification stats for approved members - NEW FUNCTION
+    // Load qualification stats for approved members
     async function loadQualificationStats() {
       const container = document.getElementById('qualificationStatsContainer');
       const loading = document.getElementById('qualificationStatsLoading');
@@ -346,6 +455,24 @@
       try {
         // Get all profiles
         const profilesSnapshot = await getDocs(collection(db, 'profiles'));
+        
+        // Get all users for later use
+        const usersSnapshot = await getDocs(collection(db, 'users'));
+        usersSnapshot.forEach(doc => {
+          allUsers[doc.id] = doc.data();
+        });
+        
+        // Get all events for later use
+        const eventsSnapshot = await getDocs(collection(db, 'events'));
+        eventsSnapshot.forEach(doc => {
+          allEvents[doc.id] = { id: doc.id, ...doc.data() };
+        });
+        
+        // Get all volunteer records for later use
+        const volunteersSnapshot = await getDocs(collection(db, 'eventVolunteers'));
+        volunteersSnapshot.forEach(doc => {
+          allVolunteers.push({ id: doc.id, ...doc.data() });
+        });
         
         // Count qualifications for approved members only
         const qualificationCounts = {};
@@ -356,6 +483,12 @@
           if (profile.adminUse?.status === 'approved') {
             const qualification = profile.medicalQualifications?.qualification || 'Unknown';
             qualificationCounts[qualification] = (qualificationCounts[qualification] || 0) + 1;
+            
+            // Store profile for modal lookup
+            allApprovedProfiles.push({
+              userId: doc.id,
+              ...profile
+            });
           }
         });
         
@@ -376,8 +509,10 @@
         sortedQualifications.forEach(([qualification, count]) => {
           html += `
             <div class="col-md-3 col-sm-4 col-6 mb-3">
-              <h3 class="text-primary stat-number" data-target="${count}">0</h3>
-              <p class="text-muted mb-0 small">${qualification}</p>
+              <div class="stat-clickable" data-qualification="${qualification}" onclick="window.openQualificationModal('${qualification.replace(/'/g, "\\'")}')">
+                <h3 class="text-primary">${count}</h3>
+                <p class="text-muted mb-0 small">${qualification}</p>
+              </div>
             </div>
           `;
         });
@@ -385,9 +520,6 @@
         container.innerHTML = html;
         container.style.display = 'flex';
         container.style.flexWrap = 'wrap';
-        
-        // Animate the counters
-        animateCounters();
         
       } catch (error) {
         console.error('Error loading qualification stats:', error);
@@ -397,35 +529,104 @@
       }
     }
 
-    // Animate counters with spinning effect - NEW FUNCTION
-    function animateCounters() {
-      const counters = document.querySelectorAll('.stat-number');
-      const duration = 1500; // Animation duration in ms
+    // Open modal with members of a specific qualification
+    window.openQualificationModal = async function(qualification) {
+      // Reset modal state
+      modalLoading.style.display = 'block';
+      modalContent.style.display = 'none';
+      modalNoMembers.style.display = 'none';
+      modalTableBody.innerHTML = '';
+      modalQualificationName.textContent = qualification;
+      modalMemberCount.textContent = '';
       
-      counters.forEach(counter => {
-        const target = parseInt(counter.getAttribute('data-target'));
-        const startTime = performance.now();
+      // Show modal
+      qualificationModal.show();
+      
+      try {
+        // Filter profiles by qualification
+        const matchingProfiles = allApprovedProfiles.filter(profile => {
+          const profileQual = profile.medicalQualifications?.qualification || 'Unknown';
+          return profileQual === qualification;
+        });
         
-        function updateCounter(currentTime) {
-          const elapsed = currentTime - startTime;
-          const progress = Math.min(elapsed / duration, 1);
-          
-          // Easing function for smooth deceleration
-          const easeOut = 1 - Math.pow(1 - progress, 3);
-          
-          const currentValue = Math.floor(easeOut * target);
-          counter.textContent = currentValue;
-          
-          if (progress < 1) {
-            requestAnimationFrame(updateCounter);
-          } else {
-            counter.textContent = target; // Ensure we end on exact target
-          }
+        if (matchingProfiles.length === 0) {
+          modalLoading.style.display = 'none';
+          modalNoMembers.style.display = 'block';
+          return;
         }
         
-        requestAnimationFrame(updateCounter);
-      });
-    }
+        // Build member data with event participation
+        const members = [];
+        
+        for (const profile of matchingProfiles) {
+          const user = allUsers[profile.userId] || {};
+          const fullName = `${user.firstName || ''} ${user.surname || ''}`.trim() || 'Unknown';
+          const grade = profile.medicalQualifications?.qualification || 'Unknown';
+          const email = user.email || 'No email';
+          const telephone = user.mobile || 'No phone';
+          
+          // Get events this member has volunteered for
+          const memberVolunteers = allVolunteers.filter(v => v.userId === profile.userId);
+          const events = memberVolunteers.map(v => {
+            const event = allEvents[v.eventId];
+            if (!event) return null;
+            return {
+              name: event.name || 'Unknown Event',
+              selected: v.selected || false
+            };
+          }).filter(e => e !== null);
+          
+          members.push({
+            fullName,
+            grade,
+            email,
+            telephone,
+            events
+          });
+        }
+        
+        // Sort alphabetically by name
+        members.sort((a, b) => a.fullName.localeCompare(b.fullName));
+        
+        // Build table rows
+        let tableHtml = '';
+        members.forEach(member => {
+          let eventsHtml = '';
+          if (member.events.length === 0) {
+            eventsHtml = '<span class="no-events">No events</span>';
+          } else {
+            eventsHtml = member.events.map(e => {
+              const badgeClass = e.selected ? 'selected' : 'volunteered';
+              const icon = e.selected ? 'check-circle-fill' : 'hourglass-split';
+              return `<span class="event-badge ${badgeClass}"><i class="bi bi-${icon}"></i> ${e.name}</span>`;
+            }).join('');
+          }
+          
+          tableHtml += `
+            <tr>
+              <td><strong>${member.fullName}</strong></td>
+              <td>${member.grade}</td>
+              <td><a href="mailto:${member.email}">${member.email}</a></td>
+              <td>${member.telephone}</td>
+              <td>${eventsHtml}</td>
+            </tr>
+          `;
+        });
+        
+        modalTableBody.innerHTML = tableHtml;
+        modalMemberCount.textContent = `${members.length} member${members.length !== 1 ? 's' : ''} found`;
+        
+        // Show content
+        modalLoading.style.display = 'none';
+        modalContent.style.display = 'block';
+        
+      } catch (error) {
+        console.error('Error loading members:', error);
+        modalLoading.style.display = 'none';
+        modalNoMembers.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Error loading members';
+        modalNoMembers.style.display = 'block';
+      }
+    };
 
     logoutLink.addEventListener('click', async (e) => {
       e.preventDefault();
@@ -449,7 +650,7 @@
           adminContent.classList.remove('hidden');
           unauthorizedMsg.classList.add('hidden');
           loadQuickStats();
-          loadQualificationStats(); // NEW: Load qualification stats
+          loadQualificationStats();
         } else {
           adminContent.classList.add('hidden');
           unauthorizedMsg.classList.remove('hidden');
