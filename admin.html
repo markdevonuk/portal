@@ -260,6 +260,26 @@
         </div>
       </div>
 
+      <!-- Qualification Stats - NEW SECTION -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="admin-card">
+            <h4 class="mb-3"><i class="bi bi-mortarboard-fill"></i> Approved Members by Qualification</h4>
+            <div id="qualificationStatsLoading" class="text-center py-3">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+            <div id="qualificationStatsContainer" class="row text-center" style="display: none;">
+              <!-- Stats will be dynamically inserted here -->
+            </div>
+            <div id="noQualificationStats" class="text-center text-muted py-3" style="display: none;">
+              <i class="bi bi-info-circle"></i> No approved members found
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- DANGER ZONE - Delete Profile -->
       <div class="row">
         <div class="col-md-12 mb-4">
@@ -317,6 +337,96 @@
       }
     }
 
+    // Load qualification stats for approved members - NEW FUNCTION
+    async function loadQualificationStats() {
+      const container = document.getElementById('qualificationStatsContainer');
+      const loading = document.getElementById('qualificationStatsLoading');
+      const noStats = document.getElementById('noQualificationStats');
+      
+      try {
+        // Get all profiles
+        const profilesSnapshot = await getDocs(collection(db, 'profiles'));
+        
+        // Count qualifications for approved members only
+        const qualificationCounts = {};
+        
+        profilesSnapshot.forEach(doc => {
+          const profile = doc.data();
+          // Only count approved profiles
+          if (profile.adminUse?.status === 'approved') {
+            const qualification = profile.medicalQualifications?.qualification || 'Unknown';
+            qualificationCounts[qualification] = (qualificationCounts[qualification] || 0) + 1;
+          }
+        });
+        
+        // Sort alphabetically by qualification name
+        const sortedQualifications = Object.entries(qualificationCounts)
+          .sort((a, b) => a[0].localeCompare(b[0]));
+        
+        // Hide loading
+        loading.style.display = 'none';
+        
+        if (sortedQualifications.length === 0) {
+          noStats.style.display = 'block';
+          return;
+        }
+        
+        // Generate HTML for each qualification
+        let html = '';
+        sortedQualifications.forEach(([qualification, count]) => {
+          html += `
+            <div class="col-md-3 col-sm-4 col-6 mb-3">
+              <h3 class="text-primary stat-number" data-target="${count}">0</h3>
+              <p class="text-muted mb-0 small">${qualification}</p>
+            </div>
+          `;
+        });
+        
+        container.innerHTML = html;
+        container.style.display = 'flex';
+        container.style.flexWrap = 'wrap';
+        
+        // Animate the counters
+        animateCounters();
+        
+      } catch (error) {
+        console.error('Error loading qualification stats:', error);
+        loading.style.display = 'none';
+        noStats.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Error loading stats';
+        noStats.style.display = 'block';
+      }
+    }
+
+    // Animate counters with spinning effect - NEW FUNCTION
+    function animateCounters() {
+      const counters = document.querySelectorAll('.stat-number');
+      const duration = 1500; // Animation duration in ms
+      
+      counters.forEach(counter => {
+        const target = parseInt(counter.getAttribute('data-target'));
+        const startTime = performance.now();
+        
+        function updateCounter(currentTime) {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          
+          // Easing function for smooth deceleration
+          const easeOut = 1 - Math.pow(1 - progress, 3);
+          
+          const currentValue = Math.floor(easeOut * target);
+          counter.textContent = currentValue;
+          
+          if (progress < 1) {
+            requestAnimationFrame(updateCounter);
+          } else {
+            counter.textContent = target; // Ensure we end on exact target
+          }
+        }
+        
+        requestAnimationFrame(updateCounter);
+      });
+    }
+
     logoutLink.addEventListener('click', async (e) => {
       e.preventDefault();
       try {
@@ -339,6 +449,7 @@
           adminContent.classList.remove('hidden');
           unauthorizedMsg.classList.add('hidden');
           loadQuickStats();
+          loadQualificationStats(); // NEW: Load qualification stats
         } else {
           adminContent.classList.add('hidden');
           unauthorizedMsg.classList.remove('hidden');
