@@ -230,19 +230,34 @@
           
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label class="form-label">Qualification <span class="text-danger">*</span></label>
               <select class="form-select" id="qualification" name="qualification" required>
-                <option value="">Select qualification...</option>
-                <option value="Paramedic">Paramedic</option>
-                <option value="Doctor">Doctor</option>
-                <option value="Nurse">Nurse</option>
-                <option value="Technician">Technician</option>
-                <option value="ECA">ECA</option>
-                <option value="CFR">CFR</option>
-                <option value="Make Ready">Make Ready</option>
-                <option value="Medcomms">Medcomms</option>
-                <option value="Non-Clinical">Non-Clinical</option>
-              </select>
+  <option value="">Select qualification...</option>
+  <option value="Make Ready">Make Ready (with no clinical certification)</option>
+  <option value="Medcomms">Medcomms (with no clinical certification)</option>
+  <option value="Non Clinical">Non Clinical (other)</option>
+  <option value="AAP">AAP</option>
+  <option value="CFR">CFR</option>
+  <option value="Doctor">Doctor</option>
+  <option value="Doctor (Critical Care/BASICS/Merit)">Doctor (Critical Care/BASICS/Merit)</option>
+  <option value="Doctor (with FREC/PHTLS or similar)">Doctor (with FREC/PHTLS or similar)</option>
+  <option value="EAA">EAA</option>
+  <option value="ECA">ECA</option>
+  <option value="FREC 3 (or similar level 3 certification)">FREC 3 (or similar level 3 certification)</option>
+  <option value="FREC 4">FREC 4</option>
+  <option value="Nurse">Nurse</option>
+  <option value="Nurse (Ambulance Nurse)">Nurse (Ambulance Nurse)</option>
+  <option value="Nurse (with FREC/PHTLS or similar)">Nurse (with FREC/PHTLS or similar)</option>
+  <option value="Paramedic">Paramedic</option>
+  <option value="Paramedic (Critical care)">Paramedic (Critical care)</option>
+  <option value="Paramedic (CTM/OO)">Paramedic (CTM/OO)</option>
+  <option value="Paramedic (HART)">Paramedic (HART)</option>
+  <option value="Paramedic (in Primary Care)">Paramedic (in Primary Care)</option>
+  <option value="Paramedic (Specialist)">Paramedic (Specialist)</option>
+  <option value="PHTLS">PHTLS</option>
+  <option value="Student Paramedic (Year 2)">Student Paramedic (Year 2)</option>
+  <option value="Student Paramedic (Year 3)">Student Paramedic (Year 3)</option>
+  <option value="Technician">Technician</option>
+</select>
             </div>
           </div>
           
@@ -458,33 +473,35 @@
     }
     
     // Show/hide qualification fields based on selection
-    function updateQualificationFields() {
-      const qual = qualification.value;
-      
-      // Hide all by default
-      hcpcSection.classList.add('hidden');
-      gmcSection.classList.add('hidden');
-      nmcSection.classList.add('hidden');
-      certExpirySection.classList.add('hidden');
-      
-      // Show relevant fields based on qualification
-      switch (qual) {
-        case 'Paramedic':
-        case 'Technician':
-          hcpcSection.classList.remove('hidden');
-          break;
-        case 'Doctor':
-          gmcSection.classList.remove('hidden');
-          break;
-        case 'Nurse':
-          nmcSection.classList.remove('hidden');
-          break;
-        case 'ECA':
-        case 'CFR':
-          certExpirySection.classList.remove('hidden');
-          break;
-      }
+function updateQualificationFields() {
+  const qual = qualification.value;
+  
+  // Hide all by default
+  hcpcSection.classList.add('hidden');
+  gmcSection.classList.add('hidden');
+  nmcSection.classList.add('hidden');
+  certExpirySection.classList.add('hidden');
+  
+  // Show relevant fields based on qualification
+  if (['Paramedic', 'Paramedic (Specialist)', 'Paramedic (HART)', 
+       'Paramedic (Critical care)', 'Paramedic (in Primary Care)', 
+       'Paramedic (CTM/OO)', 'Technician'].includes(qual)) {
+    hcpcSection.classList.remove('hidden');
+  } else if (['Doctor', 'Doctor (Critical Care/BASICS/Merit)', 
+              'Doctor (with FREC/PHTLS or similar)'].includes(qual)) {
+    gmcSection.classList.remove('hidden');
+  } else if (['Nurse', 'Nurse (Ambulance Nurse)', 
+              'Nurse (with FREC/PHTLS or similar)'].includes(qual)) {
+    nmcSection.classList.remove('hidden');
+    if (qual === 'Nurse (with FREC/PHTLS or similar)') {
+      certExpirySection.classList.remove('hidden');
     }
+  } else if (['ECA', 'CFR', 'AAP', 'EAA', 
+              'FREC 3 (or similar level 3 certification)', 
+              'FREC 4', 'PHTLS'].includes(qual)) {
+    certExpirySection.classList.remove('hidden');
+  }
+}
     
     // Add event listener for qualification change
     qualification.addEventListener('change', updateQualificationFields);
