@@ -727,21 +727,21 @@ allProfiles.rejected.sort((a, b) => {
       
 let html = '';
 profiles.forEach(profile => {
-  // Get the last note for pending profiles only
-  let lastNoteHtml = '';
-  if (status === 'pending' && profile.adminUse?.notes) {
-    // Get the last note (notes may be separated by line breaks)
-    const notes = profile.adminUse.notes.trim();
-    if (notes) {
-      // Truncate if too long for the card display
-      const truncatedNote = notes.length > 100 ? notes.substring(0, 100) + '...' : notes;
-      lastNoteHtml = `
-        <div class="last-note mt-2">
-          <small class="text-warning"><i class="bi bi-sticky"></i> <strong>Note:</strong> ${truncatedNote}</small>
-        </div>
-      `;
-    }
+
+// Get the most recent note for pending profiles only
+let lastNoteHtml = '';
+if (status === 'pending' && profile.adminUse?.notes) {
+  // Notes are stored newest first, separated by \n\n
+  const latestNote = profile.adminUse.notes.split('\n\n')[0].trim();
+  if (latestNote) {
+    lastNoteHtml = `
+      <div class="last-note mt-2">
+        <small class="text-warning"><i class="bi bi-sticky"></i> <strong>Note:</strong> ${latestNote}</small>
+      </div>
+    `;
   }
+}
+
   
   html += `
     <div class="profile-card">
