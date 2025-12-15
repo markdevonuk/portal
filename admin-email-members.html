@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Email All Members - FMS Prehospital Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background:#f8f9fa; min-height:100vh; }
+    .navbar { 
+      background: linear-gradient(135deg, #00a896 0%, #028090 100%); 
+      box-shadow:0 2px 10px rgba(0,0,0,0.1); 
+    }
+    .nav-link { 
+      color: rgba(255,255,255,.85) !important;
+      font-weight: 500;
+    }
+    .nav-link:hover { 
+      color: #fff !important;
+    }
+    .admin-header { 
+      background:linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      color:#fff; 
+      border-radius:15px; 
+      padding:40px; 
+      margin:30px 0 20px 0; 
+      box-shadow:0 10px 30px rgba(0,168,150,.3);
+    }
+    .admin-card {
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,.08);
+      padding: 30px;
+      margin: 20px 0;
+    }
+    .unauthorized { text-align: center; padding: 60px 20px; }
+    .hidden { display: none; }
+    
+    /* Email form styling */
+    .email-textarea {
+      min-height: 300px;
+      font-family: inherit;
+      resize: vertical;
+    }
+    .email-preview {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 20px;
+      white-space: pre-wrap;
+      font-family: inherit;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .member-count-badge {
+      font-size: 1.2rem;
+      padding: 10px 20px;
+    }
+    .warning-banner {
+      background: linear-gradient(135deg, #fff3cd 0%, #ffe5a0 100%);
+      border: 2px solid #ffc107;
+      border-radius: 10px;
+      padding: 15px 20px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="dashboard.html"><i class="bi bi-shield-lock"></i> FMS Prehospital Portal</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="dashboard.html">
+              <i class="bi bi-house-fill"></i> Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="admin.html">
+              <i class="bi bi-shield-lock"></i> Admin
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="logoutLink">
+              <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Unauthorized Message -->
+    <div id="unauthorizedMsg" class="hidden">
+      <div class="unauthorized">
+        <i class="bi bi-exclamation-triangle-fill" style="font-size: 4rem; color: #ffc107;"></i>
+        <h3 class="mt-4">Unauthorized Access</h3>
+        <p class="text-muted">You do not have permission to access this page.</p>
+        <a href="dashboard.html" class="btn btn-primary mt-3">
+          <i class="bi bi-arrow-left"></i> Return to Dashboard
+        </a>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent" class="hidden">
+      <div class="admin-header">
+        <h1 class="mb-2"><i class="bi bi-envelope-paper-fill"></i> Email Members</h1>
+        <p class="mb-0">Send a message to members</p>
+      </div>
+
+      <!-- Alert Container -->
+      <div id="alertContainer"></div>
+
+      <!-- Recipient Selection -->
+      <div class="admin-card">
+        <h5 class="mb-3"><i class="bi bi-people-fill"></i> Select Recipients</h5>
+        
+        <div class="row align-items-center">
+          <div class="col-md-6 mb-3 mb-md-0">
+            <label for="recipientType" class="form-label">Who do you want to email?</label>
+            <select class="form-select" id="recipientType">
+              <option value="approved">Approved Members (with approved profiles)</option>
+              <option value="registered">Registered Users (account created but no profile)</option>
+            </select>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <div id="memberCountContainer">
+              <div class="spinner-border spinner-border-sm text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <span class="ms-2 text-muted">Loading...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Warning Banner -->
+      <div class="warning-banner mb-4">
+        <div class="d-flex align-items-start gap-3">
+          <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size: 1.5rem;"></i>
+          <div>
+            <strong>Important:</strong> Please review your message carefully before sending. 
+            A copy of the email with a list of recipients will be sent to <strong>prehospital@festival-medical.org</strong>.
+          </div>
+        </div>
+      </div>
+
+      <!-- Email Form -->
+      <div class="admin-card">
+        <h4 class="mb-4"><i class="bi bi-pencil-square"></i> Compose Email</h4>
+        
+        <form id="emailForm">
+          <div class="mb-3">
+            <label for="emailSubject" class="form-label fw-bold">Subject *</label>
+            <input type="text" class="form-control" id="emailSubject" required 
+                   placeholder="Enter email subject...">
+          </div>
+          
+          <div class="mb-3">
+            <label for="emailContent" class="form-label fw-bold">Message *</label>
+            <p class="text-muted small mb-2">
+              <i class="bi bi-info-circle"></i> The greeting "Dear [member first name]," will be added automatically. 
+              Start with your message content.
+            </p>
+            <textarea class="form-control email-textarea" id="emailContent" required
+                      placeholder="Enter your message here..."></textarea>
+          </div>
+          
+          <div class="mb-4">
+            <label class="form-label fw-bold">Email Signature (included automatically)</label>
+            <div class="email-preview text-muted">Prehospital Team Leaders
+prehospital@festival-medical.org</div>
+          </div>
+
+          <hr class="my-4">
+          
+          <!-- Preview Section -->
+          <div class="mb-4">
+            <h5><i class="bi bi-eye"></i> Preview</h5>
+            <p class="text-muted small">This is how your email will appear to recipients:</p>
+            <div class="email-preview" id="emailPreview">
+              <em class="text-muted">Enter a subject and message to see preview...</em>
+            </div>
+          </div>
+
+          <div class="d-flex gap-3 flex-wrap">
+            <button type="submit" class="btn btn-primary btn-lg" id="sendEmailBtn" disabled>
+              <i class="bi bi-send-fill"></i> Send Emails
+            </button>
+            <a href="admin.html" class="btn btn-outline-secondary btn-lg">
+              <i class="bi bi-arrow-left"></i> Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-warning">
+          <h5 class="modal-title" id="confirmModalLabel">
+            <i class="bi bi-exclamation-triangle-fill"></i> Confirm Send
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>You are about to send an email to <strong id="confirmMemberCount">0</strong> <span id="confirmRecipientType">members</span>.</p>
+          <p>Subject: <strong id="confirmSubject"></strong></p>
+          <p class="mb-0">Are you sure you want to proceed?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="confirmSendBtn">
+            <i class="bi bi-send-fill"></i> Yes, Send Emails
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title" id="successModalLabel">
+            <i class="bi bi-check-circle-fill"></i> Emails Sent Successfully
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p><i class="bi bi-check-circle text-success"></i> <strong id="successCount">0</strong> emails have been queued for delivery.</p>
+          <p><i class="bi bi-envelope-check text-success"></i> A summary email has been sent to prehospital@festival-medical.org</p>
+          <p id="errorSummary" class="text-danger" style="display: none;"></p>
+        </div>
+        <div class="modal-footer">
+          <a href="admin.html" class="btn btn-primary">
+            <i class="bi bi-arrow-left"></i> Return to Admin
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { getFirestore, doc, getDoc, collection, getDocs, addDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { firebaseConfig } from './firebase-config.js';
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // DOM Elements
+    const mainContent = document.getElementById('mainContent');
+    const unauthorizedMsg = document.getElementById('unauthorizedMsg');
+    const memberCountContainer = document.getElementById('memberCountContainer');
+    const recipientType = document.getElementById('recipientType');
+    const emailForm = document.getElementById('emailForm');
+    const emailSubject = document.getElementById('emailSubject');
+    const emailContent = document.getElementById('emailContent');
+    const emailPreview = document.getElementById('emailPreview');
+    const sendEmailBtn = document.getElementById('sendEmailBtn');
+    const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+
+    // Store recipients
+    let approvedMembers = [];
+    let registeredUsers = [];
+
+    // Show alert
+    function showAlert(message, type) {
+      const alertContainer = document.getElementById('alertContainer');
+      const html = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>`;
+      alertContainer.innerHTML = html;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Set button loading state
+    function setButtonLoading(button, loading) {
+      if (loading) {
+        button.disabled = true;
+        button.dataset.originalHtml = button.innerHTML;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...';
+      } else {
+        button.disabled = false;
+        button.innerHTML = button.dataset.originalHtml || '<i class="bi bi-send-fill"></i> Send Emails';
+      }
+    }
+
+    // Get current recipients based on dropdown selection
+    function getCurrentRecipients() {
+      return recipientType.value === 'approved' ? approvedMembers : registeredUsers;
+    }
+
+    // Update recipient count display
+    function updateRecipientCount() {
+      const recipients = getCurrentRecipients();
+      const type = recipientType.value === 'approved' ? 'approved member' : 'registered user';
+      
+      memberCountContainer.innerHTML = `
+        <span class="badge bg-primary member-count-badge">
+          <i class="bi bi-people-fill"></i> ${recipients.length} ${type}${recipients.length !== 1 ? 's' : ''}
+        </span>`;
+
+      // Enable/disable send button
+      sendEmailBtn.disabled = recipients.length === 0;
+      
+      if (recipients.length === 0) {
+        showAlert(`No ${type}s found to email.`, 'warning');
+      }
+    }
+
+    // Load all recipients
+    async function loadRecipients() {
+      try {
+        // Get all users
+        const usersSnapshot = await getDocs(collection(db, 'users'));
+        const usersData = {};
+        usersSnapshot.forEach(doc => {
+          usersData[doc.id] = { id: doc.id, ...doc.data() };
+        });
+
+        // Get all profiles
+        const profilesSnapshot = await getDocs(collection(db, 'profiles'));
+        const profilesData = {};
+        profilesSnapshot.forEach(doc => {
+          profilesData[doc.id] = doc.data();
+        });
+
+        // Clear arrays
+        approvedMembers = [];
+        registeredUsers = [];
+
+        // Process each user
+        Object.keys(usersData).forEach(userId => {
+          const user = usersData[userId];
+          const profile = profilesData[userId];
+          
+          // Skip users without email
+          if (!user.email) return;
+
+          // Check if user has an approved profile
+          if (profile && profile.adminUse?.status === 'approved') {
+            approvedMembers.push({
+              id: userId,
+              email: user.email,
+              firstName: user.firstName || profile.personalDetails?.firstName || 'Member',
+              surname: user.surname || profile.personalDetails?.surname || ''
+            });
+          } 
+          // Check if user has no profile or no submitted profile
+          else if (!profile || !profile.submission?.submittedAt) {
+            registeredUsers.push({
+              id: userId,
+              email: user.email,
+              firstName: user.firstName || 'Member',
+              surname: user.surname || ''
+            });
+          }
+        });
+
+        // Sort both arrays by name
+        const sortByName = (a, b) => {
+          const nameA = `${a.firstName} ${a.surname}`.toLowerCase();
+          const nameB = `${b.firstName} ${b.surname}`.toLowerCase();
+          return nameA.localeCompare(nameB);
+        };
+        approvedMembers.sort(sortByName);
+        registeredUsers.sort(sortByName);
+
+        console.log(`Loaded ${approvedMembers.length} approved members and ${registeredUsers.length} registered users`);
+
+        // Update count display
+        updateRecipientCount();
+
+      } catch (error) {
+        console.error('Error loading recipients:', error);
+        memberCountContainer.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-triangle"></i> Error loading</span>`;
+        showAlert('Error loading recipients: ' + error.message, 'danger');
+      }
+    }
+
+    // Update preview
+    function updatePreview() {
+      const subject = emailSubject.value.trim();
+      const content = emailContent.value.trim();
+
+      if (!subject && !content) {
+        emailPreview.innerHTML = '<em class="text-muted">Enter a subject and message to see preview...</em>';
+        return;
+      }
+
+      emailPreview.textContent = `Subject: ${subject || '(No subject)'}\n\nDear [Member First Name],\n\n${content || '(No content)'}\n\nPrehospital Team Leaders\nprehospital@festival-medical.org`;
+    }
+
+    // Send emails
+    async function sendEmails() {
+      const subject = emailSubject.value.trim();
+      const content = emailContent.value.trim();
+      const recipients = getCurrentRecipients();
+      const recipientLabel = recipientType.value === 'approved' ? 'approved members' : 'registered users';
+
+      if (!subject || !content) {
+        showAlert('Please enter both subject and message.', 'warning');
+        return;
+      }
+
+      if (recipients.length === 0) {
+        showAlert('No recipients to send emails to.', 'warning');
+        return;
+      }
+
+      setButtonLoading(document.getElementById('confirmSendBtn'), true);
+
+      let successCount = 0;
+      let errorCount = 0;
+      const sentTo = [];
+
+      try {
+        // Send individual emails to each recipient
+        for (const recipient of recipients) {
+          try {
+            const firstName = recipient.firstName || 'Member';
+            const personalizedContent = `Dear ${firstName},\n\n${content}\n\nPrehospital Team Leaders\nprehospital@festival-medical.org`;
+
+            await addDoc(collection(db, 'mail'), {
+              to: recipient.email,
+              replyTo: 'prehospital@festival-medical.org',
+              message: {
+                subject: subject,
+                text: personalizedContent,
+                html: personalizedContent.replace(/\n/g, '<br>')
+              }
+            });
+
+            successCount++;
+            sentTo.push(`${recipient.firstName} ${recipient.surname} (${recipient.email})`);
+          } catch (err) {
+            console.error(`Error sending to ${recipient.email}:`, err);
+            errorCount++;
+          }
+        }
+
+        // Send summary email to prehospital
+        if (sentTo.length > 0) {
+          const summaryContent = `This email was sent to ${sentTo.length} ${recipientLabel}.\n\nSubject: ${subject}\n\nMessage:\n${content}\n\n---\nRecipient List:\n${sentTo.join('\n')}\n\n---\nPrehospital Team Leaders\nprehospital@festival-medical.org`;
+
+          await addDoc(collection(db, 'mail'), {
+            to: 'prehospital@festival-medical.org',
+            message: {
+              subject: `[COPY] ${subject} - Sent to ${sentTo.length} ${recipientLabel}`,
+              text: summaryContent,
+              html: summaryContent.replace(/\n/g, '<br>')
+            }
+          });
+        }
+
+        // Hide confirm modal
+        confirmModal.hide();
+
+        // Show success modal
+        document.getElementById('successCount').textContent = successCount;
+        if (errorCount > 0) {
+          document.getElementById('errorSummary').textContent = `${errorCount} email(s) failed to send.`;
+          document.getElementById('errorSummary').style.display = 'block';
+        } else {
+          document.getElementById('errorSummary').style.display = 'none';
+        }
+        successModal.show();
+
+        // Clear form
+        emailForm.reset();
+        updatePreview();
+
+      } catch (error) {
+        console.error('Error sending emails:', error);
+        confirmModal.hide();
+        showAlert('Error sending emails: ' + error.message, 'danger');
+      } finally {
+        setButtonLoading(document.getElementById('confirmSendBtn'), false);
+      }
+    }
+
+    // Event Listeners
+    document.getElementById('logoutLink').addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        await signOut(auth);
+        window.location.href = 'index.html';
+      } catch (error) {
+        alert('Logout failed: ' + error.message);
+      }
+    });
+
+    recipientType.addEventListener('change', () => {
+      document.getElementById('alertContainer').innerHTML = '';
+      updateRecipientCount();
+    });
+
+    emailSubject.addEventListener('input', updatePreview);
+    emailContent.addEventListener('input', updatePreview);
+
+    emailForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const recipients = getCurrentRecipients();
+      const recipientLabel = recipientType.value === 'approved' ? 'approved members' : 'registered users';
+      
+      // Update confirmation modal
+      document.getElementById('confirmMemberCount').textContent = recipients.length;
+      document.getElementById('confirmRecipientType').textContent = recipientLabel;
+      document.getElementById('confirmSubject').textContent = emailSubject.value.trim();
+      
+      // Show confirmation modal
+      confirmModal.show();
+    });
+
+    document.getElementById('confirmSendBtn').addEventListener('click', sendEmails);
+
+    // Auth state listener
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        
+        if (userDoc.exists() && userDoc.data().isAdmin === true) {
+          mainContent.classList.remove('hidden');
+          unauthorizedMsg.classList.add('hidden');
+          await loadRecipients();
+        } else {
+          mainContent.classList.add('hidden');
+          unauthorizedMsg.classList.remove('hidden');
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        mainContent.classList.add('hidden');
+        unauthorizedMsg.classList.remove('hidden');
+      }
+    });
+  </script>
+</body>
+</html>
