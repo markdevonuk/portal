@@ -15,7 +15,7 @@
     .nav-link { 
       color: rgba(255,255,255,.85) !important;
       font-weight: 500;
-    } 
+    }
     .nav-link:hover { 
       color: #fff !important;
     }
@@ -62,6 +62,23 @@
       border: 2px solid #ffc107;
       border-radius: 10px;
       padding: 15px 20px;
+    }
+    
+    /* Progress styling */
+    .progress-container {
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,.08);
+      padding: 30px;
+      margin: 20px 0;
+    }
+    .progress {
+      height: 25px;
+      border-radius: 10px;
+    }
+    .progress-bar {
+      font-size: 0.9rem;
+      font-weight: 500;
     }
   </style>
 </head>
@@ -117,8 +134,18 @@
       <!-- Alert Container -->
       <div id="alertContainer"></div>
 
+      <!-- Progress Container (hidden by default) -->
+      <div id="progressContainer" class="progress-container hidden">
+        <h5 class="mb-3"><i class="bi bi-send-check"></i> Sending Emails...</h5>
+        <p class="text-muted mb-2">Please keep this page open. Emails are being sent with a delay to avoid rate limiting.</p>
+        <div class="progress mb-3">
+          <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" id="progressBar" style="width: 0%">0%</div>
+        </div>
+        <p class="mb-0" id="progressText">Preparing to send...</p>
+      </div>
+
       <!-- Recipient Selection -->
-      <div class="admin-card">
+      <div class="admin-card" id="recipientCard">
         <h5 class="mb-3"><i class="bi bi-people-fill"></i> Select Recipients</h5>
         
         <div class="row align-items-center">
@@ -141,18 +168,19 @@
       </div>
 
       <!-- Warning Banner -->
-      <div class="warning-banner mb-4">
+      <div class="warning-banner mb-4" id="warningBanner">
         <div class="d-flex align-items-start gap-3">
           <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size: 1.5rem;"></i>
           <div>
             <strong>Important:</strong> Please review your message carefully before sending. 
             A copy of the email with a list of recipients will be sent to <strong>prehospital@festival-medical.org</strong>.
+            <br><small class="text-muted">Note: Emails are sent with a 1.5 second delay between each to avoid rate limiting.</small>
           </div>
         </div>
       </div>
 
       <!-- Email Form -->
-      <div class="admin-card">
+      <div class="admin-card" id="emailFormCard">
         <h4 class="mb-4"><i class="bi bi-pencil-square"></i> Compose Email</h4>
         
         <form id="emailForm">
@@ -215,6 +243,7 @@ prehospital@festival-medical.org</div>
         <div class="modal-body">
           <p>You are about to send an email to <strong id="confirmMemberCount">0</strong> <span id="confirmRecipientType">members</span>.</p>
           <p>Subject: <strong id="confirmSubject"></strong></p>
+          <p class="text-muted small"><i class="bi bi-clock"></i> Estimated time: <span id="estimatedTime">0</span></p>
           <p class="mb-0">Are you sure you want to proceed?</p>
         </div>
         <div class="modal-footer">
@@ -228,14 +257,13 @@ prehospital@festival-medical.org</div>
   </div>
 
   <!-- Success Modal -->
-  <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+  <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header bg-success text-white">
           <h5 class="modal-title" id="successModalLabel">
             <i class="bi bi-check-circle-fill"></i> Emails Sent Successfully
           </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <p><i class="bi bi-check-circle text-success"></i> <strong id="successCount">0</strong> emails have been queued for delivery.</p>
@@ -263,6 +291,9 @@ prehospital@festival-medical.org</div>
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // Delay between emails in milliseconds (1.5 seconds)
+    const EMAIL_DELAY_MS = 1500;
+
     // DOM Elements
     const mainContent = document.getElementById('mainContent');
     const unauthorizedMsg = document.getElementById('unauthorizedMsg');
@@ -273,12 +304,23 @@ prehospital@festival-medical.org</div>
     const emailContent = document.getElementById('emailContent');
     const emailPreview = document.getElementById('emailPreview');
     const sendEmailBtn = document.getElementById('sendEmailBtn');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const recipientCard = document.getElementById('recipientCard');
+    const warningBanner = document.getElementById('warningBanner');
+    const emailFormCard = document.getElementById('emailFormCard');
     const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
     const successModal = new bootstrap.Modal(document.getElementById('successModal'));
 
     // Store recipients
     let approvedMembers = [];
     let registeredUsers = [];
+
+    // Helper function to delay
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
 
     // Show alert
     function showAlert(message, type) {
@@ -290,18 +332,6 @@ prehospital@festival-medical.org</div>
         </div>`;
       alertContainer.innerHTML = html;
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    // Set button loading state
-    function setButtonLoading(button, loading) {
-      if (loading) {
-        button.disabled = true;
-        button.dataset.originalHtml = button.innerHTML;
-        button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...';
-      } else {
-        button.disabled = false;
-        button.innerHTML = button.dataset.originalHtml || '<i class="bi bi-send-fill"></i> Send Emails';
-      }
     }
 
     // Get current recipients based on dropdown selection
@@ -325,6 +355,26 @@ prehospital@festival-medical.org</div>
       if (recipients.length === 0) {
         showAlert(`No ${type}s found to email.`, 'warning');
       }
+    }
+
+    // Calculate estimated time
+    function getEstimatedTime(count) {
+      const totalSeconds = Math.ceil((count * EMAIL_DELAY_MS) / 1000);
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      
+      if (minutes > 0) {
+        return `${minutes} minute${minutes !== 1 ? 's' : ''} ${seconds} second${seconds !== 1 ? 's' : ''}`;
+      }
+      return `${seconds} second${seconds !== 1 ? 's' : ''}`;
+    }
+
+    // Update progress bar
+    function updateProgress(current, total, currentEmail) {
+      const percent = Math.round((current / total) * 100);
+      progressBar.style.width = `${percent}%`;
+      progressBar.textContent = `${percent}%`;
+      progressText.textContent = `Sending ${current} of ${total}: ${currentEmail}`;
     }
 
     // Load all recipients
@@ -410,7 +460,7 @@ prehospital@festival-medical.org</div>
       emailPreview.textContent = `Subject: ${subject || '(No subject)'}\n\nDear [Member First Name],\n\n${content || '(No content)'}\n\nPrehospital Team Leaders\nprehospital@festival-medical.org`;
     }
 
-    // Send emails
+    // Send emails with delay
     async function sendEmails() {
       const subject = emailSubject.value.trim();
       const content = emailContent.value.trim();
@@ -427,15 +477,29 @@ prehospital@festival-medical.org</div>
         return;
       }
 
-      setButtonLoading(document.getElementById('confirmSendBtn'), true);
+      // Hide confirm modal
+      confirmModal.hide();
+
+      // Show progress, hide form elements
+      progressContainer.classList.remove('hidden');
+      recipientCard.classList.add('hidden');
+      warningBanner.classList.add('hidden');
+      emailFormCard.classList.add('hidden');
+      document.getElementById('alertContainer').innerHTML = '';
 
       let successCount = 0;
       let errorCount = 0;
       const sentTo = [];
+      const errors = [];
 
       try {
-        // Send individual emails to each recipient
-        for (const recipient of recipients) {
+        // Send individual emails to each recipient with delay
+        for (let i = 0; i < recipients.length; i++) {
+          const recipient = recipients[i];
+          
+          // Update progress
+          updateProgress(i + 1, recipients.length, recipient.email);
+          
           try {
             const firstName = recipient.firstName || 'Member';
             const personalizedContent = `Dear ${firstName},\n\n${content}\n\nPrehospital Team Leaders\nprehospital@festival-medical.org`;
@@ -455,12 +519,21 @@ prehospital@festival-medical.org</div>
           } catch (err) {
             console.error(`Error sending to ${recipient.email}:`, err);
             errorCount++;
+            errors.push(`${recipient.email}: ${err.message}`);
+          }
+
+          // Delay before next email (except for last one)
+          if (i < recipients.length - 1) {
+            await delay(EMAIL_DELAY_MS);
           }
         }
 
+        // Update progress to complete
+        progressText.textContent = 'Sending summary email...';
+
         // Send summary email to prehospital
         if (sentTo.length > 0) {
-          const summaryContent = `This email was sent to ${sentTo.length} ${recipientLabel}.\n\nSubject: ${subject}\n\nMessage:\n${content}\n\n---\nRecipient List:\n${sentTo.join('\n')}\n\n---\nPrehospital Team Leaders\nprehospital@festival-medical.org`;
+          const summaryContent = `This email was sent to ${sentTo.length} ${recipientLabel}.\n\nSubject: ${subject}\n\nMessage:\n${content}\n\n---\nRecipient List:\n${sentTo.join('\n')}${errors.length > 0 ? '\n\n---\nErrors:\n' + errors.join('\n') : ''}\n\n---\nPrehospital Team Leaders\nprehospital@festival-medical.org`;
 
           await addDoc(collection(db, 'mail'), {
             to: 'prehospital@festival-medical.org',
@@ -472,29 +545,26 @@ prehospital@festival-medical.org</div>
           });
         }
 
-        // Hide confirm modal
-        confirmModal.hide();
+        // Hide progress
+        progressContainer.classList.add('hidden');
 
         // Show success modal
         document.getElementById('successCount').textContent = successCount;
         if (errorCount > 0) {
-          document.getElementById('errorSummary').textContent = `${errorCount} email(s) failed to send.`;
+          document.getElementById('errorSummary').textContent = `${errorCount} email(s) failed to send. Check the summary email for details.`;
           document.getElementById('errorSummary').style.display = 'block';
         } else {
           document.getElementById('errorSummary').style.display = 'none';
         }
         successModal.show();
 
-        // Clear form
-        emailForm.reset();
-        updatePreview();
-
       } catch (error) {
         console.error('Error sending emails:', error);
-        confirmModal.hide();
+        progressContainer.classList.add('hidden');
+        recipientCard.classList.remove('hidden');
+        warningBanner.classList.remove('hidden');
+        emailFormCard.classList.remove('hidden');
         showAlert('Error sending emails: ' + error.message, 'danger');
-      } finally {
-        setButtonLoading(document.getElementById('confirmSendBtn'), false);
       }
     }
 
@@ -527,6 +597,7 @@ prehospital@festival-medical.org</div>
       document.getElementById('confirmMemberCount').textContent = recipients.length;
       document.getElementById('confirmRecipientType').textContent = recipientLabel;
       document.getElementById('confirmSubject').textContent = emailSubject.value.trim();
+      document.getElementById('estimatedTime').textContent = getEstimatedTime(recipients.length);
       
       // Show confirmation modal
       confirmModal.show();
