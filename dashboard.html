@@ -94,6 +94,27 @@
       padding: 10px 20px;
       font-weight: 500;
     }
+
+    /* Newsflash card styles */
+    .newsflash-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      border-radius: 15px;
+      padding: 25px;
+      margin: 0;
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+      height: 100%;
+    }
+
+    .newsflash-card h3 {
+      margin-bottom: 15px;
+    }
+
+    .newsflash-card p {
+      font-size: 1rem;
+      line-height: 1.6;
+      margin-bottom: 0;
+    }
   </style>
 </head>
 <body>
@@ -153,8 +174,20 @@
         </div>
       </div>
 
-      <!-- Events Card Container (shown only for approved profiles) -->
-      <div id="eventsCardContainer"></div>
+      <!-- Row for Newsflash and Events cards side by side on larger screens -->
+      <div class="row mt-4 g-3">
+        <div class="col-lg-6">
+          <!-- Newsflash Card -->
+          <div class="newsflash-card">
+            <h3><i class="bi bi-megaphone-fill"></i> Newsflash</h3>
+            <p>2026 events are available for you to select (once your profile is approved). Get in early to secure the best chance of places as 2026 will be super busy despite Glastonbury taking a year off.</p>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <!-- Events Card Container (shown only for approved profiles) -->
+          <div id="eventsCardContainer"></div>
+        </div>
+      </div>
 
     </div>
   </div>
