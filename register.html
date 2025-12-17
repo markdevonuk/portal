@@ -217,7 +217,7 @@ if (!/[0-9]/.test(password)) {
         const allowedEmailDoc = await getDoc(doc(db, 'allowedEmails', email));
         
         if (!allowedEmailDoc.exists()) {
-          showAlert('This email address is not authorized to register. Please contact an administrator.', 'danger');
+          showAlert('This email address is not authorised to register. Please contact a Team Leader if you feel you should be able to access this portal.', 'danger');
           setButtonLoading('registerBtn', false);
           return;
         }
