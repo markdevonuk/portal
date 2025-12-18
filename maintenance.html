@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FMS Prehospital Portal - Maintenance</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      min-height: 100vh; 
+      display: flex; 
+      align-items: center; 
+      padding: 20px; 
+    }
+    .auth-card { 
+      background: #fff; 
+      border-radius: 20px; 
+      box-shadow: 0 20px 60px rgba(0,0,0,.3); 
+      overflow: hidden; 
+      max-width: 500px; 
+      margin: 0 auto; 
+    }
+    .auth-header { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      color: #fff; 
+      padding: 30px; 
+      text-align: center; 
+    }
+    .auth-body { 
+      padding: 30px; 
+      text-align: center;
+    }
+    .maintenance-icon {
+      font-size: 4rem;
+      color: #00a896;
+      margin-bottom: 1rem;
+      animation: spin 4s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .time-badge {
+      background: linear-gradient(135deg, #00a896 0%, #028090 100%);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 50px;
+      font-weight: 600;
+      display: inline-block;
+      margin: 1rem 0;
+    }
+    .message {
+      color: #495057;
+      font-size: 1.1rem;
+      line-height: 1.8;
+    }
+    .footer-text {
+      color: #6c757d;
+      font-size: 0.9rem;
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e9ecef;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h2 class="mb-0"><i class="bi bi-heart-pulse"></i> FMS Prehospital Portal</h2>
+        <p class="mb-0 mt-2">System Maintenance</p>
+      </div>
+
+      <div class="auth-body">
+        <div class="maintenance-icon">
+          <i class="bi bi-gear-wide-connected"></i>
+        </div>
+        
+        <h4 class="mb-3">Important Update in Progress</h4>
+        
+        <div class="time-badge">
+          <i class="bi bi-clock me-2"></i>Estimated: 3-4 hours
+        </div>
+        
+        <p class="message">
+          The web app is currently closed for an important update.
+          <br><br>
+          In 3 to 4 hours we hope all systems will be go!
+          <br>
+          So please check back later.
+        </p>
+        
+        <div class="footer-text">
+          <i class="bi bi-heart-pulse me-1"></i> Festival Medical Services
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
