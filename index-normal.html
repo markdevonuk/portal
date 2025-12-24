@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FMS Prehospital Portal - Welcome</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      min-height: 100vh; 
+      display:flex; 
+      align-items:center; 
+      padding:20px; 
+    }
+    .auth-card { 
+      background:#fff; 
+      border-radius:20px; 
+      box-shadow:0 20px 60px rgba(0,0,0,.3); 
+      overflow:hidden; 
+      max-width:500px; 
+      margin:0 auto; 
+    }
+    .auth-header { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      color:#fff; 
+      padding:30px; 
+      text-align:center; 
+    }
+    .auth-body { 
+      padding:30px; 
+    }
+    .welcome-btn {
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      border:none; 
+      padding:20px 30px; 
+      font-weight:600;
+      font-size: 1.1rem;
+      border-radius: 12px;
+      color: #fff;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .welcome-btn:hover { 
+      transform:translateY(-3px); 
+      box-shadow:0 8px 20px rgba(0,168,150,.4);
+      color: #fff;
+    }
+    .welcome-btn i {
+      font-size: 1.5rem;
+      display: block;
+      margin-bottom: 10px;
+    }
+    .btn-secondary-custom {
+      background: #fff;
+      border: 2px solid #00a896;
+      color: #00a896;
+      padding:20px 30px; 
+      font-weight:600;
+      font-size: 1.1rem;
+      border-radius: 12px;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+      transition: transform .2s, box-shadow .2s, background .2s;
+    }
+    .btn-secondary-custom:hover {
+      transform:translateY(-3px); 
+      box-shadow:0 8px 20px rgba(0,168,150,.2);
+      background: #f8f9fa;
+      color: #028090;
+    }
+    .btn-secondary-custom i {
+      font-size: 1.5rem;
+      display: block;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h2 class="mb-0"><i class="bi bi-heart-pulse"></i> FMS Prehospital Portal</h2>
+        <p class="mb-0 mt-2">Make your choice below....</p>
+      </div>
+
+      <div class="auth-body">
+        <h4 class="text-center mb-4">Welcome! How can we help you today?</h4>
+        
+        <div class="d-grid gap-3">
+          <a href="joinfms.html" class="welcome-btn">
+            <i class="bi bi-person-plus"></i>
+            I would like to join the FMS Prehospital Team
+          </a>
+          
+          <a href="login.html" class="btn-secondary-custom">
+            <i class="bi bi-box-arrow-in-right"></i>
+            I am already an approved member
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -7,35 +7,137 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
   <style>
+    /* Christmas Theme Background */
     body { 
-      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 50%, #165B33 100%);
       min-height: 100vh; 
-      display:flex; 
-      align-items:center; 
-      padding:20px; 
+      display: flex; 
+      align-items: center; 
+      padding: 20px;
+      position: relative;
+      overflow-x: hidden;
     }
+
+    /* Snowfall Animation */
+    .snowflakes {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .snowflake {
+      position: absolute;
+      top: -10px;
+      color: #fff;
+      font-size: 1rem;
+      opacity: 0.8;
+      animation: fall linear infinite;
+    }
+
+    @keyframes fall {
+      0% {
+        transform: translateY(-10px) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0.3;
+      }
+    }
+
+    /* Generate different snowflakes */
+    .snowflake:nth-child(1) { left: 5%; animation-duration: 8s; animation-delay: 0s; font-size: 0.8rem; }
+    .snowflake:nth-child(2) { left: 15%; animation-duration: 12s; animation-delay: 1s; font-size: 1.2rem; }
+    .snowflake:nth-child(3) { left: 25%; animation-duration: 10s; animation-delay: 2s; font-size: 0.9rem; }
+    .snowflake:nth-child(4) { left: 35%; animation-duration: 14s; animation-delay: 0.5s; font-size: 1rem; }
+    .snowflake:nth-child(5) { left: 45%; animation-duration: 9s; animation-delay: 3s; font-size: 1.1rem; }
+    .snowflake:nth-child(6) { left: 55%; animation-duration: 11s; animation-delay: 1.5s; font-size: 0.7rem; }
+    .snowflake:nth-child(7) { left: 65%; animation-duration: 13s; animation-delay: 2.5s; font-size: 1.3rem; }
+    .snowflake:nth-child(8) { left: 75%; animation-duration: 8s; animation-delay: 4s; font-size: 0.85rem; }
+    .snowflake:nth-child(9) { left: 85%; animation-duration: 10s; animation-delay: 0.8s; font-size: 1rem; }
+    .snowflake:nth-child(10) { left: 95%; animation-duration: 15s; animation-delay: 2s; font-size: 0.95rem; }
+    .snowflake:nth-child(11) { left: 10%; animation-duration: 9s; animation-delay: 3.5s; font-size: 1.15rem; }
+    .snowflake:nth-child(12) { left: 30%; animation-duration: 11s; animation-delay: 1.2s; font-size: 0.75rem; }
+    .snowflake:nth-child(13) { left: 50%; animation-duration: 13s; animation-delay: 4.5s; font-size: 1.05rem; }
+    .snowflake:nth-child(14) { left: 70%; animation-duration: 7s; animation-delay: 0.3s; font-size: 0.9rem; }
+    .snowflake:nth-child(15) { left: 90%; animation-duration: 12s; animation-delay: 2.8s; font-size: 1.2rem; }
+
+    .container {
+      position: relative;
+      z-index: 2;
+    }
+
     .auth-card { 
-      background:#fff; 
-      border-radius:20px; 
-      box-shadow:0 20px 60px rgba(0,0,0,.3); 
-      overflow:hidden; 
-      max-width:500px; 
-      margin:0 auto; 
+      background: #fff; 
+      border-radius: 20px; 
+      box-shadow: 0 20px 60px rgba(0,0,0,.4); 
+      overflow: hidden; 
+      max-width: 500px; 
+      margin: 0 auto;
+      border: 3px solid #c41e3a;
     }
+
     .auth-header { 
-      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
-      color:#fff; 
-      padding:30px; 
-      text-align:center; 
+      background: linear-gradient(135deg, #c41e3a 0%, #a01830 100%);
+      color: #fff; 
+      padding: 30px; 
+      text-align: center;
+      position: relative;
+      overflow: hidden;
     }
+
+    /* Twinkling stars in header */
+    .auth-header::before {
+      content: "✨";
+      position: absolute;
+      top: 10px;
+      left: 20px;
+      font-size: 1.2rem;
+      animation: twinkle 1.5s ease-in-out infinite;
+    }
+
+    .auth-header::after {
+      content: "✨";
+      position: absolute;
+      top: 15px;
+      right: 25px;
+      font-size: 1rem;
+      animation: twinkle 1.5s ease-in-out infinite 0.5s;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* Christmas decorations */
+    .christmas-decor {
+      text-align: center;
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+      animation: sway 3s ease-in-out infinite;
+    }
+
+    @keyframes sway {
+      0%, 100% { transform: rotate(-3deg); }
+      50% { transform: rotate(3deg); }
+    }
+
     .auth-body { 
-      padding:30px; 
+      padding: 30px;
+      background: linear-gradient(180deg, #fff 0%, #f8f9fa 100%);
     }
+
     .welcome-btn {
-      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
-      border:none; 
-      padding:20px 30px; 
-      font-weight:600;
+      background: linear-gradient(135deg, #c41e3a 0%, #a01830 100%);
+      border: none; 
+      padding: 20px 30px; 
+      font-weight: 600;
       font-size: 1.1rem;
       border-radius: 12px;
       color: #fff;
@@ -43,52 +145,159 @@
       display: block;
       text-align: center;
       transition: transform .2s, box-shadow .2s;
+      position: relative;
+      overflow: hidden;
     }
+
+    .welcome-btn::before {
+      content: "🎄";
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.3rem;
+    }
+
     .welcome-btn:hover { 
-      transform:translateY(-3px); 
-      box-shadow:0 8px 20px rgba(0,168,150,.4);
+      transform: translateY(-3px); 
+      box-shadow: 0 8px 20px rgba(196, 30, 58, .4);
       color: #fff;
     }
+
     .welcome-btn i {
       font-size: 1.5rem;
       display: block;
       margin-bottom: 10px;
     }
+
     .btn-secondary-custom {
       background: #fff;
-      border: 2px solid #00a896;
-      color: #00a896;
-      padding:20px 30px; 
-      font-weight:600;
+      border: 2px solid #165B33;
+      color: #165B33;
+      padding: 20px 30px; 
+      font-weight: 600;
       font-size: 1.1rem;
       border-radius: 12px;
       text-decoration: none;
       display: block;
       text-align: center;
       transition: transform .2s, box-shadow .2s, background .2s;
+      position: relative;
+      overflow: hidden;
     }
+
+    .btn-secondary-custom::before {
+      content: "🎁";
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.3rem;
+    }
+
     .btn-secondary-custom:hover {
-      transform:translateY(-3px); 
-      box-shadow:0 8px 20px rgba(0,168,150,.2);
-      background: #f8f9fa;
-      color: #028090;
+      transform: translateY(-3px); 
+      box-shadow: 0 8px 20px rgba(22, 91, 51, .2);
+      background: #f0fff4;
+      color: #0d3d22;
     }
+
     .btn-secondary-custom i {
       font-size: 1.5rem;
       display: block;
       margin-bottom: 10px;
     }
+
+    /* Festive greeting */
+    .festive-greeting {
+      text-align: center;
+      margin-bottom: 20px;
+      padding: 15px;
+      background: linear-gradient(135deg, #fff9e6 0%, #fff3cc 100%);
+      border-radius: 10px;
+      border: 2px dashed #d4a017;
+    }
+
+    .festive-greeting span {
+      font-size: 1.5rem;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .festive-greeting p {
+      color: #8b6914;
+      font-weight: 600;
+      margin: 0;
+      font-size: 0.95rem;
+    }
+
+    /* Candy cane divider */
+    .candy-divider {
+      height: 8px;
+      background: repeating-linear-gradient(
+        90deg,
+        #c41e3a 0px,
+        #c41e3a 20px,
+        #fff 20px,
+        #fff 40px
+      );
+      margin: 0 -30px;
+    }
+
+    /* Holly decoration at bottom */
+    .holly-footer {
+      text-align: center;
+      padding-top: 20px;
+      font-size: 1.3rem;
+    }
+
+    /* Pulsing heart icon */
+    .auth-header h2 i {
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
   </style>
 </head>
 <body>
+  <!-- Snowfall Effect -->
+  <div class="snowflakes" aria-hidden="true">
+    <div class="snowflake">❄</div>
+    <div class="snowflake">❅</div>
+    <div class="snowflake">❆</div>
+    <div class="snowflake">❄</div>
+    <div class="snowflake">❅</div>
+    <div class="snowflake">❆</div>
+    <div class="snowflake">❄</div>
+    <div class="snowflake">❅</div>
+    <div class="snowflake">❆</div>
+    <div class="snowflake">❄</div>
+    <div class="snowflake">❅</div>
+    <div class="snowflake">❆</div>
+    <div class="snowflake">❄</div>
+    <div class="snowflake">❅</div>
+    <div class="snowflake">❆</div>
+  </div>
+
   <div class="container">
     <div class="auth-card">
       <div class="auth-header">
+        <div class="christmas-decor">🔔 🎄 ⭐ 🎄 🔔</div>
         <h2 class="mb-0"><i class="bi bi-heart-pulse"></i> FMS Prehospital Portal</h2>
         <p class="mb-0 mt-2">Make your choice below....</p>
       </div>
-
+      
+      <div class="candy-divider"></div>
+      
       <div class="auth-body">
+        <div class="festive-greeting">
+          <span>🎅 🦌 🎁</span>
+          <p>Merry Christmas from the FMS Team!</p>
+        </div>
+        
         <h4 class="text-center mb-4">Welcome! How can we help you today?</h4>
         
         <div class="d-grid gap-3">
@@ -101,6 +310,10 @@
             <i class="bi bi-box-arrow-in-right"></i>
             I am already an approved member
           </a>
+        </div>
+        
+        <div class="holly-footer">
+          🍂 🎄 ❄️ 🎄 🍂
         </div>
       </div>
     </div>
