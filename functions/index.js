@@ -1,6 +1,7 @@
 /**
  * Firebase Cloud Functions for FMS Portal
- * Handles Stripe webhook for auto-marking applicants as paid
+ * - Stripe webhook for auto-marking applicants as paid
+ * - 2FA reset request handler
  */
 
 const functions = require("firebase-functions");
@@ -112,5 +113,115 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
     console.error("Error processing webhook:", error);
     // Still return 200 to prevent Stripe from retrying
     return res.status(200).send("Error processed");
+  }
+});
+
+/**
+ * 2FA Reset Request Handler
+ * This function handles requests to reset 2FA for locked-out users.
+ * It runs server-side with admin privileges, so it can:
+ * - Query users by email
+ * - Create mail documents
+ * - Create reset tokens
+ * All without exposing these permissions to the client
+ */
+exports.request2FAReset = functions.https.onCall(async (data, context) => {
+  const email = data.email?.trim().toLowerCase();
+
+  // Validate email format
+  if (!email || !email.includes("@")) {
+    throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Valid email is required",
+    );
+  }
+
+  try {
+    // Find user with this email who has 2FA enabled
+    const usersSnapshot = await db.collection("users")
+        .where("email", "==", email)
+        .where("has2FA", "==", true)
+        .limit(1)
+        .get();
+
+    // Always return success (don't reveal if account exists)
+    if (usersSnapshot.empty) {
+      console.log("No user found with 2FA for email:", email);
+      return {success: true};
+    }
+
+    const userDoc = usersSnapshot.docs[0];
+    const userData = userDoc.data();
+    const userId = userDoc.id;
+
+    // Generate secure random token
+    const crypto = require("crypto");
+    const tokenBytes = crypto.randomBytes(32);
+    const token = tokenBytes.toString("hex");
+
+    // Token expires in 30 minutes
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+
+    // Store token in Firestore
+    await db.collection("2faResetTokens").add({
+      token: token,
+      userId: userId,
+      email: email,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      expiresAt: expiresAt,
+      used: false,
+    });
+
+    // Create reset link
+    const resetLink =
+      `https://portal.fmsprehospital.co.uk/confirm-2fa-reset.html?token=${token}`;
+
+    // Send email via mail collection (triggers SendGrid)
+    await db.collection("mail").add({
+      to: email,
+      message: {
+        subject: "Reset Your 2FA - FMS Portal",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #00a896 0%, #028090 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+              <h1 style="color: white; margin: 0;">FMS Prehospital Portal</h1>
+            </div>
+            <div style="padding: 30px; background: #f8f9fa; border-radius: 0 0 10px 10px;">
+              <h2 style="color: #333;">Reset Your Two-Factor Authentication</h2>
+              <p style="color: #666; font-size: 16px;">
+                Hello ${userData.firstName || "there"},
+              </p>
+              <p style="color: #666; font-size: 16px;">
+                We received a request to reset your two-factor authentication. Click the button below to disable your current 2FA and set up a new one.
+              </p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${resetLink}" style="background: linear-gradient(135deg, #00a896 0%, #028090 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                  Reset My 2FA
+                </a>
+              </div>
+              <p style="color: #999; font-size: 14px;">
+                <strong>This link will expire in 30 minutes.</strong>
+              </p>
+              <p style="color: #999; font-size: 14px;">
+                If you didn't request this reset, you can safely ignore this email. Your 2FA settings will remain unchanged.
+              </p>
+              <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+              <p style="color: #999; font-size: 12px; text-align: center;">
+                Festival Medical Services - FMS Prehospital Portal
+              </p>
+            </div>
+          </div>
+        `,
+      },
+    });
+
+    console.log("2FA reset email queued for:", email);
+    return {success: true};
+  } catch (error) {
+    console.error("2FA reset error:", error);
+    throw new functions.https.HttpsError(
+        "internal",
+        "An error occurred processing your request",
+    );
   }
 });
