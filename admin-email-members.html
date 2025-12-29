@@ -155,6 +155,7 @@
               <option value="approved">Approved Members (with approved profiles)</option>
               <option value="registered">Registered Users (account created but no profile)</option>
               <option value="pending">Pending Registration (on allowed list but no account)</option>
+              <option value="noEvents">Approved Members (not volunteered for any events)</option>
             </select>
           </div>
           <div class="col-md-6 text-md-end">
@@ -327,6 +328,7 @@ prehospital@festival-medical.org</div>
     let approvedMembers = [];
     let registeredUsers = [];
     let pendingRegistration = [];
+    let approvedNoEvents = [];
 
     // Helper function to delay
     function delay(ms) {
@@ -351,9 +353,12 @@ prehospital@festival-medical.org</div>
         return approvedMembers;
       } else if (recipientType.value === 'registered') {
         return registeredUsers;
-      } else {
+      } else if (recipientType.value === 'pending') {
         return pendingRegistration;
+      } else if (recipientType.value === 'noEvents') {
+        return approvedNoEvents;
       }
+      return [];
     }
 
     // Get label for recipient type
@@ -362,9 +367,12 @@ prehospital@festival-medical.org</div>
         return 'approved member';
       } else if (recipientType.value === 'registered') {
         return 'registered user';
-      } else {
+      } else if (recipientType.value === 'pending') {
         return 'pending registration';
+      } else if (recipientType.value === 'noEvents') {
+        return 'approved member (no events)';
       }
+      return 'recipient';
     }
 
     // Update recipient count display
@@ -445,10 +453,21 @@ prehospital@festival-medical.org</div>
           allowedEmails.push(doc.id); // The document ID is the email address
         });
 
+        // Get all event volunteers to track who has volunteered
+        const eventVolunteersSnapshot = await getDocs(collection(db, 'eventVolunteers'));
+        const usersWhoVolunteered = new Set();
+        eventVolunteersSnapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.userId) {
+            usersWhoVolunteered.add(data.userId);
+          }
+        });
+
         // Clear arrays
         approvedMembers = [];
         registeredUsers = [];
         pendingRegistration = [];
+        approvedNoEvents = [];
 
         // Process each user
         Object.keys(usersData).forEach(userId => {
@@ -460,12 +479,20 @@ prehospital@festival-medical.org</div>
 
           // Check if user has an approved profile
           if (profile && profile.adminUse?.status === 'approved') {
-            approvedMembers.push({
+            const memberData = {
               id: userId,
               email: user.email,
               firstName: user.firstName || profile.personalDetails?.firstName || 'Member',
               surname: user.surname || profile.personalDetails?.surname || ''
-            });
+            };
+            
+            // Add to approved members list
+            approvedMembers.push(memberData);
+            
+            // Check if they have NOT volunteered for any events
+            if (!usersWhoVolunteered.has(userId)) {
+              approvedNoEvents.push({ ...memberData });
+            }
           } 
           // Check if user has no profile or no submitted profile
           else if (!profile || !profile.submission?.submittedAt) {
@@ -501,8 +528,9 @@ prehospital@festival-medical.org</div>
         approvedMembers.sort(sortByName);
         registeredUsers.sort(sortByName);
         pendingRegistration.sort(sortByEmail);
+        approvedNoEvents.sort(sortByName);
 
-        console.log(`Loaded ${approvedMembers.length} approved members, ${registeredUsers.length} registered users, and ${pendingRegistration.length} pending registrations`);
+        console.log(`Loaded ${approvedMembers.length} approved members, ${registeredUsers.length} registered users, ${pendingRegistration.length} pending registrations, and ${approvedNoEvents.length} approved members with no events`);
 
         // Update count display
         updateRecipientCount();
