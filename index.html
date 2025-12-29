@@ -7,9 +7,9 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
   <style>
-    /* Christmas Theme Background */
+    /* New Year Theme Background - Midnight Blue */
     body { 
-      background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 50%, #165B33 100%);
+      background: linear-gradient(135deg, #0a0a2e 0%, #16213e 50%, #1a1a4e 100%);
       min-height: 100vh; 
       display: flex; 
       align-items: center; 
@@ -18,8 +18,8 @@
       overflow-x: hidden;
     }
 
-    /* Snowfall Animation */
-    .snowflakes {
+    /* Fireworks Animation */
+    .fireworks {
       position: fixed;
       top: 0;
       left: 0;
@@ -30,42 +30,112 @@
       overflow: hidden;
     }
 
-    .snowflake {
+    .firework {
       position: absolute;
-      top: -10px;
-      color: #fff;
-      font-size: 1rem;
-      opacity: 0.8;
-      animation: fall linear infinite;
+      font-size: 1.5rem;
+      animation: explode 2s ease-out infinite;
     }
 
-    @keyframes fall {
+    @keyframes explode {
       0% {
-        transform: translateY(-10px) rotate(0deg);
+        transform: scale(0) translateY(100px);
+        opacity: 0;
+      }
+      50% {
+        transform: scale(1.2) translateY(0);
         opacity: 1;
       }
       100% {
-        transform: translateY(100vh) rotate(360deg);
-        opacity: 0.3;
+        transform: scale(0.8) translateY(-50px);
+        opacity: 0;
       }
     }
 
-    /* Generate different snowflakes */
-    .snowflake:nth-child(1) { left: 5%; animation-duration: 8s; animation-delay: 0s; font-size: 0.8rem; }
-    .snowflake:nth-child(2) { left: 15%; animation-duration: 12s; animation-delay: 1s; font-size: 1.2rem; }
-    .snowflake:nth-child(3) { left: 25%; animation-duration: 10s; animation-delay: 2s; font-size: 0.9rem; }
-    .snowflake:nth-child(4) { left: 35%; animation-duration: 14s; animation-delay: 0.5s; font-size: 1rem; }
-    .snowflake:nth-child(5) { left: 45%; animation-duration: 9s; animation-delay: 3s; font-size: 1.1rem; }
-    .snowflake:nth-child(6) { left: 55%; animation-duration: 11s; animation-delay: 1.5s; font-size: 0.7rem; }
-    .snowflake:nth-child(7) { left: 65%; animation-duration: 13s; animation-delay: 2.5s; font-size: 1.3rem; }
-    .snowflake:nth-child(8) { left: 75%; animation-duration: 8s; animation-delay: 4s; font-size: 0.85rem; }
-    .snowflake:nth-child(9) { left: 85%; animation-duration: 10s; animation-delay: 0.8s; font-size: 1rem; }
-    .snowflake:nth-child(10) { left: 95%; animation-duration: 15s; animation-delay: 2s; font-size: 0.95rem; }
-    .snowflake:nth-child(11) { left: 10%; animation-duration: 9s; animation-delay: 3.5s; font-size: 1.15rem; }
-    .snowflake:nth-child(12) { left: 30%; animation-duration: 11s; animation-delay: 1.2s; font-size: 0.75rem; }
-    .snowflake:nth-child(13) { left: 50%; animation-duration: 13s; animation-delay: 4.5s; font-size: 1.05rem; }
-    .snowflake:nth-child(14) { left: 70%; animation-duration: 7s; animation-delay: 0.3s; font-size: 0.9rem; }
-    .snowflake:nth-child(15) { left: 90%; animation-duration: 12s; animation-delay: 2.8s; font-size: 1.2rem; }
+    /* Position fireworks */
+    .firework:nth-child(1) { left: 10%; top: 20%; animation-delay: 0s; color: #ffd700; }
+    .firework:nth-child(2) { left: 25%; top: 15%; animation-delay: 0.5s; color: #ff6b6b; }
+    .firework:nth-child(3) { left: 40%; top: 25%; animation-delay: 1s; color: #4ecdc4; }
+    .firework:nth-child(4) { left: 60%; top: 10%; animation-delay: 0.3s; color: #ffd700; }
+    .firework:nth-child(5) { left: 75%; top: 20%; animation-delay: 0.8s; color: #ff6b6b; }
+    .firework:nth-child(6) { left: 90%; top: 15%; animation-delay: 1.2s; color: #c9b037; }
+    .firework:nth-child(7) { left: 5%; top: 35%; animation-delay: 1.5s; color: #4ecdc4; }
+    .firework:nth-child(8) { left: 85%; top: 30%; animation-delay: 0.2s; color: #ffd700; }
+
+    /* Falling confetti */
+    .confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .confetti-piece {
+      position: absolute;
+      top: -20px;
+      font-size: 1rem;
+      animation: confetti-fall linear infinite;
+    }
+
+    @keyframes confetti-fall {
+      0% {
+        transform: translateY(-20px) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0.5;
+      }
+    }
+
+    .confetti-piece:nth-child(1) { left: 5%; animation-duration: 6s; animation-delay: 0s; }
+    .confetti-piece:nth-child(2) { left: 15%; animation-duration: 8s; animation-delay: 1s; }
+    .confetti-piece:nth-child(3) { left: 25%; animation-duration: 7s; animation-delay: 2s; }
+    .confetti-piece:nth-child(4) { left: 35%; animation-duration: 9s; animation-delay: 0.5s; }
+    .confetti-piece:nth-child(5) { left: 45%; animation-duration: 6s; animation-delay: 3s; }
+    .confetti-piece:nth-child(6) { left: 55%; animation-duration: 8s; animation-delay: 1.5s; }
+    .confetti-piece:nth-child(7) { left: 65%; animation-duration: 7s; animation-delay: 2.5s; }
+    .confetti-piece:nth-child(8) { left: 75%; animation-duration: 9s; animation-delay: 0.8s; }
+    .confetti-piece:nth-child(9) { left: 85%; animation-duration: 6s; animation-delay: 1.2s; }
+    .confetti-piece:nth-child(10) { left: 95%; animation-duration: 8s; animation-delay: 2s; }
+
+    /* Stars twinkling in background */
+    .stars {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .star {
+      position: absolute;
+      color: #fff;
+      font-size: 0.5rem;
+      animation: twinkle 2s ease-in-out infinite;
+      opacity: 0.6;
+    }
+
+    .star:nth-child(1) { left: 10%; top: 10%; animation-delay: 0s; }
+    .star:nth-child(2) { left: 20%; top: 40%; animation-delay: 0.3s; }
+    .star:nth-child(3) { left: 30%; top: 60%; animation-delay: 0.6s; }
+    .star:nth-child(4) { left: 50%; top: 30%; animation-delay: 0.9s; }
+    .star:nth-child(5) { left: 70%; top: 50%; animation-delay: 1.2s; }
+    .star:nth-child(6) { left: 80%; top: 70%; animation-delay: 1.5s; }
+    .star:nth-child(7) { left: 90%; top: 20%; animation-delay: 0.4s; }
+    .star:nth-child(8) { left: 15%; top: 80%; animation-delay: 0.7s; }
+    .star:nth-child(9) { left: 60%; top: 85%; animation-delay: 1s; }
+    .star:nth-child(10) { left: 40%; top: 5%; animation-delay: 1.3s; }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.3); }
+    }
 
     .container {
       position: relative;
@@ -75,15 +145,15 @@
     .auth-card { 
       background: #fff; 
       border-radius: 20px; 
-      box-shadow: 0 20px 60px rgba(0,0,0,.4); 
+      box-shadow: 0 20px 60px rgba(0,0,0,.5), 0 0 40px rgba(255, 215, 0, 0.2); 
       overflow: hidden; 
       max-width: 500px; 
       margin: 0 auto;
-      border: 3px solid #c41e3a;
+      border: 3px solid #ffd700;
     }
 
     .auth-header { 
-      background: linear-gradient(135deg, #c41e3a 0%, #a01830 100%);
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
       color: #fff; 
       padding: 30px; 
       text-align: center;
@@ -91,14 +161,14 @@
       overflow: hidden;
     }
 
-    /* Twinkling stars in header */
+    /* Sparkle effects in header */
     .auth-header::before {
       content: "✨";
       position: absolute;
       top: 10px;
       left: 20px;
       font-size: 1.2rem;
-      animation: twinkle 1.5s ease-in-out infinite;
+      animation: sparkle 1s ease-in-out infinite;
     }
 
     .auth-header::after {
@@ -107,25 +177,25 @@
       top: 15px;
       right: 25px;
       font-size: 1rem;
-      animation: twinkle 1.5s ease-in-out infinite 0.5s;
+      animation: sparkle 1s ease-in-out infinite 0.3s;
     }
 
-    @keyframes twinkle {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(0.8); }
+    @keyframes sparkle {
+      0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); }
+      50% { opacity: 0.5; transform: scale(0.8) rotate(180deg); }
     }
 
-    /* Christmas decorations */
-    .christmas-decor {
+    /* New Year decorations */
+    .new-year-decor {
       text-align: center;
       font-size: 1.5rem;
       margin-bottom: 10px;
-      animation: sway 3s ease-in-out infinite;
+      animation: bounce 2s ease-in-out infinite;
     }
 
-    @keyframes sway {
-      0%, 100% { transform: rotate(-3deg); }
-      50% { transform: rotate(3deg); }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
     }
 
     .auth-body { 
@@ -134,13 +204,13 @@
     }
 
     .welcome-btn {
-      background: linear-gradient(135deg, #c41e3a 0%, #a01830 100%);
+      background: linear-gradient(135deg, #ffd700 0%, #c9b037 100%);
       border: none; 
       padding: 20px 30px; 
       font-weight: 600;
       font-size: 1.1rem;
       border-radius: 12px;
-      color: #fff;
+      color: #1a1a2e;
       text-decoration: none;
       display: block;
       text-align: center;
@@ -150,7 +220,7 @@
     }
 
     .welcome-btn::before {
-      content: "🎄";
+      content: "🎉";
       position: absolute;
       left: 15px;
       top: 50%;
@@ -160,8 +230,8 @@
 
     .welcome-btn:hover { 
       transform: translateY(-3px); 
-      box-shadow: 0 8px 20px rgba(196, 30, 58, .4);
-      color: #fff;
+      box-shadow: 0 8px 25px rgba(255, 215, 0, .5);
+      color: #1a1a2e;
     }
 
     .welcome-btn i {
@@ -172,8 +242,8 @@
 
     .btn-secondary-custom {
       background: #fff;
-      border: 2px solid #165B33;
-      color: #165B33;
+      border: 2px solid #16213e;
+      color: #16213e;
       padding: 20px 30px; 
       font-weight: 600;
       font-size: 1.1rem;
@@ -187,7 +257,7 @@
     }
 
     .btn-secondary-custom::before {
-      content: "🎁";
+      content: "🥂";
       position: absolute;
       left: 15px;
       top: 50%;
@@ -197,9 +267,9 @@
 
     .btn-secondary-custom:hover {
       transform: translateY(-3px); 
-      box-shadow: 0 8px 20px rgba(22, 91, 51, .2);
-      background: #f0fff4;
-      color: #0d3d22;
+      box-shadow: 0 8px 20px rgba(22, 33, 62, .2);
+      background: #f0f4ff;
+      color: #0f1a30;
     }
 
     .btn-secondary-custom i {
@@ -208,44 +278,49 @@
       margin-bottom: 10px;
     }
 
-    /* Festive greeting */
-    .festive-greeting {
+    /* New Year greeting */
+    .new-year-greeting {
       text-align: center;
       margin-bottom: 20px;
       padding: 15px;
-      background: linear-gradient(135deg, #fff9e6 0%, #fff3cc 100%);
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
       border-radius: 10px;
-      border: 2px dashed #d4a017;
+      border: 2px solid #ffd700;
+      color: #fff;
     }
 
-    .festive-greeting span {
-      font-size: 1.5rem;
+    .new-year-greeting .year {
+      font-size: 2.5rem;
+      font-weight: 700;
       display: block;
-      margin-bottom: 5px;
+      background: linear-gradient(135deg, #ffd700 0%, #fff 50%, #ffd700 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 2s ease-in-out infinite;
     }
 
-    .festive-greeting p {
-      color: #8b6914;
-      font-weight: 600;
-      margin: 0;
+    @keyframes shimmer {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.3); }
+    }
+
+    .new-year-greeting p {
+      color: #c9c9c9;
+      font-weight: 500;
+      margin: 5px 0 0 0;
       font-size: 0.95rem;
     }
 
-    /* Candy cane divider */
-    .candy-divider {
-      height: 8px;
-      background: repeating-linear-gradient(
-        90deg,
-        #c41e3a 0px,
-        #c41e3a 20px,
-        #fff 20px,
-        #fff 40px
-      );
+    /* Gold divider */
+    .gold-divider {
+      height: 4px;
+      background: linear-gradient(90deg, #ffd700 0%, #fff 50%, #ffd700 100%);
       margin: 0 -30px;
     }
 
-    /* Holly decoration at bottom */
-    .holly-footer {
+    /* Celebration footer */
+    .celebration-footer {
       text-align: center;
       padding-top: 20px;
       font-size: 1.3rem;
@@ -254,48 +329,74 @@
     /* Pulsing heart icon */
     .auth-header h2 i {
       animation: pulse 1.5s ease-in-out infinite;
+      color: #ffd700;
     }
 
     @keyframes pulse {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.1); }
     }
+
+    .auth-header h2 {
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
   </style>
 </head>
 <body>
-  <!-- Snowfall Effect -->
-  <div class="snowflakes" aria-hidden="true">
-    <div class="snowflake">❄</div>
-    <div class="snowflake">❅</div>
-    <div class="snowflake">❆</div>
-    <div class="snowflake">❄</div>
-    <div class="snowflake">❅</div>
-    <div class="snowflake">❆</div>
-    <div class="snowflake">❄</div>
-    <div class="snowflake">❅</div>
-    <div class="snowflake">❆</div>
-    <div class="snowflake">❄</div>
-    <div class="snowflake">❅</div>
-    <div class="snowflake">❆</div>
-    <div class="snowflake">❄</div>
-    <div class="snowflake">❅</div>
-    <div class="snowflake">❆</div>
+  <!-- Twinkling Stars -->
+  <div class="stars" aria-hidden="true">
+    <div class="star">★</div>
+    <div class="star">★</div>
+    <div class="star">★</div>
+    <div class="star">★</div>
+    <div class="star">★</div>
+    <div class="star">★</div>
+    <div class="star">★</div>
+    <div class="star">★</div>
+    <div class="star">★</div>
+    <div class="star">★</div>
+  </div>
+
+  <!-- Fireworks Effect -->
+  <div class="fireworks" aria-hidden="true">
+    <div class="firework">✦</div>
+    <div class="firework">✧</div>
+    <div class="firework">✦</div>
+    <div class="firework">✧</div>
+    <div class="firework">✦</div>
+    <div class="firework">✧</div>
+    <div class="firework">✦</div>
+    <div class="firework">✧</div>
+  </div>
+
+  <!-- Confetti Effect -->
+  <div class="confetti" aria-hidden="true">
+    <div class="confetti-piece">🎊</div>
+    <div class="confetti-piece">✨</div>
+    <div class="confetti-piece">🎊</div>
+    <div class="confetti-piece">✨</div>
+    <div class="confetti-piece">🎊</div>
+    <div class="confetti-piece">✨</div>
+    <div class="confetti-piece">🎊</div>
+    <div class="confetti-piece">✨</div>
+    <div class="confetti-piece">🎊</div>
+    <div class="confetti-piece">✨</div>
   </div>
 
   <div class="container">
     <div class="auth-card">
       <div class="auth-header">
-        <div class="christmas-decor">🔔 🎄 ⭐ 🎄 🔔</div>
+        <div class="new-year-decor">🎆 🥳 🎇 🥳 🎆</div>
         <h2 class="mb-0"><i class="bi bi-heart-pulse"></i> FMS Prehospital Portal</h2>
         <p class="mb-0 mt-2">Make your choice below....</p>
       </div>
       
-      <div class="candy-divider"></div>
+      <div class="gold-divider"></div>
       
       <div class="auth-body">
-        <div class="festive-greeting">
-          <span>🎅 🦌 🎁</span>
-          <p>Merry Christmas from the FMS Team!</p>
+        <div class="new-year-greeting">
+          <span class="year">2026</span>
+          <p>Happy New Year from the FMS Team!</p>
         </div>
         
         <h4 class="text-center mb-4">Welcome! How can we help you today?</h4>
@@ -312,8 +413,8 @@
           </a>
         </div>
         
-        <div class="holly-footer">
-          🍂 🎄 ❄️ 🎄 🍂
+        <div class="celebration-footer">
+          🍾 🎉 ⭐ 🎉 🍾
         </div>
       </div>
     </div>
