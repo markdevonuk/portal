@@ -336,11 +336,16 @@
       try {
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         
-        console.log('User doc exists:', userDoc.exists());
+       
         
         if (userDoc.exists()) {
-          const userData = userDoc.data();
-          console.log('User data from Firestore:', userData);
+  const userData = userDoc.data();
+  
+  // Enforce 2FA - redirect if not set up
+  if (userData.has2FA !== true || !userData.secret2FA) {
+    window.location.href = 'setup-2fa.html';
+    return;
+  }
           
           // Display user name from Firestore
           const firstName = userData.firstName || 'User';

@@ -201,18 +201,18 @@
         // Check if user has 2FA enabled
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         
-        if (userDoc.exists() && userDoc.data().has2FA === true) {
-          // Store flag for 2FA verification (keep user signed in)
-          sessionStorage.setItem('needs2FA', 'true');
-          sessionStorage.setItem('pendingAuthEmail', email);
-          
-          // Redirect to 2FA verification (keep user authenticated)
-          window.location.href = 'verify-2fa.html';
-        } else {
-          // No 2FA, go directly to dashboard
-          showAlert('Login successful! Redirecting...', 'success');
-          setTimeout(() => window.location.href = 'dashboard.html', 1000);
-        }
+       if (userDoc.exists() && userDoc.data().has2FA === true) {
+  // Store flag for 2FA verification (keep user signed in)
+  sessionStorage.setItem('needs2FA', 'true');
+  sessionStorage.setItem('pendingAuthEmail', email);
+  
+  // Redirect to 2FA verification (keep user authenticated)
+  window.location.href = 'verify-2fa.html';
+} else {
+  // No 2FA setup yet - redirect to setup
+  showAlert('2FA setup required. Redirecting...', 'info');
+  setTimeout(() => window.location.href = 'setup-2fa.html', 1000);
+}
       } catch (error) {
         setButtonLoading('loginBtn', false);
         
