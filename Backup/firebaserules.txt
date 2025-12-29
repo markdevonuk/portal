@@ -1,0 +1,120 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+    
+    // Prefer custom claim; fallback to flag in the current user's doc
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.admin == true ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true
+      );
+    }
+    
+    // APPLICANTS collection - public can create, only admins can read/update/delete
+    match /applicants/{applicantId} {
+      // Anyone can create an application (no auth required)
+      allow create: if true;
+      // Only admins can read, update, or delete applications
+      allow read, update, delete: if isAdmin();
+    }
+    
+    // TEAMS collection - only readable/writable by admins
+    match /teams/{teamId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // events collection - readable by all users, writable by admins
+    match /events/{eventId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // eventVolunteers collection - users can read all, create for themselves, update/delete their own
+    match /eventVolunteers/{volunteerId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null && (
+        // Users can update/delete their own volunteer records
+        resource.data.userId == request.auth.uid ||
+        // Admins can update/delete any volunteer records
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true
+      );
+    }
+    
+    // USERS collection
+    match /users/{userId} {
+      // Read: self OR admin (enables admin list/search)
+      allow read: if isOwner(userId) || isAdmin();
+      // Create: self OR admin
+      allow create: if isOwner(userId) || isAdmin();
+      // Update: self (but cannot change isAdmin) OR admin
+      allow update: if
+        (isOwner(userId) &&
+         // forbid self-elevating to admin
+         request.resource.data.isAdmin == resource.data.isAdmin) ||
+        isAdmin();
+      // Allow admins to update teams field for any user
+      allow update: if isAdmin() && 
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['teams']);
+      // Delete: admin only
+      allow delete: if isAdmin();
+    }
+    
+    // PROFILES collection
+    match /profiles/{userId} {
+      // Read: self OR admin
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Create/Update: self (but cannot change admin review fields)
+      allow create, update: if 
+        isOwner(userId) && 
+        (!request.resource.data.keys().hasAny(['adminReview']) || 
+         request.resource.data.adminReview == resource.data.adminReview);
+      
+      // Only admins can update adminReview fields
+      allow update: if isAdmin();
+      
+      // Delete: admin only
+      allow delete: if isAdmin();
+    }
+    
+    // Admin-only area for dashboards, counters, settings, etc.
+    match /admin/{doc=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // Allowed emails (tighten if you can)
+    match /allowedEmails/{docId} {
+      // Changed to allow public reads - necessary for registration
+      allow read: if true;         // Allow anyone to read this collection
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Rule for the mail collection - UPDATED to use isAdmin() function
+    match /mail/{mailId} {
+      // Allow only admin users to create emails
+      allow create: if isAdmin();
+      // Deny other operations
+      allow read, update, delete: if false;
+    }
+    
+    // 2FA Reset Tokens - allow creation by anyone, reading/deleting by token match
+match /2faResetTokens/{tokenId} {
+  allow create: if true;
+  allow read, delete: if true;
+}
+ 
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
