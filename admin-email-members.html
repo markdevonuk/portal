@@ -154,6 +154,7 @@
             <select class="form-select" id="recipientType">
               <option value="approved">Approved Members (with approved profiles)</option>
               <option value="registered">Registered Users (account created but no profile)</option>
+              <option value="pending">Pending Registration (on allowed list but no account)</option>
             </select>
           </div>
           <div class="col-md-6 text-md-end">
@@ -179,6 +180,13 @@
         </div>
       </div>
 
+      <!-- Pending Registration Info Banner (hidden by default) -->
+      <div class="alert alert-info mb-4 hidden" id="pendingInfoBanner">
+        <i class="bi bi-info-circle-fill"></i>
+        <strong>Note:</strong> These recipients have not yet created an account, so we don't have their names. 
+        Emails will use "Hello" as the greeting instead of their first name.
+      </div>
+
       <!-- Email Form -->
       <div class="admin-card" id="emailFormCard">
         <h4 class="mb-4"><i class="bi bi-pencil-square"></i> Compose Email</h4>
@@ -192,7 +200,7 @@
           
           <div class="mb-3">
             <label for="emailContent" class="form-label fw-bold">Message *</label>
-            <p class="text-muted small mb-2">
+            <p class="text-muted small mb-2" id="greetingHint">
               <i class="bi bi-info-circle"></i> The greeting "Dear [member first name]," will be added automatically. 
               Start with your message content.
             </p>
@@ -310,12 +318,15 @@ prehospital@festival-medical.org</div>
     const recipientCard = document.getElementById('recipientCard');
     const warningBanner = document.getElementById('warningBanner');
     const emailFormCard = document.getElementById('emailFormCard');
+    const pendingInfoBanner = document.getElementById('pendingInfoBanner');
+    const greetingHint = document.getElementById('greetingHint');
     const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
     const successModal = new bootstrap.Modal(document.getElementById('successModal'));
 
     // Store recipients
     let approvedMembers = [];
     let registeredUsers = [];
+    let pendingRegistration = [];
 
     // Helper function to delay
     function delay(ms) {
@@ -336,13 +347,30 @@ prehospital@festival-medical.org</div>
 
     // Get current recipients based on dropdown selection
     function getCurrentRecipients() {
-      return recipientType.value === 'approved' ? approvedMembers : registeredUsers;
+      if (recipientType.value === 'approved') {
+        return approvedMembers;
+      } else if (recipientType.value === 'registered') {
+        return registeredUsers;
+      } else {
+        return pendingRegistration;
+      }
+    }
+
+    // Get label for recipient type
+    function getRecipientLabel() {
+      if (recipientType.value === 'approved') {
+        return 'approved member';
+      } else if (recipientType.value === 'registered') {
+        return 'registered user';
+      } else {
+        return 'pending registration';
+      }
     }
 
     // Update recipient count display
     function updateRecipientCount() {
       const recipients = getCurrentRecipients();
-      const type = recipientType.value === 'approved' ? 'approved member' : 'registered user';
+      const type = getRecipientLabel();
       
       memberCountContainer.innerHTML = `
         <span class="badge bg-primary member-count-badge">
@@ -351,6 +379,18 @@ prehospital@festival-medical.org</div>
 
       // Enable/disable send button
       sendEmailBtn.disabled = recipients.length === 0;
+      
+      // Show/hide pending info banner and update greeting hint
+      if (recipientType.value === 'pending') {
+        pendingInfoBanner.classList.remove('hidden');
+        greetingHint.innerHTML = '<i class="bi bi-info-circle"></i> The greeting "Hello," will be added automatically (no names available for pending registrations). Start with your message content.';
+      } else {
+        pendingInfoBanner.classList.add('hidden');
+        greetingHint.innerHTML = '<i class="bi bi-info-circle"></i> The greeting "Dear [member first name]," will be added automatically. Start with your message content.';
+      }
+      
+      // Update preview when recipient type changes
+      updatePreview();
       
       if (recipients.length === 0) {
         showAlert(`No ${type}s found to email.`, 'warning');
@@ -383,8 +423,12 @@ prehospital@festival-medical.org</div>
         // Get all users
         const usersSnapshot = await getDocs(collection(db, 'users'));
         const usersData = {};
+        const registeredEmails = new Set(); // Track all registered email addresses
         usersSnapshot.forEach(doc => {
           usersData[doc.id] = { id: doc.id, ...doc.data() };
+          if (doc.data().email) {
+            registeredEmails.add(doc.data().email.toLowerCase());
+          }
         });
 
         // Get all profiles
@@ -394,9 +438,17 @@ prehospital@festival-medical.org</div>
           profilesData[doc.id] = doc.data();
         });
 
+        // Get all allowed emails
+        const allowedEmailsSnapshot = await getDocs(collection(db, 'allowedEmails'));
+        const allowedEmails = [];
+        allowedEmailsSnapshot.forEach(doc => {
+          allowedEmails.push(doc.id); // The document ID is the email address
+        });
+
         // Clear arrays
         approvedMembers = [];
         registeredUsers = [];
+        pendingRegistration = [];
 
         // Process each user
         Object.keys(usersData).forEach(userId => {
@@ -426,16 +478,31 @@ prehospital@festival-medical.org</div>
           }
         });
 
-        // Sort both arrays by name
+        // Process allowed emails to find those who haven't registered
+        allowedEmails.forEach(email => {
+          const emailLower = email.toLowerCase();
+          // Check if this email has NOT registered (not in usersData)
+          if (!registeredEmails.has(emailLower)) {
+            pendingRegistration.push({
+              email: email,
+              firstName: null // No name available
+            });
+          }
+        });
+
+        // Sort all arrays
         const sortByName = (a, b) => {
-          const nameA = `${a.firstName} ${a.surname}`.toLowerCase();
-          const nameB = `${b.firstName} ${b.surname}`.toLowerCase();
+          const nameA = `${a.firstName || ''} ${a.surname || ''}`.toLowerCase();
+          const nameB = `${b.firstName || ''} ${b.surname || ''}`.toLowerCase();
           return nameA.localeCompare(nameB);
         };
+        const sortByEmail = (a, b) => a.email.toLowerCase().localeCompare(b.email.toLowerCase());
+        
         approvedMembers.sort(sortByName);
         registeredUsers.sort(sortByName);
+        pendingRegistration.sort(sortByEmail);
 
-        console.log(`Loaded ${approvedMembers.length} approved members and ${registeredUsers.length} registered users`);
+        console.log(`Loaded ${approvedMembers.length} approved members, ${registeredUsers.length} registered users, and ${pendingRegistration.length} pending registrations`);
 
         // Update count display
         updateRecipientCount();
@@ -457,7 +524,10 @@ prehospital@festival-medical.org</div>
         return;
       }
 
-      emailPreview.textContent = `Subject: ${subject || '(No subject)'}\n\nDear [Member First Name],\n\n${content || '(No content)'}\n\nPrehospital Team Leaders\nprehospital@festival-medical.org`;
+      // Use different greeting for pending registrations
+      const greeting = recipientType.value === 'pending' ? 'Hello' : 'Dear [Member First Name]';
+
+      emailPreview.textContent = `Subject: ${subject || '(No subject)'}\n\n${greeting},\n\n${content || '(No content)'}\n\nPrehospital Team Leaders\nprehospital@festival-medical.org`;
     }
 
     // Send emails with delay
@@ -465,7 +535,8 @@ prehospital@festival-medical.org</div>
       const subject = emailSubject.value.trim();
       const content = emailContent.value.trim();
       const recipients = getCurrentRecipients();
-      const recipientLabel = recipientType.value === 'approved' ? 'approved members' : 'registered users';
+      const recipientLabel = getRecipientLabel() + 's';
+      const isPending = recipientType.value === 'pending';
 
       if (!subject || !content) {
         showAlert('Please enter both subject and message.', 'warning');
@@ -484,6 +555,7 @@ prehospital@festival-medical.org</div>
       progressContainer.classList.remove('hidden');
       recipientCard.classList.add('hidden');
       warningBanner.classList.add('hidden');
+      pendingInfoBanner.classList.add('hidden');
       emailFormCard.classList.add('hidden');
       document.getElementById('alertContainer').innerHTML = '';
 
@@ -501,8 +573,14 @@ prehospital@festival-medical.org</div>
           updateProgress(i + 1, recipients.length, recipient.email);
           
           try {
-            const firstName = recipient.firstName || 'Member';
-            const personalizedContent = `Dear ${firstName},\n\n${content}\n\nPrehospital Team Leaders\nprehospital@festival-medical.org`;
+            // Use different greeting for pending registrations (no name available)
+            let personalizedContent;
+            if (isPending) {
+              personalizedContent = `Hello,\n\n${content}\n\nPrehospital Team Leaders\nprehospital@festival-medical.org`;
+            } else {
+              const firstName = recipient.firstName || 'Member';
+              personalizedContent = `Dear ${firstName},\n\n${content}\n\nPrehospital Team Leaders\nprehospital@festival-medical.org`;
+            }
 
             await addDoc(collection(db, 'mail'), {
               to: recipient.email,
@@ -515,7 +593,11 @@ prehospital@festival-medical.org</div>
             });
 
             successCount++;
-            sentTo.push(`${recipient.firstName} ${recipient.surname} (${recipient.email})`);
+            if (isPending) {
+              sentTo.push(recipient.email);
+            } else {
+              sentTo.push(`${recipient.firstName} ${recipient.surname} (${recipient.email})`);
+            }
           } catch (err) {
             console.error(`Error sending to ${recipient.email}:`, err);
             errorCount++;
@@ -563,6 +645,9 @@ prehospital@festival-medical.org</div>
         progressContainer.classList.add('hidden');
         recipientCard.classList.remove('hidden');
         warningBanner.classList.remove('hidden');
+        if (recipientType.value === 'pending') {
+          pendingInfoBanner.classList.remove('hidden');
+        }
         emailFormCard.classList.remove('hidden');
         showAlert('Error sending emails: ' + error.message, 'danger');
       }
@@ -591,7 +676,7 @@ prehospital@festival-medical.org</div>
       e.preventDefault();
       
       const recipients = getCurrentRecipients();
-      const recipientLabel = recipientType.value === 'approved' ? 'approved members' : 'registered users';
+      const recipientLabel = getRecipientLabel() + 's';
       
       // Update confirmation modal
       document.getElementById('confirmMemberCount').textContent = recipients.length;
