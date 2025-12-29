@@ -109,11 +109,14 @@
   
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-    import { getFirestore, collection, query, where, getDocs, doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
     import { firebaseConfig } from './firebase-config.js';
 
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    const functions = getFunctions(app);
+
+    // Get reference to our Cloud Function
+    const confirm2FAReset = httpsCallable(functions, 'confirm2FAReset');
 
     function showError(message) {
       document.getElementById('loadingState').classList.add('hidden');
@@ -139,54 +142,31 @@
       }
 
       try {
-        // Find the token in Firestore
-        const tokensRef = collection(db, '2faResetTokens');
-        const q = query(tokensRef, where('token', '==', token));
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) {
-          showError('This reset link is invalid. It may have already been used.');
-          return;
-        }
-
-        const tokenDoc = querySnapshot.docs[0];
-        const tokenData = tokenDoc.data();
-
-        // Check if token has been used
-        if (tokenData.used) {
-          showError('This reset link has already been used. Please request a new one if needed.');
-          return;
-        }
-
-        // Check if token has expired
-        const expiresAt = tokenData.expiresAt.toDate ? tokenData.expiresAt.toDate() : new Date(tokenData.expiresAt);
-        if (new Date() > expiresAt) {
-          showError('This reset link has expired. Please request a new one.');
-          // Clean up expired token
-          await deleteDoc(doc(db, '2faResetTokens', tokenDoc.id));
-          return;
-        }
-
-        // Token is valid - disable 2FA for the user
-        const userId = tokenData.userId;
-        const userRef = doc(db, 'users', userId);
+        // Call the Cloud Function to validate and process the reset
+        const result = await confirm2FAReset({ token: token });
         
-        await updateDoc(userRef, {
-          has2FA: false,
-          secret2FA: null,
-          twoFactorDisabledAt: new Date().toISOString(),
-          twoFactorDisabledReason: 'email_reset'
-        });
-
-        // Mark token as used and delete it
-        await deleteDoc(doc(db, '2faResetTokens', tokenDoc.id));
-
-        console.log('2FA reset successful for user:', userId);
-        showSuccess();
-
+        if (result.data.success) {
+          showSuccess();
+        } else {
+          showError('An error occurred. Please try again.');
+        }
       } catch (error) {
-        console.error('Reset processing error:', error);
-        showError('An error occurred while processing your reset. Please try again or contact support.');
+        console.error('Reset confirmation error:', error);
+        
+        // Extract the error message from Firebase function error
+        let errorMessage = 'An error occurred. Please try again.';
+        
+        if (error.code === 'functions/not-found') {
+          errorMessage = 'This reset link is invalid. It may have already been used.';
+        } else if (error.code === 'functions/failed-precondition') {
+          errorMessage = 'This reset link has already been used. Please request a new one.';
+        } else if (error.code === 'functions/deadline-exceeded') {
+          errorMessage = 'This reset link has expired. Please request a new one.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        showError(errorMessage);
       }
     }
 
@@ -194,4 +174,4 @@
     processReset();
   </script>
 </body>
-</html> 
+</html>

@@ -2,6 +2,7 @@
  * Firebase Cloud Functions for FMS Portal
  * - Stripe webhook for auto-marking applicants as paid
  * - 2FA reset request handler
+ * - 2FA reset confirmation handler
  */
 
 const functions = require("firebase-functions");
@@ -118,17 +119,11 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
 
 /**
  * 2FA Reset Request Handler
- * This function handles requests to reset 2FA for locked-out users.
- * It runs server-side with admin privileges, so it can:
- * - Query users by email
- * - Create mail documents
- * - Create reset tokens
- * All without exposing these permissions to the client
+ * Sends reset email to users who have lost access to their authenticator
  */
 exports.request2FAReset = functions.https.onCall(async (data, context) => {
   const email = data.email?.trim().toLowerCase();
 
-  // Validate email format
   if (!email || !email.includes("@")) {
     throw new functions.https.HttpsError(
         "invalid-argument",
@@ -156,11 +151,12 @@ exports.request2FAReset = functions.https.onCall(async (data, context) => {
 
     // Generate secure random token
     const crypto = require("crypto");
-    const tokenBytes = crypto.randomBytes(32);
-    const token = tokenBytes.toString("hex");
+    const token = crypto.randomBytes(32).toString("hex");
 
     // Token expires in 30 minutes
-    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+    const expiresAt = admin.firestore.Timestamp.fromDate(
+        new Date(Date.now() + 30 * 60 * 1000),
+    );
 
     // Store token in Firestore
     await db.collection("2faResetTokens").add({
@@ -188,27 +184,15 @@ exports.request2FAReset = functions.https.onCall(async (data, context) => {
             </div>
             <div style="padding: 30px; background: #f8f9fa; border-radius: 0 0 10px 10px;">
               <h2 style="color: #333;">Reset Your Two-Factor Authentication</h2>
-              <p style="color: #666; font-size: 16px;">
-                Hello ${userData.firstName || "there"},
-              </p>
-              <p style="color: #666; font-size: 16px;">
-                We received a request to reset your two-factor authentication. Click the button below to disable your current 2FA and set up a new one.
-              </p>
+              <p style="color: #666; font-size: 16px;">Hello ${userData.firstName || "there"},</p>
+              <p style="color: #666; font-size: 16px;">We received a request to reset your two-factor authentication. Click the button below to disable your current 2FA and set up a new one.</p>
               <div style="text-align: center; margin: 30px 0;">
-                <a href="${resetLink}" style="background: linear-gradient(135deg, #00a896 0%, #028090 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
-                  Reset My 2FA
-                </a>
+                <a href="${resetLink}" style="background: linear-gradient(135deg, #00a896 0%, #028090 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Reset My 2FA</a>
               </div>
-              <p style="color: #999; font-size: 14px;">
-                <strong>This link will expire in 30 minutes.</strong>
-              </p>
-              <p style="color: #999; font-size: 14px;">
-                If you didn't request this reset, you can safely ignore this email. Your 2FA settings will remain unchanged.
-              </p>
+              <p style="color: #999; font-size: 14px;"><strong>This link will expire in 30 minutes.</strong></p>
+              <p style="color: #999; font-size: 14px;">If you didn't request this reset, you can safely ignore this email.</p>
               <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
-              <p style="color: #999; font-size: 12px; text-align: center;">
-                Festival Medical Services - FMS Prehospital Portal
-              </p>
+              <p style="color: #999; font-size: 12px; text-align: center;">Festival Medical Services - FMS Prehospital Portal</p>
             </div>
           </div>
         `,
@@ -219,6 +203,88 @@ exports.request2FAReset = functions.https.onCall(async (data, context) => {
     return {success: true};
   } catch (error) {
     console.error("2FA reset error:", error);
+    throw new functions.https.HttpsError(
+        "internal",
+        "An error occurred processing your request",
+    );
+  }
+});
+
+/**
+ * 2FA Reset Confirmation Handler
+ * Validates token and disables 2FA for the user
+ */
+exports.confirm2FAReset = functions.https.onCall(async (data, context) => {
+  const token = data.token?.trim();
+
+  if (!token) {
+    throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Reset token is required",
+    );
+  }
+
+  try {
+    // Find the token in Firestore
+    const tokensSnapshot = await db.collection("2faResetTokens")
+        .where("token", "==", token)
+        .limit(1)
+        .get();
+
+    if (tokensSnapshot.empty) {
+      console.log("Token not found:", token.substring(0, 10) + "...");
+      throw new functions.https.HttpsError(
+          "not-found",
+          "This reset link is invalid. It may have already been used.",
+      );
+    }
+
+    const tokenDoc = tokensSnapshot.docs[0];
+    const tokenData = tokenDoc.data();
+
+    // Check if token has been used
+    if (tokenData.used) {
+      console.log("Token already used:", tokenDoc.id);
+      throw new functions.https.HttpsError(
+          "failed-precondition",
+          "This reset link has already been used. Please request a new one.",
+      );
+    }
+
+    // Check if token has expired
+    const expiresAt = tokenData.expiresAt.toDate();
+    if (new Date() > expiresAt) {
+      console.log("Token expired:", tokenDoc.id);
+      // Delete expired token
+      await tokenDoc.ref.delete();
+      throw new functions.https.HttpsError(
+          "deadline-exceeded",
+          "This reset link has expired. Please request a new one.",
+      );
+    }
+
+    // Token is valid - disable 2FA for the user
+    const userId = tokenData.userId;
+    const userRef = db.collection("users").doc(userId);
+
+    await userRef.update({
+      has2FA: false,
+      secret2FA: admin.firestore.FieldValue.delete(),
+      twoFactorDisabledAt: admin.firestore.FieldValue.serverTimestamp(),
+      twoFactorDisabledReason: "email_reset",
+    });
+
+    // Delete the used token
+    await tokenDoc.ref.delete();
+
+    console.log("2FA reset successful for user:", userId);
+    return {success: true, message: "2FA has been reset successfully"};
+  } catch (error) {
+    // Re-throw HttpsErrors as-is
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    console.error("2FA confirmation error:", error);
     throw new functions.https.HttpsError(
         "internal",
         "An error occurred processing your request",
