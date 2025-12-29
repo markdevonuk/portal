@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset 2FA - FMS Prehospital Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      min-height: 100vh; 
+      display:flex; 
+      align-items:center; 
+      padding:20px; 
+    }
+    .auth-card { 
+      background:#fff; 
+      border-radius:20px; 
+      box-shadow:0 20px 60px rgba(0,0,0,.3); 
+      overflow:hidden; 
+      max-width:450px; 
+      margin:0 auto; 
+    }
+    .auth-header { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      color:#fff; 
+      padding:30px; 
+      text-align:center; 
+    }
+    .auth-body { padding:30px; }
+    .form-control:focus { 
+      border-color:#00a896; 
+      box-shadow:0 0 0 .2rem rgba(0,168,150,.25); 
+    }
+    .btn-primary { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      border:none; 
+      padding:12px; 
+      font-weight:600; 
+    }
+    .btn-primary:hover { 
+      transform:translateY(-2px); 
+      box-shadow:0 5px 15px rgba(0,168,150,.4); 
+    }
+    .alert { border-radius:10px; }
+    .btn-loading { 
+      position:relative; 
+      pointer-events:none; 
+      opacity:.7; 
+    }
+    .btn-loading::after { 
+      content:""; 
+      position:absolute; 
+      width:16px; 
+      height:16px; 
+      top:50%; 
+      left:50%; 
+      margin-left:-8px; 
+      margin-top:-8px; 
+      border:2px solid #fff; 
+      border-radius:50%; 
+      border-top-color:transparent; 
+      animation:spinner .6s linear infinite; 
+    }
+    @keyframes spinner { to { transform: rotate(360deg); } }
+    .info-box {
+      background: #e7f5f3;
+      border-left: 4px solid #00a896;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+    .warning-box {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h2 class="mb-0"><i class="bi bi-shield-exclamation"></i> Reset 2FA</h2>
+        <p class="mb-0 mt-2">Lost Access Recovery</p>
+      </div>
+
+      <div class="auth-body">
+        <div id="alertContainer"></div>
+
+        <!-- Request Form -->
+        <div id="requestForm">
+          <div class="info-box">
+            <i class="bi bi-info-circle"></i> 
+            <strong>Lost access to your authenticator?</strong><br>
+            Enter your email address and we'll send you a secure link to reset your two-factor authentication.
+          </div>
+
+          <div class="warning-box">
+            <i class="bi bi-exclamation-triangle"></i> 
+            <strong>Important:</strong> The reset link will expire in 30 minutes and can only be used once.
+          </div>
+          
+          <form id="resetRequestForm">
+            <div class="mb-3">
+              <label class="form-label">Email Address</label>
+              <input type="email" class="form-control form-control-lg" 
+                     id="resetEmail" placeholder="your.email@example.com" required autofocus>
+            </div>
+            
+            <button type="submit" id="resetBtn" class="btn btn-primary w-100 mb-3">
+              <i class="bi bi-envelope"></i> Send Reset Link
+            </button>
+            
+            <a href="verify-2fa.html" class="btn btn-outline-secondary w-100">
+              <i class="bi bi-arrow-left"></i> Back to Verification
+            </a>
+          </form>
+        </div>
+
+        <!-- Success Message -->
+        <div id="successMessage" class="hidden">
+          <div class="text-center py-4">
+            <i class="bi bi-envelope-check text-success" style="font-size: 4rem;"></i>
+            <h4 class="mt-3">Check Your Email</h4>
+            <p class="text-muted">
+              If an account exists with that email and has 2FA enabled, you'll receive a reset link shortly.
+            </p>
+            <p class="text-muted">
+              <strong>Remember:</strong> The link expires in 30 minutes.
+            </p>
+            <a href="index.html" class="btn btn-primary mt-3">
+              <i class="bi bi-arrow-left"></i> Return to Login
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getFirestore, collection, query, where, getDocs, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { firebaseConfig } from './firebase-config.js';
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    function setButtonLoading(id, loading) {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      if (loading) {
+        btn.classList.add('btn-loading');
+        btn.disabled = true;
+      } else {
+        btn.classList.remove('btn-loading');
+        btn.disabled = false;
+      }
+    }
+
+    function showAlert(message, type) {
+      const html = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>`;
+      document.getElementById('alertContainer').innerHTML = html;
+    }
+
+    // Generate secure random token
+    function generateToken() {
+      const array = new Uint8Array(32);
+      crypto.getRandomValues(array);
+      return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    }
+
+    // Handle reset request
+    document.getElementById('resetRequestForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setButtonLoading('resetBtn', true);
+      
+      const email = document.getElementById('resetEmail').value.trim().toLowerCase();
+
+      try {
+        // Find user with this email who has 2FA enabled
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('email', '==', email), where('has2FA', '==', true));
+        const querySnapshot = await getDocs(q);
+
+        // Always show success message (don't reveal if account exists)
+        // But only actually send email if user exists with 2FA
+        if (!querySnapshot.empty) {
+          const userDoc = querySnapshot.docs[0];
+          const userData = userDoc.data();
+          const userId = userDoc.id;
+
+          // Generate reset token
+          const token = generateToken();
+          const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes from now
+
+          // Store token in Firestore
+          await addDoc(collection(db, '2faResetTokens'), {
+            token: token,
+            userId: userId,
+            email: email,
+            createdAt: serverTimestamp(),
+            expiresAt: expiresAt,
+            used: false
+          });
+
+          // Create reset link
+          const resetLink = `https://portal.fmsprehospital.co.uk/confirm-2fa-reset.html?token=${token}`;
+
+          // Send email via mail collection (triggers SendGrid)
+          await addDoc(collection(db, 'mail'), {
+            to: email,
+            message: {
+              subject: 'Reset Your 2FA - FMS Portal',
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <div style="background: linear-gradient(135deg, #00a896 0%, #028090 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                    <h1 style="color: white; margin: 0;">FMS Prehospital Portal</h1>
+                  </div>
+                  <div style="padding: 30px; background: #f8f9fa; border-radius: 0 0 10px 10px;">
+                    <h2 style="color: #333;">Reset Your Two-Factor Authentication</h2>
+                    <p style="color: #666; font-size: 16px;">
+                      Hello ${userData.firstName || 'there'},
+                    </p>
+                    <p style="color: #666; font-size: 16px;">
+                      We received a request to reset your two-factor authentication. Click the button below to disable your current 2FA and set up a new one.
+                    </p>
+                    <div style="text-align: center; margin: 30px 0;">
+                      <a href="${resetLink}" style="background: linear-gradient(135deg, #00a896 0%, #028090 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                        Reset My 2FA
+                      </a>
+                    </div>
+                    <p style="color: #999; font-size: 14px;">
+                      <strong>This link will expire in 30 minutes.</strong>
+                    </p>
+                    <p style="color: #999; font-size: 14px;">
+                      If you didn't request this reset, you can safely ignore this email. Your 2FA settings will remain unchanged.
+                    </p>
+                    <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+                    <p style="color: #999; font-size: 12px; text-align: center;">
+                      Festival Medical Services - FMS Prehospital Portal
+                    </p>
+                  </div>
+                </div>
+              `
+            }
+          });
+
+          console.log('2FA reset email queued for:', email);
+        }
+
+        // Always show success (security: don't reveal if account exists)
+        document.getElementById('requestForm').classList.add('hidden');
+        document.getElementById('successMessage').classList.remove('hidden');
+
+      } catch (error) {
+        console.error('Reset request error:', error);
+        setButtonLoading('resetBtn', false);
+        showAlert('An error occurred. Please try again later.', 'danger');
+      }
+    });
+  </script>
+</body>
+</html>

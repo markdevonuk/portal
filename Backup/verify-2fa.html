@@ -64,86 +64,6 @@
       animation:spinner .6s linear infinite; 
     }
     @keyframes spinner { to { transform: rotate(360deg); } }
-    
-    /* Help section styles */
-    .help-toggle {
-      color: #6c757d;
-      text-decoration: none;
-      font-size: 0.9rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      cursor: pointer;
-      margin-top: 20px;
-      padding: 10px;
-      border-radius: 8px;
-      transition: background-color 0.2s;
-    }
-    .help-toggle:hover {
-      background-color: #f8f9fa;
-      color: #00a896;
-    }
-    .help-content {
-      background: #f8f9fa;
-      border-radius: 10px;
-      padding: 20px;
-      margin-top: 15px;
-      display: none;
-    }
-    .help-content.show {
-      display: block;
-    }
-    .help-item {
-      margin-bottom: 15px;
-      padding-bottom: 15px;
-      border-bottom: 1px solid #e9ecef;
-    }
-    .help-item:last-child {
-      margin-bottom: 0;
-      padding-bottom: 0;
-      border-bottom: none;
-    }
-    .help-item h6 {
-      color: #00a896;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .help-item p, .help-item ul {
-      color: #6c757d;
-      font-size: 0.9rem;
-      margin-bottom: 0;
-    }
-    .help-item ul {
-      padding-left: 20px;
-      margin-top: 5px;
-    }
-    .help-item a {
-      color: #00a896;
-    }
-    .app-badges {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-    }
-    .app-badges a {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 8px 12px;
-      background: #00a896;
-      color: white;
-      text-decoration: none;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      transition: transform 0.2s;
-    }
-    .app-badges a:hover {
-      transform: translateY(-2px);
-      color: white;
-    }
   </style>
 </head>
 <body>
@@ -176,45 +96,6 @@
             <i class="bi bi-arrow-left"></i> Back to Login
           </a>
         </form>
-
-        <!-- Having Trouble Section -->
-        <div class="help-toggle" id="helpToggle">
-          <i class="bi bi-question-circle"></i>
-          <span>Having trouble?</span>
-          <i class="bi bi-chevron-down" id="helpChevron"></i>
-        </div>
-
-        <div class="help-content" id="helpContent">
-          <div class="help-item">
-            <h6><i class="bi bi-clock"></i> Code not working?</h6>
-            <ul>
-              <li>Wait for a fresh code - they change every 30 seconds</li>
-              <li>Make sure your phone's time is set to <strong>automatic</strong></li>
-              <li>Check you're using the code for <strong>FMS Portal</strong></li>
-            </ul>
-          </div>
-
-          <div class="help-item">
-            <h6><i class="bi bi-phone"></i> Lost access to authenticator?</h6>
-            <p>If you've lost your phone, deleted the app, or can't access your authenticator codes, you can reset your 2FA via email.</p>
-            <a href="reset-2fa.html" class="btn btn-outline-primary btn-sm mt-2">
-              <i class="bi bi-envelope"></i> Reset 2FA via Email
-            </a>
-          </div>
-
-          <div class="help-item">
-            <h6><i class="bi bi-download"></i> Need an authenticator app?</h6>
-            <p>Download Microsoft Authenticator:</p>
-            <div class="app-badges">
-              <a href="https://apps.apple.com/app/microsoft-authenticator/id983156458" target="_blank">
-                <i class="bi bi-apple"></i> App Store
-              </a>
-              <a href="https://play.google.com/store/apps/details?id=com.azure.authenticator" target="_blank">
-                <i class="bi bi-google-play"></i> Google Play
-              </a>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -270,14 +151,6 @@
         </div>`;
       document.getElementById('alertContainer').innerHTML = html;
     }
-
-    // Help toggle functionality
-    document.getElementById('helpToggle').addEventListener('click', function() {
-      const helpContent = document.getElementById('helpContent');
-      const chevron = document.getElementById('helpChevron');
-      helpContent.classList.toggle('show');
-      chevron.style.transform = helpContent.classList.contains('show') ? 'rotate(180deg)' : 'rotate(0deg)';
-    });
 
     // Base32 decode (RFC 4648)
     function base32Decode(base32) {
