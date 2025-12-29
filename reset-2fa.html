@@ -64,6 +64,7 @@
       animation:spinner .6s linear infinite; 
     }
     @keyframes spinner { to { transform: rotate(360deg); } }
+    .hidden { display: none; }
     .info-box {
       background: #e7f5f3;
       border-left: 4px solid #00a896;
@@ -145,11 +146,14 @@
   
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-    import { getFirestore, collection, query, where, getDocs, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
     import { firebaseConfig } from './firebase-config.js';
 
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    const functions = getFunctions(app);
+
+    // Get reference to our Cloud Function
+    const request2FAReset = httpsCallable(functions, 'request2FAReset');
 
     function setButtonLoading(id, loading) {
       const btn = document.getElementById(id);
@@ -172,13 +176,6 @@
       document.getElementById('alertContainer').innerHTML = html;
     }
 
-    // Generate secure random token
-    function generateToken() {
-      const array = new Uint8Array(32);
-      crypto.getRandomValues(array);
-      return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
-    }
-
     // Handle reset request
     document.getElementById('resetRequestForm').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -187,78 +184,10 @@
       const email = document.getElementById('resetEmail').value.trim().toLowerCase();
 
       try {
-        // Find user with this email who has 2FA enabled
-        const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('email', '==', email), where('has2FA', '==', true));
-        const querySnapshot = await getDocs(q);
+        // Call the Cloud Function
+        await request2FAReset({ email: email });
 
-        // Always show success message (don't reveal if account exists)
-        // But only actually send email if user exists with 2FA
-        if (!querySnapshot.empty) {
-          const userDoc = querySnapshot.docs[0];
-          const userData = userDoc.data();
-          const userId = userDoc.id;
-
-          // Generate reset token
-          const token = generateToken();
-          const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes from now
-
-          // Store token in Firestore
-          await addDoc(collection(db, '2faResetTokens'), {
-            token: token,
-            userId: userId,
-            email: email,
-            createdAt: serverTimestamp(),
-            expiresAt: expiresAt,
-            used: false
-          });
-
-          // Create reset link
-          const resetLink = `https://portal.fmsprehospital.co.uk/confirm-2fa-reset.html?token=${token}`;
-
-          // Send email via mail collection (triggers SendGrid)
-          await addDoc(collection(db, 'mail'), {
-            to: email,
-            message: {
-              subject: 'Reset Your 2FA - FMS Portal',
-              html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                  <div style="background: linear-gradient(135deg, #00a896 0%, #028090 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                    <h1 style="color: white; margin: 0;">FMS Prehospital Portal</h1>
-                  </div>
-                  <div style="padding: 30px; background: #f8f9fa; border-radius: 0 0 10px 10px;">
-                    <h2 style="color: #333;">Reset Your Two-Factor Authentication</h2>
-                    <p style="color: #666; font-size: 16px;">
-                      Hello ${userData.firstName || 'there'},
-                    </p>
-                    <p style="color: #666; font-size: 16px;">
-                      We received a request to reset your two-factor authentication. Click the button below to disable your current 2FA and set up a new one.
-                    </p>
-                    <div style="text-align: center; margin: 30px 0;">
-                      <a href="${resetLink}" style="background: linear-gradient(135deg, #00a896 0%, #028090 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
-                        Reset My 2FA
-                      </a>
-                    </div>
-                    <p style="color: #999; font-size: 14px;">
-                      <strong>This link will expire in 30 minutes.</strong>
-                    </p>
-                    <p style="color: #999; font-size: 14px;">
-                      If you didn't request this reset, you can safely ignore this email. Your 2FA settings will remain unchanged.
-                    </p>
-                    <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
-                    <p style="color: #999; font-size: 12px; text-align: center;">
-                      Festival Medical Services - FMS Prehospital Portal
-                    </p>
-                  </div>
-                </div>
-              `
-            }
-          });
-
-          console.log('2FA reset email queued for:', email);
-        }
-
-        // Always show success (security: don't reveal if account exists)
+        // Show success message (always, for security)
         document.getElementById('requestForm').classList.add('hidden');
         document.getElementById('successMessage').classList.remove('hidden');
 
