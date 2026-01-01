@@ -1648,15 +1648,18 @@
         return;
       }
 
-      // Initialize disabledPositions for this day if not exists
+      // Initialize disabledPositions if not exists
       if (!rotaData.disabledPositions) {
         rotaData.disabledPositions = {};
       }
-      if (!rotaData.disabledPositions[currentEditorDay]) {
-        rotaData.disabledPositions[currentEditorDay] = [];
+      
+      // Key is now day + shift combined
+      const disabledKey = `${currentEditorDay}_${currentShift}`;
+      if (!rotaData.disabledPositions[disabledKey]) {
+        rotaData.disabledPositions[disabledKey] = [];
       }
 
-      const disabledForDay = rotaData.disabledPositions[currentEditorDay];
+      const disabledForDayShift = rotaData.disabledPositions[disabledKey];
 
       // Group by category
       const grouped = {};
@@ -1673,7 +1676,7 @@
       // Build bulk controls
       let html = `
         <div class="bulk-controls">
-          <span class="bulk-controls-label"><i class="bi bi-toggles"></i> Quick Actions:</span>
+          <span class="bulk-controls-label"><i class="bi bi-toggles"></i> Quick Actions (${currentShift.charAt(0).toUpperCase() + currentShift.slice(1)} shift):</span>
           <div class="btn-group flex-wrap">
             <button class="btn btn-outline-success btn-sm" onclick="enableAllPositions()">
               <i class="bi bi-check-all"></i> Enable All
@@ -1706,7 +1709,7 @@
         if (grouped[category].length === 0) return;
 
         // Count enabled/disabled in this category
-        const enabledCount = grouped[category].filter(pos => !disabledForDay.includes(pos.id)).length;
+        const enabledCount = grouped[category].filter(pos => !disabledForDayShift.includes(pos.id)).length;
         const totalCount = grouped[category].length;
 
         html += `
@@ -1721,7 +1724,7 @@
         `;
 
         grouped[category].forEach(pos => {
-          const isDisabled = disabledForDay.includes(pos.id);
+          const isDisabled = disabledForDayShift.includes(pos.id);
           const defaultShiftTimes = pos.shifts[currentShift];
           const assignmentKey = `${currentEditorDay}_${pos.id}_${currentShift}`;
           const assignment = rotaData.assignments[assignmentKey] || { crew1: null, crew2: null };
@@ -1745,7 +1748,7 @@
                     </div>
                   </div>
                   <div class="position-disabled-label">
-                    <i class="bi bi-pause-circle"></i> Not active on this day
+                    <i class="bi bi-pause-circle"></i> Not active for this shift
                   </div>
                 </div>
               </div>
@@ -1845,15 +1848,17 @@
       if (!rotaData.disabledPositions) {
         rotaData.disabledPositions = {};
       }
-      if (!rotaData.disabledPositions[currentEditorDay]) {
-        rotaData.disabledPositions[currentEditorDay] = [];
+      
+      const disabledKey = `${currentEditorDay}_${currentShift}`;
+      if (!rotaData.disabledPositions[disabledKey]) {
+        rotaData.disabledPositions[disabledKey] = [];
       }
 
-      const disabledList = rotaData.disabledPositions[currentEditorDay];
+      const disabledList = rotaData.disabledPositions[disabledKey];
       
       if (enabled) {
         // Remove from disabled list
-        rotaData.disabledPositions[currentEditorDay] = disabledList.filter(id => id !== positionId);
+        rotaData.disabledPositions[disabledKey] = disabledList.filter(id => id !== positionId);
       } else {
         // Add to disabled list
         if (!disabledList.includes(positionId)) {
@@ -1869,11 +1874,13 @@
       if (!rotaData.disabledPositions) {
         rotaData.disabledPositions = {};
       }
-      rotaData.disabledPositions[currentEditorDay] = [];
+      
+      const disabledKey = `${currentEditorDay}_${currentShift}`;
+      rotaData.disabledPositions[disabledKey] = [];
 
       await saveRotaData();
       renderEditorContent();
-      showAlert('All positions enabled for this day.', 'success');
+      showAlert(`All positions enabled for this day's ${currentShift} shift.`, 'success');
     };
 
     window.disableAllPositions = async function() {
@@ -1881,24 +1888,28 @@
         rotaData.disabledPositions = {};
       }
       
+      const disabledKey = `${currentEditorDay}_${currentShift}`;
+      
       // Get all position IDs that have the current shift type
       const positionIds = rotaData.positions
         .filter(pos => pos.shifts && pos.shifts[currentShift])
         .map(pos => pos.id);
       
-      rotaData.disabledPositions[currentEditorDay] = positionIds;
+      rotaData.disabledPositions[disabledKey] = positionIds;
 
       await saveRotaData();
       renderEditorContent();
-      showAlert('All positions disabled for this day.', 'success');
+      showAlert(`All positions disabled for this day's ${currentShift} shift.`, 'success');
     };
 
     window.enableCategory = async function(category) {
       if (!rotaData.disabledPositions) {
         rotaData.disabledPositions = {};
       }
-      if (!rotaData.disabledPositions[currentEditorDay]) {
-        rotaData.disabledPositions[currentEditorDay] = [];
+      
+      const disabledKey = `${currentEditorDay}_${currentShift}`;
+      if (!rotaData.disabledPositions[disabledKey]) {
+        rotaData.disabledPositions[disabledKey] = [];
       }
 
       // Get position IDs in this category
@@ -1907,20 +1918,22 @@
         .map(pos => pos.id);
 
       // Remove these from disabled list
-      rotaData.disabledPositions[currentEditorDay] = rotaData.disabledPositions[currentEditorDay]
+      rotaData.disabledPositions[disabledKey] = rotaData.disabledPositions[disabledKey]
         .filter(id => !categoryPositionIds.includes(id));
 
       await saveRotaData();
       renderEditorContent();
-      showAlert(`All ${category} positions enabled.`, 'success');
+      showAlert(`All ${category} positions enabled for ${currentShift} shift.`, 'success');
     };
 
     window.disableCategory = async function(category) {
       if (!rotaData.disabledPositions) {
         rotaData.disabledPositions = {};
       }
-      if (!rotaData.disabledPositions[currentEditorDay]) {
-        rotaData.disabledPositions[currentEditorDay] = [];
+      
+      const disabledKey = `${currentEditorDay}_${currentShift}`;
+      if (!rotaData.disabledPositions[disabledKey]) {
+        rotaData.disabledPositions[disabledKey] = [];
       }
 
       // Get position IDs in this category
@@ -1930,14 +1943,14 @@
 
       // Add these to disabled list (avoiding duplicates)
       categoryPositionIds.forEach(id => {
-        if (!rotaData.disabledPositions[currentEditorDay].includes(id)) {
-          rotaData.disabledPositions[currentEditorDay].push(id);
+        if (!rotaData.disabledPositions[disabledKey].includes(id)) {
+          rotaData.disabledPositions[disabledKey].push(id);
         }
       });
 
       await saveRotaData();
       renderEditorContent();
-      showAlert(`All ${category} positions disabled.`, 'success');
+      showAlert(`All ${category} positions disabled for ${currentShift} shift.`, 'success');
     };
 
     // ============================================
@@ -2002,8 +2015,13 @@
       const sourceAssignments = Object.entries(rotaData.assignments)
         .filter(([key, value]) => key.startsWith(sourcePrefix) && (value.startTime || value.endTime));
 
-      // Get disabled positions for source day
-      const sourceDisabled = rotaData.disabledPositions?.[currentEditorDay] || [];
+      // Get disabled positions for source day (all shifts)
+      const shiftTypes = ['early', 'late', 'night'];
+      const sourceDisabledByShift = {};
+      shiftTypes.forEach(shift => {
+        const key = `${currentEditorDay}_${shift}`;
+        sourceDisabledByShift[shift] = rotaData.disabledPositions?.[key] || [];
+      });
 
       let clonedTimes = 0;
       let clonedDisabled = 0;
@@ -2027,30 +2045,41 @@
           clonedTimes++;
         });
 
-        // Clone disabled positions
+        // Clone disabled positions for each shift type
         if (!rotaData.disabledPositions) {
           rotaData.disabledPositions = {};
         }
-        rotaData.disabledPositions[targetDayId] = [...sourceDisabled];
-        if (sourceDisabled.length > 0) {
-          clonedDisabled++;
-        }
+        
+        shiftTypes.forEach(shift => {
+          const targetKey = `${targetDayId}_${shift}`;
+          const sourceDisabled = sourceDisabledByShift[shift];
+          
+          if (sourceDisabled.length > 0) {
+            rotaData.disabledPositions[targetKey] = [...sourceDisabled];
+            clonedDisabled++;
+          } else {
+            // Clear any existing disabled positions for this target
+            rotaData.disabledPositions[targetKey] = [];
+          }
+        });
       });
 
       await saveRotaData();
+      
+      const totalDisabledPositions = shiftTypes.reduce((sum, shift) => sum + sourceDisabledByShift[shift].length, 0);
       
       const messages = [];
       if (sourceAssignments.length > 0) {
         messages.push(`${sourceAssignments.length} time configurations`);
       }
-      if (sourceDisabled.length > 0) {
-        messages.push(`${sourceDisabled.length} disabled positions`);
+      if (totalDisabledPositions > 0) {
+        messages.push(`disabled/enabled states for all shifts`);
       }
       
       if (messages.length > 0) {
         showAlert(`Cloned ${messages.join(' and ')} to ${selectedDays.length} day(s).`, 'success');
       } else {
-        showAlert(`Day configuration copied to ${selectedDays.length} day(s). (No custom times or disabled positions to clone.)`, 'info');
+        showAlert(`Day configuration copied to ${selectedDays.length} day(s). (All positions enabled with default times.)`, 'info');
       }
 
       const modal = bootstrap.Modal.getInstance(document.getElementById('cloneDayModal'));
