@@ -14,6 +14,61 @@ async function renderEventsCard(container, auth, db, firebaseFunctions) {
       return;
     }
 
+    // Check if user is admin
+    let isAdmin = false;
+    try {
+      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+      if (userDoc.exists()) {
+        isAdmin = userDoc.data().isAdmin === true;
+      }
+    } catch (err) {
+      console.warn('Could not check admin status:', err);
+    }
+
+    // Helper function to check rota status
+    async function getRotaStatus(eventId) {
+      try {
+        const rotaDoc = await getDoc(doc(db, 'eventRotas', eventId));
+        if (!rotaDoc.exists()) return null;
+        
+        const data = rotaDoc.data();
+        // Check if rota has content
+        if (!data.days || data.days.length === 0 || !data.positions || data.positions.length === 0) {
+          return null;
+        }
+        return data.status; // 'draft' or 'published'
+      } catch (error) {
+        console.error('Error checking rota:', error);
+        return null;
+      }
+    }
+
+    // Helper function to build rota button HTML
+    function buildRotaButtonHtml(eventId, rotaStatus, isSelected) {
+      if (!rotaStatus) return ''; // No rota exists
+      
+      if (rotaStatus === 'published') {
+        return `
+          <a href="event-rota.html?eventId=${eventId}" class="btn btn-success btn-sm">
+            <i class="bi bi-calendar3"></i> View Rota
+          </a>
+        `;
+      } else if (rotaStatus === 'draft' && isAdmin) {
+        return `
+          <a href="event-rota.html?eventId=${eventId}" class="btn btn-warning btn-sm">
+            <i class="bi bi-calendar3"></i> Rota <span class="badge bg-dark">Draft</span>
+          </a>
+        `;
+      } else if (rotaStatus === 'draft') {
+        return `
+          <span class="btn btn-outline-secondary btn-sm disabled">
+            <i class="bi bi-clock"></i> Rota Coming Soon
+          </span>
+        `;
+      }
+      return '';
+    }
+
     // Create the card container
     const eventsCard = document.createElement('div');
     eventsCard.className = 'dashboard-card';
@@ -100,18 +155,27 @@ async function renderEventsCard(container, auth, db, firebaseFunctions) {
     for (const volunteerDoc of volunteerSnapshot.docs) {
       const volunteerData = volunteerDoc.data();
       const eventId = volunteerData.eventId;
+      const isSelected = volunteerData.selected === true;
       
       // Get the event details
       const eventDoc = await getDoc(doc(db, 'events', eventId));
       
       if (eventDoc.exists()) {
+        // Check rota status (only if selected or admin)
+        let rotaButtonHtml = '';
+        if (isSelected || isAdmin) {
+          const rotaStatus = await getRotaStatus(eventId);
+          rotaButtonHtml = buildRotaButtonHtml(eventId, rotaStatus, isSelected);
+        }
+        
         myEvents.push({
           id: eventDoc.id,
           ...eventDoc.data(),
-          volunteerStatus: volunteerData.selected ? 'selected' : 'volunteered',
+          volunteerStatus: isSelected ? 'selected' : 'volunteered',
           volunteeredAt: volunteerData.volunteeredAt,
           selectedAt: volunteerData.selectedAt,
-          notes: volunteerData.notes || ''
+          notes: volunteerData.notes || '',
+          rotaButtonHtml: rotaButtonHtml
         });
       }
     }
@@ -165,6 +229,11 @@ async function renderEventsCard(container, auth, db, firebaseFunctions) {
             <p class="card-text mb-2"><i class="bi bi-calendar-date"></i> ${dateDisplay}</p>
             ${leaderBadgesHtml}
             ${event.notes ? `<p class="card-text text-muted small fst-italic">Your notes: "${event.notes}"</p>` : ''}
+            ${event.rotaButtonHtml ? `
+              <div class="mt-3 pt-2 border-top">
+                ${event.rotaButtonHtml}
+              </div>
+            ` : ''}
           </div>
         </div>
       `;
