@@ -40,8 +40,13 @@
       margin-bottom: 1.5rem;
     }
     .day-navigation select {
-      min-width: 220px;
+      min-width: 180px;
+      max-width: 220px;
       font-weight: 500;
+      flex-shrink: 1;
+    }
+    .day-navigation .btn {
+      flex-shrink: 0;
     }
     
     /* My Shifts section */
@@ -127,11 +132,10 @@
     /* Shift jump links */
     .shift-jump-links {
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.5rem;
       margin-bottom: 1.5rem;
-      flex-wrap: wrap;
       padding: 1rem;
       background: #f8f9fa;
       border-radius: 10px;
@@ -139,9 +143,16 @@
     .jump-label {
       font-weight: 500;
       color: #6c757d;
+      margin-bottom: 0.25rem;
+    }
+    .jump-links-row {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
     }
     .shift-jump-link {
-      padding: 0.5rem 1rem;
+      padding: 0.5rem 1.25rem;
       border-radius: 50rem;
       text-decoration: none;
       font-weight: 600;
@@ -165,10 +176,6 @@
     .shift-jump-link.shift-night {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: #fff;
-    }
-    .shift-jump-link.shift-night .badge {
-      background: rgba(255,255,255,0.3) !important;
-      color: #fff !important;
     }
     
     /* Shift section headers */
@@ -387,14 +394,21 @@
     /* Mobile */
     @media (max-width: 768px) {
       .day-navigation {
-        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .day-navigation select {
+        min-width: 140px;
+        max-width: 180px;
+        font-size: 0.9rem;
       }
       .shift-jump-links {
-        gap: 0.5rem;
         padding: 0.75rem;
       }
+      .jump-links-row {
+        gap: 0.5rem;
+      }
       .shift-jump-link {
-        padding: 0.4rem 0.75rem;
+        padding: 0.4rem 1rem;
         font-size: 0.9rem;
       }
       .shift-header {
@@ -863,21 +877,23 @@
       html += `
         <div class="shift-jump-links">
           <span class="jump-label">Jump to:</span>
-          ${shiftCounts.early > 0 ? `
-            <a href="#shift-early" class="shift-jump-link shift-early">
-              <i class="bi bi-sunrise"></i> Early <span class="badge bg-secondary">${shiftCounts.early}</span>
-            </a>
-          ` : ''}
-          ${shiftCounts.late > 0 ? `
-            <a href="#shift-late" class="shift-jump-link shift-late">
-              <i class="bi bi-sun"></i> Late <span class="badge bg-secondary">${shiftCounts.late}</span>
-            </a>
-          ` : ''}
-          ${shiftCounts.night > 0 ? `
-            <a href="#shift-night" class="shift-jump-link shift-night">
-              <i class="bi bi-moon-stars"></i> Night <span class="badge bg-secondary">${shiftCounts.night}</span>
-            </a>
-          ` : ''}
+          <div class="jump-links-row">
+            ${shiftCounts.early > 0 ? `
+              <a href="#shift-early" class="shift-jump-link shift-early">
+                <i class="bi bi-sunrise"></i> Early
+              </a>
+            ` : ''}
+            ${shiftCounts.late > 0 ? `
+              <a href="#shift-late" class="shift-jump-link shift-late">
+                <i class="bi bi-sun"></i> Late
+              </a>
+            ` : ''}
+            ${shiftCounts.night > 0 ? `
+              <a href="#shift-night" class="shift-jump-link shift-night">
+                <i class="bi bi-moon-stars"></i> Night
+              </a>
+            ` : ''}
+          </div>
         </div>
       `;
 
