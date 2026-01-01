@@ -31,7 +31,7 @@
     .btn-primary { 
       background: linear-gradient(135deg, #00a896 0%, #028090 100%); 
       border: none; 
-      font-weight: 600;  
+      font-weight: 600; 
     }
     .btn-primary:hover { 
       transform: translateY(-2px); 
@@ -284,6 +284,33 @@
     .position-card .time-separator {
       color: #6c757d;
       font-weight: 500;
+    }
+    .position-card .position-edit-btn {
+      background: none;
+      border: none;
+      color: #6c757d;
+      padding: 0.25rem;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+    .position-card .position-edit-btn:hover {
+      opacity: 1;
+      color: #00a896;
+    }
+    .position-card .position-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .position-name-override {
+      font-size: 0.8rem;
+      color: #6c757d;
+      font-style: italic;
+      margin-top: 0.25rem;
+    }
+    .position-name-override i {
+      margin-right: 0.25rem;
     }
     
     /* Disabled position styling */
@@ -755,6 +782,8 @@
             <i class="bi bi-info-circle"></i> This will copy:
             <ul class="mb-0 mt-1">
               <li>Custom shift times</li>
+              <li>Custom position names</li>
+              <li>Position notes</li>
               <li>Enabled/disabled position states</li>
             </ul>
             <strong>Crew assignments will NOT be copied.</strong>
@@ -766,6 +795,46 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
           <button type="button" class="btn btn-primary" onclick="confirmCloneDay()">Clone Structure</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Position Override Modal -->
+  <div class="modal fade" id="editPositionOverrideModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Position for This Shift</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editOverrideKey">
+          <input type="hidden" id="editOverridePositionId">
+          <div class="mb-3">
+            <label class="form-label text-muted small">Original Position Name:</label>
+            <div id="originalPositionName" class="fw-bold"></div>
+          </div>
+          <div class="mb-3">
+            <label for="overridePositionName" class="form-label">Custom Name for This Shift</label>
+            <input type="text" class="form-control" id="overridePositionName" 
+                   placeholder="Leave blank to use original name">
+            <div class="form-text">
+              Override the position name for this specific day and shift only.
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="overrideNotes" class="form-label">Notes <span class="text-muted">(optional)</span></label>
+            <textarea class="form-control" id="overrideNotes" rows="2" 
+                      placeholder="Any additional notes for this shift..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-danger me-auto" onclick="clearPositionOverride()">
+            <i class="bi bi-arrow-counterclockwise"></i> Reset to Original
+          </button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="savePositionOverride()">Save Changes</button>
         </div>
       </div>
     </div>
@@ -1352,6 +1421,9 @@
                   <div class="shift-times">${shiftBadges.join('')}</div>
                 </div>
                 <div>
+                  <button class="btn btn-outline-primary btn-icon btn-sm" onclick="clonePosition('${pos.id}')" title="Clone Position">
+                    <i class="bi bi-copy"></i>
+                  </button>
                   <button class="btn btn-outline-secondary btn-icon btn-sm" onclick="editPosition('${pos.id}')" title="Edit">
                     <i class="bi bi-pencil"></i>
                   </button>
@@ -1524,6 +1596,29 @@
       renderPositionsList();
 
       showAlert('Position deleted successfully.', 'success');
+    };
+
+    window.clonePosition = async function(positionId) {
+      const sourcePos = rotaData.positions.find(p => p.id === positionId);
+      if (!sourcePos) return;
+
+      // Create a copy with new ID and modified name
+      const newPosition = {
+        id: 'pos_' + Date.now(),
+        name: sourcePos.name + ' (copy)',
+        category: sourcePos.category,
+        crewSlots: sourcePos.crewSlots,
+        shifts: JSON.parse(JSON.stringify(sourcePos.shifts)) // Deep copy
+      };
+
+      rotaData.positions.push(newPosition);
+      await saveRotaData();
+      renderPositionsList();
+
+      showAlert('Position cloned! Click edit to rename it.', 'success');
+      
+      // Automatically open edit modal for the new position
+      setTimeout(() => editPosition(newPosition.id), 300);
     };
 
     // ============================================
@@ -1755,31 +1850,51 @@
             `;
           } else {
             // Enabled position - full view
+            const displayName = assignment.overrideName || pos.name;
+            const hasOverride = assignment.overrideName || assignment.notes;
+            
             html += `
               <div class="col-md-6 mb-3">
                 <div class="position-card ${CATEGORY_CARD_CLASSES[category] || ''}" data-position-id="${pos.id}">
                   <div class="card-header">
-                    <div>
-                      <div class="position-toggle">
-                        <input type="checkbox" id="toggle-${pos.id}" checked
-                               onchange="togglePosition('${pos.id}', this.checked)">
-                        <label for="toggle-${pos.id}" class="position-title" style="margin-bottom: 0; cursor: pointer;">
-                          ${pos.name}
-                        </label>
+                    <div class="position-header-row">
+                      <div>
+                        <div class="position-toggle">
+                          <input type="checkbox" id="toggle-${pos.id}" checked
+                                 onchange="togglePosition('${pos.id}', this.checked)">
+                          <label for="toggle-${pos.id}" class="position-title" style="margin-bottom: 0; cursor: pointer;">
+                            ${displayName}
+                          </label>
+                        </div>
+                        ${hasOverride ? `
+                          <div class="position-name-override">
+                            <i class="bi bi-pencil-fill"></i> 
+                            ${assignment.overrideName && assignment.overrideName !== pos.name ? 'Custom name' : ''}
+                            ${assignment.notes ? (assignment.overrideName ? ' • ' : '') + 'Has notes' : ''}
+                          </div>
+                        ` : ''}
+                        <div class="position-time-edit">
+                          <input type="time" class="form-control form-control-sm time-input" 
+                                 value="${startTime}" 
+                                 onchange="updateAssignmentTime('${assignmentKey}', 'startTime', this.value, '${defaultShiftTimes.start}')"
+                                 title="Start time">
+                          <span class="time-separator">-</span>
+                          <input type="time" class="form-control form-control-sm time-input" 
+                                 value="${endTime}" 
+                                 onchange="updateAssignmentTime('${assignmentKey}', 'endTime', this.value, '${defaultShiftTimes.end}')"
+                                 title="End time">
+                        </div>
                       </div>
-                      <div class="position-time-edit">
-                        <input type="time" class="form-control form-control-sm time-input" 
-                               value="${startTime}" 
-                               onchange="updateAssignmentTime('${assignmentKey}', 'startTime', this.value, '${defaultShiftTimes.start}')"
-                               title="Start time">
-                        <span class="time-separator">-</span>
-                        <input type="time" class="form-control form-control-sm time-input" 
-                               value="${endTime}" 
-                               onchange="updateAssignmentTime('${assignmentKey}', 'endTime', this.value, '${defaultShiftTimes.end}')"
-                               title="End time">
-                      </div>
+                      <button class="position-edit-btn" onclick="openEditPositionOverride('${assignmentKey}', '${pos.id}')" title="Edit position details">
+                        <i class="bi bi-pencil"></i>
+                      </button>
                     </div>
                   </div>
+                  ${assignment.notes ? `
+                    <div class="alert alert-secondary small py-1 px-2 mb-2">
+                      <i class="bi bi-sticky"></i> ${assignment.notes}
+                    </div>
+                  ` : ''}
                   <div class="crew-selects">
                     <div class="crew-select-row">
                       <span class="crew-label">Crew 1:</span>
@@ -1841,6 +1956,72 @@
       }
 
       await saveRotaData();
+    };
+
+    // Edit position override functions
+    window.openEditPositionOverride = function(assignmentKey, positionId) {
+      const pos = rotaData.positions.find(p => p.id === positionId);
+      if (!pos) return;
+
+      const assignment = rotaData.assignments[assignmentKey] || {};
+
+      document.getElementById('editOverrideKey').value = assignmentKey;
+      document.getElementById('editOverridePositionId').value = positionId;
+      document.getElementById('originalPositionName').textContent = pos.name;
+      document.getElementById('overridePositionName').value = assignment.overrideName || '';
+      document.getElementById('overrideNotes').value = assignment.notes || '';
+
+      const modal = new bootstrap.Modal(document.getElementById('editPositionOverrideModal'));
+      modal.show();
+    };
+
+    window.savePositionOverride = async function() {
+      const assignmentKey = document.getElementById('editOverrideKey').value;
+      const overrideName = document.getElementById('overridePositionName').value.trim();
+      const notes = document.getElementById('overrideNotes').value.trim();
+
+      if (!rotaData.assignments[assignmentKey]) {
+        rotaData.assignments[assignmentKey] = { crew1: null, crew2: null };
+      }
+
+      // Set or clear override name
+      if (overrideName) {
+        rotaData.assignments[assignmentKey].overrideName = overrideName;
+      } else {
+        delete rotaData.assignments[assignmentKey].overrideName;
+      }
+
+      // Set or clear notes
+      if (notes) {
+        rotaData.assignments[assignmentKey].notes = notes;
+      } else {
+        delete rotaData.assignments[assignmentKey].notes;
+      }
+
+      await saveRotaData();
+      renderEditorContent();
+
+      const modal = bootstrap.Modal.getInstance(document.getElementById('editPositionOverrideModal'));
+      modal.hide();
+
+      showAlert('Position details saved.', 'success');
+    };
+
+    window.clearPositionOverride = async function() {
+      const assignmentKey = document.getElementById('editOverrideKey').value;
+
+      if (rotaData.assignments[assignmentKey]) {
+        delete rotaData.assignments[assignmentKey].overrideName;
+        delete rotaData.assignments[assignmentKey].notes;
+        
+        await saveRotaData();
+        renderEditorContent();
+      }
+
+      const modal = bootstrap.Modal.getInstance(document.getElementById('editPositionOverrideModal'));
+      modal.hide();
+
+      showAlert('Position reset to original.', 'success');
     };
 
     // Position enable/disable functions
@@ -2010,10 +2191,11 @@
         return;
       }
 
-      // Get all assignments for the source day that have time overrides
+      // Get all assignments for the source day that have overrides (times, names, notes)
       const sourcePrefix = currentEditorDay + '_';
       const sourceAssignments = Object.entries(rotaData.assignments)
-        .filter(([key, value]) => key.startsWith(sourcePrefix) && (value.startTime || value.endTime));
+        .filter(([key, value]) => key.startsWith(sourcePrefix) && 
+          (value.startTime || value.endTime || value.overrideName || value.notes));
 
       // Get disabled positions for source day (all shifts)
       const shiftTypes = ['early', 'late', 'night'];
@@ -2023,12 +2205,11 @@
         sourceDisabledByShift[shift] = rotaData.disabledPositions?.[key] || [];
       });
 
-      let clonedTimes = 0;
-      let clonedDisabled = 0;
+      let clonedItems = 0;
 
       // Clone to each selected day
       selectedDays.forEach(targetDayId => {
-        // Clone time overrides
+        // Clone assignment overrides (times, names, notes)
         sourceAssignments.forEach(([sourceKey, sourceValue]) => {
           const targetKey = sourceKey.replace(sourcePrefix, targetDayId + '_');
           
@@ -2036,13 +2217,23 @@
             rotaData.assignments[targetKey] = { crew1: null, crew2: null };
           }
           
+          // Clone time overrides
           if (sourceValue.startTime) {
             rotaData.assignments[targetKey].startTime = sourceValue.startTime;
           }
           if (sourceValue.endTime) {
             rotaData.assignments[targetKey].endTime = sourceValue.endTime;
           }
-          clonedTimes++;
+          // Clone name override
+          if (sourceValue.overrideName) {
+            rotaData.assignments[targetKey].overrideName = sourceValue.overrideName;
+          }
+          // Clone notes
+          if (sourceValue.notes) {
+            rotaData.assignments[targetKey].notes = sourceValue.notes;
+          }
+          
+          clonedItems++;
         });
 
         // Clone disabled positions for each shift type
@@ -2056,9 +2247,7 @@
           
           if (sourceDisabled.length > 0) {
             rotaData.disabledPositions[targetKey] = [...sourceDisabled];
-            clonedDisabled++;
           } else {
-            // Clear any existing disabled positions for this target
             rotaData.disabledPositions[targetKey] = [];
           }
         });
@@ -2070,16 +2259,16 @@
       
       const messages = [];
       if (sourceAssignments.length > 0) {
-        messages.push(`${sourceAssignments.length} time configurations`);
+        messages.push(`${sourceAssignments.length} position configurations`);
       }
       if (totalDisabledPositions > 0) {
-        messages.push(`disabled/enabled states for all shifts`);
+        messages.push(`enabled/disabled states`);
       }
       
       if (messages.length > 0) {
         showAlert(`Cloned ${messages.join(' and ')} to ${selectedDays.length} day(s).`, 'success');
       } else {
-        showAlert(`Day configuration copied to ${selectedDays.length} day(s). (All positions enabled with default times.)`, 'info');
+        showAlert(`Day configuration copied to ${selectedDays.length} day(s). (All positions enabled with defaults.)`, 'info');
       }
 
       const modal = bootstrap.Modal.getInstance(document.getElementById('cloneDayModal'));
