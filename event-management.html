@@ -1250,7 +1250,7 @@ await loadEventVolunteers(eventId);
       }
     }
 
-    // Load event volunteers
+    // Load event volunteers - OPTIMIZED VERSION with parallel fetching
     async function loadEventVolunteers(eventId) {
       try {
         // Query volunteers for this event
@@ -1279,54 +1279,77 @@ await loadEventVolunteers(eventId);
           return;
         }
         
-        // Process volunteers
+        // ============================================================
+        // PERFORMANCE FIX: Fetch all user and profile data in PARALLEL
+        // instead of one-by-one sequentially
+        // ============================================================
+        
+        // Step 1: Collect all volunteer docs and their user IDs
+        const volunteerDocs = volunteersSnapshot.docs.map(volunteerDoc => ({
+          doc: volunteerDoc,
+          data: volunteerDoc.data()
+        }));
+        
+        // Step 2: Create all fetch promises at once
+        const userPromises = volunteerDocs.map(v => 
+          getDoc(doc(db, 'users', v.data.userId))
+        );
+        const profilePromises = volunteerDocs.map(v => 
+          getDoc(doc(db, 'profiles', v.data.userId))
+        );
+        
+        // Step 3: Execute ALL fetches in parallel (this is the key performance improvement!)
+        const [userDocs, profileDocs] = await Promise.all([
+          Promise.all(userPromises),
+          Promise.all(profilePromises)
+        ]);
+        
+        // Step 4: Process the results
         const volunteers = [];
         let selectedCount = 0;
         
-        // For each volunteer record
-        for (const volunteerDoc of volunteersSnapshot.docs) {
-          const volunteerData = volunteerDoc.data();
+        volunteerDocs.forEach((volunteerInfo, index) => {
+          const volunteerData = volunteerInfo.data;
+          const volunteerDoc = volunteerInfo.doc;
           
-          // Get user data
-          const userDoc = await getDoc(doc(db, 'users', volunteerData.userId));
+          // Get user data from pre-fetched results
+          const userDoc = userDocs[index];
           let userData = {};
-          
           if (userDoc.exists()) {
             userData = userDoc.data();
           }
           
-          // Get profile data (for grade)
-const profileDoc = await getDoc(doc(db, 'profiles', volunteerData.userId));
-let grade = 'Unknown';
-
-if (profileDoc.exists()) {
-  const profileData = profileDoc.data();
-  if (profileData.medicalQualifications && profileData.medicalQualifications.qualification) {
-    grade = profileData.medicalQualifications.qualification;
-  }
-}
+          // Get profile data from pre-fetched results
+          const profileDoc = profileDocs[index];
+          let grade = 'Unknown';
+          if (profileDoc.exists()) {
+            const profileData = profileDoc.data();
+            if (profileData.medicalQualifications && profileData.medicalQualifications.qualification) {
+              grade = profileData.medicalQualifications.qualification;
+            }
+          }
           
-        // Get user's teams
-const userTeams = userData.teams || [];
-
-// Combine data
-volunteers.push({
-  id: volunteerDoc.id,
-  userId: volunteerData.userId,
-  name: `${userData.firstName || ''} ${userData.surname || ''}`.trim() || userData.email || 'Unknown',
-  email: userData.email || 'Unknown',
-  grade: grade,
-  teams: userTeams,
-  notes: volunteerData.notes || '',
-  selected: volunteerData.selected || false,
-  volunteeredAt: volunteerData.volunteeredAt,
-  selectedAt: volunteerData.selectedAt
-});
+          // Get user's teams
+          const userTeams = userData.teams || [];
+          
+          // Combine data
+          volunteers.push({
+            id: volunteerDoc.id,
+            userId: volunteerData.userId,
+            name: `${userData.firstName || ''} ${userData.surname || ''}`.trim() || userData.email || 'Unknown',
+            email: userData.email || 'Unknown',
+            grade: grade,
+            teams: userTeams,
+            notes: volunteerData.notes || '',
+            selected: volunteerData.selected || false,
+            volunteeredAt: volunteerData.volunteeredAt,
+            selectedAt: volunteerData.selectedAt
+          });
           
           if (volunteerData.selected) {
             selectedCount++;
           }
-        }
+        });
         
         currentEventVolunteers = volunteers;
         
