@@ -161,6 +161,16 @@
       color: #6c757d;
       margin-right: 0.5rem;
     }
+    
+    /* Rota button styling */
+.rota-btn {
+  margin-right: 0.5rem;
+}
+.rota-coming-soon {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-right: 0.5rem;
+}
   </style>
 </head>
 <body>
@@ -334,6 +344,7 @@
     let currentVolunteerId = null;
     let availableTeams = [];
     let allUsers = []; // Store all users for leader name lookup
+    let isAdmin = false; // Track admin status
     
     // Helper functions
     function showAlert(message, type = 'info') {
@@ -416,6 +427,51 @@
       }
     }
 
+// Check rota status for an event
+async function getRotaStatus(eventId) {
+  try {
+    const rotaDoc = await getDoc(doc(db, 'eventRotas', eventId));
+    if (!rotaDoc.exists()) return null; // No rota
+    
+    const data = rotaDoc.data();
+    // Check if rota has content
+    if (!data.days || data.days.length === 0 || !data.positions || data.positions.length === 0) {
+      return null;
+    }
+    return data.status; // 'draft' or 'published'
+  } catch (error) {
+    console.error('Error checking rota:', error);
+    return null;
+  }
+}
+
+// Build rota link HTML based on status
+function buildRotaLinkHtml(eventId, rotaStatus, isSelected) {
+  if (!rotaStatus) return ''; // No rota exists
+  
+  if (rotaStatus === 'published') {
+    return `
+      <a href="event-rota.html?eventId=${eventId}" class="btn btn-outline-primary btn-sm rota-btn">
+        <i class="bi bi-calendar3"></i> View Rota
+      </a>
+    `;
+  } else if (rotaStatus === 'draft' && isAdmin) {
+    return `
+      <a href="event-rota.html?eventId=${eventId}" class="btn btn-outline-warning btn-sm rota-btn">
+        <i class="bi bi-calendar3"></i> Rota <span class="badge bg-warning text-dark">Draft</span>
+      </a>
+    `;
+  } else if (rotaStatus === 'draft') {
+    return `
+      <span class="rota-coming-soon">
+        <i class="bi bi-clock"></i> Rota coming soon
+      </span>
+    `;
+  }
+  return '';
+}
+
+
     // Get leader names from IDs
     function getLeaderNames(leaderIds) {
       if (!leaderIds || !Array.isArray(leaderIds)) return [];
@@ -496,17 +552,27 @@
           // Get the event details
           const eventDoc = await getDoc(doc(db, 'events', eventId));
           
-          if (eventDoc.exists()) {
-            myEvents.push({
-              id: eventDoc.id,
-              ...eventDoc.data(),
-              volunteerStatus: volunteerData.selected ? 'selected' : 'volunteered',
-              volunteeredAt: volunteerData.volunteeredAt,
-              selectedAt: volunteerData.selectedAt,
-              notes: volunteerData.notes || '',
-              volunteerId: volunteerDoc.id
-            });
-          }
+        if (eventDoc.exists()) {
+  const isSelected = volunteerData.selected === true;
+  
+  // Check rota status (only if selected or admin)
+  let rotaLinkHtml = '';
+  if (isSelected || isAdmin) {
+    const rotaStatus = await getRotaStatus(eventId);
+    rotaLinkHtml = buildRotaLinkHtml(eventId, rotaStatus, isSelected);
+  }
+  
+  myEvents.push({
+    id: eventDoc.id,
+    ...eventDoc.data(),
+    volunteerStatus: isSelected ? 'selected' : 'volunteered',
+    volunteeredAt: volunteerData.volunteeredAt,
+    selectedAt: volunteerData.selectedAt,
+    notes: volunteerData.notes || '',
+    volunteerId: volunteerDoc.id,
+    rotaLinkHtml: rotaLinkHtml
+  });
+}
         }
         
         // Sort events by start date (soonest first)
@@ -561,15 +627,18 @@
               ${event.notes ? `<p class="font-italic text-muted">Your notes: "${event.notes}"</p>` : ''}
               
               <div class="d-flex justify-content-between align-items-center">
-                ${event.website ? `
-                  <a href="${event.website}" target="_blank" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-link-45deg"></i> Event Website
-                  </a>
-                ` : '<div></div>'}
-                <button class="btn btn-outline-danger btn-sm withdraw-btn" data-event-id="${event.id}" data-event-name="${event.name}" data-volunteer-id="${event.volunteerId}">
-                  <i class="bi bi-x-circle"></i> Withdraw
-                </button>
-              </div>
+  <div>
+    ${event.website ? `
+      <a href="${event.website}" target="_blank" class="btn btn-outline-secondary btn-sm me-2">
+        <i class="bi bi-link-45deg"></i> Event Website
+      </a>
+    ` : ''}
+    ${event.rotaLinkHtml || ''}
+  </div>
+  <button class="btn btn-outline-danger btn-sm withdraw-btn" data-event-id="${event.id}" data-event-name="${event.name}" data-volunteer-id="${event.volunteerId}">
+    <i class="bi bi-x-circle"></i> Withdraw
+  </button>
+</div>
             </div>
           `;
           
@@ -807,10 +876,21 @@
     confirmWithdrawBtn.addEventListener('click', withdrawFromEvent);
 
     // Initialize
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        currentUser = user;
-        await loadEvents();
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    currentUser = user;
+    
+    // Check admin status
+    try {
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        isAdmin = userDoc.data().isAdmin === true;
+      }
+    } catch (err) {
+      console.warn('Could not check admin status:', err);
+    }
+    
+    await loadEvents();
       } else {
         window.location.href = 'index.html';
       }

@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Event Rota - FMS Prehospital Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background:#f8f9fa; min-height:100vh; }
+    .navbar { 
+      background: linear-gradient(135deg, #00a896 0%, #028090 100%); 
+      box-shadow:0 2px 10px rgba(0,0,0,0.1); 
+    }
+    .nav-link { color: rgba(255,255,255,.85) !important; font-weight: 500; }
+    .nav-link:hover { color: #fff !important; }
+    
+    .page-header { 
+      background:linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      color:#fff; 
+      border-radius:15px; 
+      padding:30px; 
+      margin:30px 0 20px 0; 
+    }
+    
+    .rota-card {
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,.08);
+      padding: 25px;
+      margin-bottom: 20px;
+    }
+    
+    /* Day navigation */
+    .day-navigation {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .day-navigation select {
+      min-width: 220px;
+      font-weight: 500;
+    }
+    
+    /* Shift tabs */
+    .shift-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .shift-tab {
+      padding: 0.6rem 1.5rem;
+      border: 2px solid #dee2e6;
+      border-radius: 50rem;
+      background: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .shift-tab:hover {
+      border-color: #00a896;
+    }
+    .shift-tab.active {
+      background: linear-gradient(135deg, #00a896 0%, #028090 100%);
+      border-color: #00a896;
+      color: #fff;
+    }
+    .shift-tab .badge {
+      margin-left: 0.5rem;
+    }
+    
+    /* Section filter */
+    .filter-bar {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+    .filter-bar select {
+      max-width: 250px;
+    }
+    
+    /* Category sections */
+    .category-section {
+      margin-bottom: 2rem;
+    }
+    .category-header {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-weight: 600;
+      color: #495057;
+      margin-bottom: 1rem;
+    }
+    
+    /* Position cards */
+    .position-card {
+      background: #fff;
+      border: 1px solid #dee2e6;
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+      transition: all 0.2s;
+    }
+    .position-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    
+    /* Category colors */
+    .position-card.card-leadership { background-color: #e7f3ff; border-color: #b8daff; }
+    .position-card.card-vehicles { background-color: #f0f0f0; border-color: #d0d0d0; }
+    .position-card.card-responders { background-color: #e8fbe8; border-color: #b8e6b8; }
+    .position-card.card-static { background-color: #ffe4e1; border-color: #f5c6c6; }
+    .position-card.card-stage { background-color: #f0e8ff; border-color: #d4c4f0; }
+    .position-card.card-medcomms { background-color: #fff8e7; border-color: #f0e0b0; }
+    .position-card.card-makeready { background-color: #ffffe0; border-color: #e0e0a0; }
+    
+    .position-card .position-name {
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 0.25rem;
+    }
+    .position-card .position-time {
+      color: #6c757d;
+      font-size: 0.9rem;
+      margin-bottom: 0.75rem;
+    }
+    .position-card .position-notes {
+      background: rgba(0,0,0,0.05);
+      padding: 0.5rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      color: #6c757d;
+      margin-bottom: 0.75rem;
+      font-style: italic;
+    }
+    .position-card .crew-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .position-card .crew-list li {
+      padding: 0.4rem 0;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .position-card .crew-list li:last-child {
+      border-bottom: none;
+    }
+    .position-card .crew-list .crew-name {
+      font-weight: 500;
+    }
+    .position-card .crew-list .crew-qual {
+      color: #6c757d;
+      font-size: 0.85rem;
+    }
+    .position-card .crew-list .no-crew {
+      color: #adb5bd;
+      font-style: italic;
+    }
+    
+    /* Empty states */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 2rem;
+      color: #6c757d;
+    }
+    .empty-state i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+    
+    /* Coming soon state */
+    .coming-soon {
+      text-align: center;
+      padding: 4rem 2rem;
+    }
+    .coming-soon i {
+      font-size: 4rem;
+      color: #00a896;
+      margin-bottom: 1.5rem;
+    }
+    .coming-soon h3 {
+      margin-bottom: 1rem;
+    }
+    .coming-soon p {
+      color: #6c757d;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    
+    /* Loading state */
+    .loading-state {
+      text-align: center;
+      padding: 4rem 2rem;
+    }
+    
+    /* Draft banner */
+    .draft-banner {
+      background: #ffc107;
+      color: #000;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-weight: 500;
+    }
+    
+    /* Search/highlight own shifts */
+    .my-shift {
+      border: 3px solid #00a896 !important;
+      box-shadow: 0 4px 12px rgba(0,168,150,0.2) !important;
+    }
+    .my-shift-indicator {
+      background: #00a896;
+      color: #fff;
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      margin-left: auto;
+    }
+
+    /* Back to top */
+    .back-to-top {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 45px;
+      height: 45px;
+      background: linear-gradient(135deg, #00a896 0%, #028090 100%);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+      z-index: 998;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      border: none;
+    }
+    .back-to-top:hover {
+      transform: translateY(-2px);
+    }
+    .back-to-top.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    /* Mobile */
+    @media (max-width: 768px) {
+      .day-navigation {
+        flex-wrap: wrap;
+      }
+      .shift-tabs {
+        gap: 0.25rem;
+      }
+      .shift-tab {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="dashboard.html"><i class="bi bi-shield-lock"></i> FMS Prehospital Portal</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="dashboard.html">
+              <i class="bi bi-house-fill"></i> Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="events.html">
+              <i class="bi bi-calendar-event"></i> Events
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="logoutLink">
+              <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+          <h1 class="mb-2"><i class="bi bi-calendar3"></i> <span id="eventName">Event Rota</span></h1>
+          <p class="mb-0" id="eventDates">Loading...</p>
+        </div>
+        <div id="adminEditBtn" class="d-none">
+          <a href="#" id="editRotaLink" class="btn btn-light">
+            <i class="bi bi-pencil"></i> Edit Rota
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div id="alertContainer"></div>
+
+    <!-- Main Content Container -->
+    <div id="mainContent">
+      <div class="loading-state">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-muted">Loading rota...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Back to Top Button -->
+  <button class="back-to-top" onclick="scrollToTop()" title="Back to top">
+    <i class="bi bi-arrow-up"></i>
+  </button>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { 
+      getFirestore, 
+      collection, 
+      doc, 
+      getDoc,
+      getDocs,
+      query,
+      where
+    } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { firebaseConfig } from './firebase-config.js';
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Constants
+    const CATEGORY_ORDER = [
+      'Leadership',
+      'Vehicles', 
+      'Responders',
+      'Static Medical Points',
+      'Stage Medical',
+      'Medcomms Team',
+      'Make Ready Team'
+    ];
+
+    const CATEGORY_CARD_CLASSES = {
+      'Leadership': 'card-leadership',
+      'Vehicles': 'card-vehicles',
+      'Responders': 'card-responders',
+      'Static Medical Points': 'card-static',
+      'Stage Medical': 'card-stage',
+      'Medcomms Team': 'card-medcomms',
+      'Make Ready Team': 'card-makeready'
+    };
+
+    // State
+    let currentUser = null;
+    let isAdmin = false;
+    let eventId = null;
+    let eventData = null;
+    let rotaData = null;
+    let crewLookup = {}; // userId -> { name, qualification }
+    let currentDay = null;
+    let currentShift = 'early';
+
+    // Get event ID from URL
+    function getEventIdFromURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('eventId');
+    }
+
+    // Initialize
+    async function init() {
+      eventId = getEventIdFromURL();
+      
+      if (!eventId) {
+        showError('No event specified.');
+        return;
+      }
+
+      // Load event data first
+      const eventLoaded = await loadEventData();
+      if (!eventLoaded) return;
+
+      // Check if user is selected for this event
+      const isSelected = await checkUserSelected();
+      
+      // Load rota data
+      const rotaLoaded = await loadRotaData();
+      
+      if (!rotaLoaded) {
+        // No rota exists
+        showNoRota();
+        return;
+      }
+
+      // Check access
+      if (rotaData.status === 'draft' && !isAdmin) {
+        showComingSoon();
+        return;
+      }
+
+      if (!isSelected && !isAdmin) {
+        showNotSelected();
+        return;
+      }
+
+      // Load crew data for display
+      await loadCrewData();
+
+      // Show the rota
+      renderRota();
+      setupEventListeners();
+    }
+
+    // Load event data
+    async function loadEventData() {
+      try {
+        const eventDoc = await getDoc(doc(db, 'events', eventId));
+        
+        if (!eventDoc.exists()) {
+          showError('Event not found.');
+          return false;
+        }
+
+        eventData = { id: eventDoc.id, ...eventDoc.data() };
+        
+        // Update page header
+        document.getElementById('eventName').textContent = eventData.name;
+        document.title = `${eventData.name} Rota - FMS Prehospital Portal`;
+        
+        // Format dates
+        const startDate = eventData.startDate?.toDate ? eventData.startDate.toDate() : new Date(eventData.startDate);
+        const endDate = eventData.endDate?.toDate ? eventData.endDate.toDate() : new Date(eventData.endDate);
+        
+        const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+        const startStr = startDate.toLocaleDateString('en-GB', dateOptions);
+        const endStr = endDate.toLocaleDateString('en-GB', dateOptions);
+        
+        document.getElementById('eventDates').textContent = 
+          startStr === endStr ? startStr : `${startStr} - ${endStr}`;
+
+        return true;
+
+      } catch (error) {
+        console.error('Error loading event:', error);
+        showError('Error loading event: ' + error.message);
+        return false;
+      }
+    }
+
+    // Check if current user is selected for this event
+    async function checkUserSelected() {
+      try {
+        const volunteersQuery = query(
+          collection(db, 'eventVolunteers'),
+          where('eventId', '==', eventId),
+          where('userId', '==', currentUser.uid),
+          where('selected', '==', true)
+        );
+        
+        const snapshot = await getDocs(volunteersQuery);
+        return !snapshot.empty;
+
+      } catch (error) {
+        console.error('Error checking selection:', error);
+        return false;
+      }
+    }
+
+    // Load rota data
+    async function loadRotaData() {
+      try {
+        const rotaDoc = await getDoc(doc(db, 'eventRotas', eventId));
+        
+        if (!rotaDoc.exists()) {
+          return false;
+        }
+
+        rotaData = rotaDoc.data();
+        
+        // Check if rota has any content
+        if (!rotaData.days || rotaData.days.length === 0 || 
+            !rotaData.positions || rotaData.positions.length === 0) {
+          return false;
+        }
+
+        // Show admin edit button if admin
+        if (isAdmin) {
+          document.getElementById('adminEditBtn').classList.remove('d-none');
+          document.getElementById('editRotaLink').href = `admin-event-rota.html?eventId=${eventId}`;
+        }
+
+        return true;
+
+      } catch (error) {
+        console.error('Error loading rota:', error);
+        return false;
+      }
+    }
+
+    // Load crew data for all selected volunteers
+    async function loadCrewData() {
+      try {
+        const volunteersQuery = query(
+          collection(db, 'eventVolunteers'),
+          where('eventId', '==', eventId),
+          where('selected', '==', true)
+        );
+        
+        const volunteersSnapshot = await getDocs(volunteersQuery);
+        
+        if (volunteersSnapshot.empty) return;
+
+        const userIds = volunteersSnapshot.docs.map(doc => doc.data().userId);
+        
+        // Fetch user and profile data in parallel
+        const userPromises = userIds.map(userId => getDoc(doc(db, 'users', userId)));
+        const profilePromises = userIds.map(userId => getDoc(doc(db, 'profiles', userId)));
+        
+        const [userDocs, profileDocs] = await Promise.all([
+          Promise.all(userPromises),
+          Promise.all(profilePromises)
+        ]);
+
+        userIds.forEach((userId, index) => {
+          const userData = userDocs[index].exists() ? userDocs[index].data() : {};
+          const profileData = profileDocs[index].exists() ? profileDocs[index].data() : {};
+          
+          const firstName = userData.firstName || '';
+          const surname = userData.surname || '';
+          const name = `${firstName} ${surname}`.trim() || userData.email || 'Unknown';
+          
+          let qualification = '';
+          if (profileData.medicalQualifications?.qualification) {
+            qualification = profileData.medicalQualifications.qualification;
+          }
+
+          crewLookup[userId] = { name, qualification };
+        });
+
+      } catch (error) {
+        console.error('Error loading crew data:', error);
+      }
+    }
+
+    // Render the rota
+    function renderRota() {
+      const container = document.getElementById('mainContent');
+      
+      // Sort days by date
+      const sortedDays = [...rotaData.days].sort((a, b) => {
+        const dateA = parseUKDate(a.date);
+        const dateB = parseUKDate(b.date);
+        return dateA - dateB;
+      });
+
+      // Set initial day if not set
+      if (!currentDay && sortedDays.length > 0) {
+        currentDay = sortedDays[0].id;
+      }
+
+      let html = '';
+
+      // Draft banner for admins
+      if (rotaData.status === 'draft' && isAdmin) {
+        html += `
+          <div class="draft-banner">
+            <i class="bi bi-exclamation-triangle"></i>
+            This rota is in DRAFT mode - only visible to admins
+          </div>
+        `;
+      }
+
+      html += '<div class="rota-card">';
+
+      // Day navigation
+      html += `
+        <div class="day-navigation">
+          <button class="btn btn-outline-primary" onclick="navigateDay(-1)" id="prevDayBtn">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <select id="daySelect" class="form-select" onchange="changeDay(this.value)">
+            ${sortedDays.map(day => `
+              <option value="${day.id}" ${day.id === currentDay ? 'selected' : ''}>
+                ${day.dayName} ${day.date}
+              </option>
+            `).join('')}
+          </select>
+          <button class="btn btn-outline-primary" onclick="navigateDay(1)" id="nextDayBtn">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      `;
+
+      // Calculate shift counts for tabs
+      const shiftCounts = { early: 0, late: 0, night: 0 };
+      rotaData.positions.forEach(pos => {
+        ['early', 'late', 'night'].forEach(shift => {
+          if (pos.shifts && pos.shifts[shift]) {
+            const disabledKey = `${currentDay}_${shift}`;
+            const isDisabled = rotaData.disabledPositions?.[disabledKey]?.includes(pos.id);
+            if (!isDisabled) {
+              shiftCounts[shift]++;
+            }
+          }
+        });
+      });
+
+      // Shift tabs
+      html += `
+        <div class="shift-tabs">
+          <div class="shift-tab ${currentShift === 'early' ? 'active' : ''}" data-shift="early" onclick="changeShift('early')">
+            <i class="bi bi-sunrise"></i> Early
+            <span class="badge ${currentShift === 'early' ? 'bg-light text-dark' : 'bg-secondary'}">${shiftCounts.early}</span>
+          </div>
+          <div class="shift-tab ${currentShift === 'late' ? 'active' : ''}" data-shift="late" onclick="changeShift('late')">
+            <i class="bi bi-sun"></i> Late
+            <span class="badge ${currentShift === 'late' ? 'bg-light text-dark' : 'bg-secondary'}">${shiftCounts.late}</span>
+          </div>
+          <div class="shift-tab ${currentShift === 'night' ? 'active' : ''}" data-shift="night" onclick="changeShift('night')">
+            <i class="bi bi-moon-stars"></i> Night
+            <span class="badge ${currentShift === 'night' ? 'bg-light text-dark' : 'bg-secondary'}">${shiftCounts.night}</span>
+          </div>
+        </div>
+      `;
+
+      // Section filter
+      html += `
+        <div class="filter-bar">
+          <select id="sectionFilter" class="form-select" onchange="filterSection(this.value)">
+            <option value="all">All Sections</option>
+            ${CATEGORY_ORDER.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
+          </select>
+        </div>
+      `;
+
+      // Rota content
+      html += '<div id="rotaContent"></div>';
+
+      html += '</div>'; // End rota-card
+
+      container.innerHTML = html;
+
+      // Render the actual positions
+      renderPositions();
+    }
+
+    // Render positions for current day/shift
+    function renderPositions() {
+      const container = document.getElementById('rotaContent');
+      const sectionFilter = document.getElementById('sectionFilter')?.value || 'all';
+
+      // Filter positions for this shift
+      let positions = rotaData.positions.filter(pos => pos.shifts && pos.shifts[currentShift]);
+
+      // Check disabled positions
+      const disabledKey = `${currentDay}_${currentShift}`;
+      const disabledList = rotaData.disabledPositions?.[disabledKey] || [];
+      positions = positions.filter(pos => !disabledList.includes(pos.id));
+
+      // Apply section filter
+      if (sectionFilter !== 'all') {
+        positions = positions.filter(pos => pos.category === sectionFilter);
+      }
+
+      if (positions.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="bi bi-calendar-x"></i>
+            <h5>No Positions</h5>
+            <p>No active positions for this shift${sectionFilter !== 'all' ? ' in this section' : ''}.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Group by category
+      const grouped = {};
+      CATEGORY_ORDER.forEach(cat => grouped[cat] = []);
+      positions.forEach(pos => {
+        if (grouped[pos.category]) {
+          grouped[pos.category].push(pos);
+        }
+      });
+
+      let html = '';
+
+      CATEGORY_ORDER.forEach(category => {
+        if (grouped[category].length === 0) return;
+
+        html += `
+          <div class="category-section" id="section-${category.replace(/\s+/g, '-')}">
+            <div class="category-header">
+              <i class="bi bi-people-fill"></i> ${category}
+            </div>
+            <div class="row">
+        `;
+
+        grouped[category].forEach(pos => {
+          const assignmentKey = `${currentDay}_${pos.id}_${currentShift}`;
+          const assignment = rotaData.assignments?.[assignmentKey] || {};
+          
+          // Get display name (with possible override)
+          const displayName = assignment.overrideName || pos.name;
+          
+          // Get times (with possible override)
+          const defaultTimes = pos.shifts[currentShift];
+          const startTime = assignment.startTime || defaultTimes.start;
+          const endTime = assignment.endTime || defaultTimes.end;
+
+          // Get crew members
+          const crew1 = assignment.crew1 ? crewLookup[assignment.crew1] : null;
+          const crew2 = assignment.crew2 ? crewLookup[assignment.crew2] : null;
+
+          // Check if current user is assigned to this position
+          const isMyShift = assignment.crew1 === currentUser.uid || assignment.crew2 === currentUser.uid;
+
+          html += `
+            <div class="col-md-6 mb-3">
+              <div class="position-card ${CATEGORY_CARD_CLASSES[category] || ''} ${isMyShift ? 'my-shift' : ''}">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="position-name">${displayName}</div>
+                  ${isMyShift ? '<span class="my-shift-indicator"><i class="bi bi-star-fill"></i> Your Shift</span>' : ''}
+                </div>
+                <div class="position-time">
+                  <i class="bi bi-clock"></i> ${startTime} - ${endTime}
+                </div>
+                ${assignment.notes ? `
+                  <div class="position-notes">
+                    <i class="bi bi-sticky"></i> ${assignment.notes}
+                  </div>
+                ` : ''}
+                <ul class="crew-list">
+                  ${renderCrewMember(crew1, 1, pos.crewSlots, assignment.crew1 === currentUser.uid)}
+                  ${pos.crewSlots >= 2 ? renderCrewMember(crew2, 2, pos.crewSlots, assignment.crew2 === currentUser.uid) : ''}
+                </ul>
+              </div>
+            </div>
+          `;
+        });
+
+        html += '</div></div>';
+      });
+
+      container.innerHTML = html;
+    }
+
+    // Render a crew member
+    function renderCrewMember(crew, slotNum, totalSlots, isCurrentUser) {
+      if (crew) {
+        return `
+          <li>
+            <i class="bi bi-person-fill ${isCurrentUser ? 'text-primary' : ''}"></i>
+            <span class="crew-name ${isCurrentUser ? 'text-primary' : ''}">${crew.name}</span>
+            ${crew.qualification ? `<span class="crew-qual">(${crew.qualification})</span>` : ''}
+          </li>
+        `;
+      } else if (totalSlots >= slotNum) {
+        return `
+          <li>
+            <i class="bi bi-person text-muted"></i>
+            <span class="no-crew">Not assigned</span>
+          </li>
+        `;
+      }
+      return '';
+    }
+
+    // Navigation functions
+    window.changeDay = function(dayId) {
+      currentDay = dayId;
+      renderRota();
+    };
+
+    window.navigateDay = function(direction) {
+      const select = document.getElementById('daySelect');
+      const options = Array.from(select.options);
+      const currentIndex = options.findIndex(o => o.value === currentDay);
+      
+      const newIndex = currentIndex + direction;
+      if (newIndex >= 0 && newIndex < options.length) {
+        currentDay = options[newIndex].value;
+        renderRota();
+      }
+    };
+
+    window.changeShift = function(shift) {
+      currentShift = shift;
+      
+      // Update tab styling
+      document.querySelectorAll('.shift-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.shift === shift);
+      });
+      
+      renderPositions();
+    };
+
+    window.filterSection = function(section) {
+      renderPositions();
+    };
+
+    // Parse UK date
+    function parseUKDate(dateStr) {
+      const parts = dateStr.split('/');
+      return new Date(parts[2], parts[1] - 1, parts[0]);
+    }
+
+    // Show error state
+    function showError(message) {
+      document.getElementById('mainContent').innerHTML = `
+        <div class="rota-card">
+          <div class="empty-state">
+            <i class="bi bi-exclamation-triangle text-danger"></i>
+            <h5>Error</h5>
+            <p>${message}</p>
+            <a href="events.html" class="btn btn-primary mt-3">
+              <i class="bi bi-arrow-left"></i> Back to Events
+            </a>
+          </div>
+        </div>
+      `;
+    }
+
+    // Show no rota state
+    function showNoRota() {
+      document.getElementById('mainContent').innerHTML = `
+        <div class="rota-card">
+          <div class="empty-state">
+            <i class="bi bi-calendar-x"></i>
+            <h5>No Rota Available</h5>
+            <p>The rota for this event hasn't been created yet.</p>
+            <a href="events.html" class="btn btn-primary mt-3">
+              <i class="bi bi-arrow-left"></i> Back to Events
+            </a>
+          </div>
+        </div>
+      `;
+
+      // Show admin edit button if admin
+      if (isAdmin) {
+        document.getElementById('adminEditBtn').classList.remove('d-none');
+        document.getElementById('editRotaLink').href = `admin-event-rota.html?eventId=${eventId}`;
+      }
+    }
+
+    // Show coming soon state (draft, non-admin)
+    function showComingSoon() {
+      document.getElementById('mainContent').innerHTML = `
+        <div class="rota-card">
+          <div class="coming-soon">
+            <i class="bi bi-clock-history"></i>
+            <h3>Coming Soon</h3>
+            <p>The rota for this event is being prepared and will be available soon. Check back later!</p>
+            <a href="events.html" class="btn btn-primary mt-3">
+              <i class="bi bi-arrow-left"></i> Back to Events
+            </a>
+          </div>
+        </div>
+      `;
+    }
+
+    // Show not selected state
+    function showNotSelected() {
+      document.getElementById('mainContent').innerHTML = `
+        <div class="rota-card">
+          <div class="empty-state">
+            <i class="bi bi-person-x"></i>
+            <h5>Access Restricted</h5>
+            <p>You need to be selected for this event to view the rota.</p>
+            <a href="events.html" class="btn btn-primary mt-3">
+              <i class="bi bi-arrow-left"></i> Back to Events
+            </a>
+          </div>
+        </div>
+      `;
+    }
+
+    // Back to top
+    window.scrollToTop = function() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    function handleScroll() {
+      const backToTop = document.querySelector('.back-to-top');
+      if (window.scrollY > 200) {
+        backToTop.classList.add('visible');
+      } else {
+        backToTop.classList.remove('visible');
+      }
+    }
+
+    // Setup event listeners
+    function setupEventListeners() {
+      window.addEventListener('scroll', handleScroll);
+    }
+
+    // Check admin status
+    async function checkAdminStatus() {
+      try {
+        if (!currentUser) return false;
+        
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        
+        if (!userDoc.exists()) return false;
+        
+        return userDoc.data().isAdmin === true;
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        return false;
+      }
+    }
+
+    // Logout
+    document.getElementById('logoutLink').addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        await signOut(auth);
+        window.location.href = 'index.html';
+      } catch (error) {
+        console.error('Logout error:', error);
+      }
+    });
+
+    // Auth state listener
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        isAdmin = await checkAdminStatus();
+        await init();
+      } else {
+        window.location.href = 'index.html';
+      }
+    });
+  </script>
+</body>
+</html>
