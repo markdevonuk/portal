@@ -55,6 +55,45 @@ async function renderEventsCard(container, auth, db, firebaseFunctions) {
       return;
     }
     
+    // Load all users for leader name lookup
+    const usersSnapshot = await getDocs(collection(db, 'users'));
+    const allUsers = [];
+    usersSnapshot.forEach(userDoc => {
+      const userData = userDoc.data();
+      allUsers.push({
+        id: userDoc.id,
+        firstName: userData.firstName || '',
+        surname: userData.surname || '',
+        name: `${userData.firstName || ''} ${userData.surname || ''}`.trim()
+      });
+    });
+    
+    // Helper function to get leader names
+    function getLeaderNames(leaderIds) {
+      if (!leaderIds || !Array.isArray(leaderIds)) return [];
+      
+      return leaderIds.map(leaderId => {
+        const user = allUsers.find(u => u.id === leaderId);
+        return user ? user.name : null;
+      }).filter(name => name !== null);
+    }
+    
+    // Helper function to build leader badges HTML
+    function buildLeaderBadgesHtml(assignedLeaders) {
+      if (!assignedLeaders || assignedLeaders.length === 0) return '';
+      
+      const leaderNames = getLeaderNames(assignedLeaders);
+      if (leaderNames.length === 0) return '';
+      
+      return `
+        <p class="card-text mb-1">
+          <i class="bi bi-person-badge-fill text-warning"></i> 
+          <small class="text-muted">Team Leaders:</small> 
+          <small>${leaderNames.join(', ')}</small>
+        </p>
+      `;
+    }
+    
     // If the user has volunteered for events, load and display them
     const myEvents = [];
     
@@ -112,6 +151,9 @@ async function renderEventsCard(container, auth, db, firebaseFunctions) {
         bgColorClass = 'bg-warning bg-opacity-10'; // Light yellow/orange background
       }
       
+      // Build leader badges HTML
+      const leaderBadgesHtml = buildLeaderBadgesHtml(event.assignedLeaders);
+      
       eventsList += `
         <div class="card mb-3 border-0 shadow-sm ${bgColorClass}" style="transition: all 0.2s ease;">
           <div class="card-body p-3">
@@ -121,6 +163,7 @@ async function renderEventsCard(container, auth, db, firebaseFunctions) {
             </div>
             <p class="card-text mb-1"><i class="bi bi-geo-alt"></i> ${event.location || 'Location TBD'}</p>
             <p class="card-text mb-2"><i class="bi bi-calendar-date"></i> ${dateDisplay}</p>
+            ${leaderBadgesHtml}
             ${event.notes ? `<p class="card-text text-muted small fst-italic">Your notes: "${event.notes}"</p>` : ''}
           </div>
         </div>
