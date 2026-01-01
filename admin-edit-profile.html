@@ -235,7 +235,9 @@
   <option value="Make Ready">Make Ready (with no clinical certification)</option>
   <option value="Medcomms">Medcomms (with no clinical certification)</option>
   <option value="Non Clinical">Non Clinical (other)</option>
-  <option value="AAP">AAP</option>
+  <option value="Advanced Nurse Practitioner (ANP)">Advanced Nurse Practitioner (ANP)</option>
+<option value="Advanced Clinical Practitioner (ACP)">Advanced Clinical Practitioner (ACP)</option>
+<option value="AAP">AAP</option>
   <option value="CFR">CFR</option>
   <option value="Doctor">Doctor</option>
   <option value="Doctor (Critical Care/BASICS/Merit)">Doctor (Critical Care/BASICS/Merit)</option>
@@ -276,6 +278,21 @@
               <input type="text" class="form-control" id="gmc" name="gmc" placeholder="GMC registration">
             </div>
           </div>
+          
+          
+     <!-- Registration Type Selector (for ANP/ACP) -->
+<div class="row hidden" id="registrationTypeSection">
+  <div class="col-md-6 mb-3">
+    <label class="form-label">Registration Type</label>
+    <select class="form-select" id="registrationType" name="registrationType">
+      <option value="">Select registration type...</option>
+      <option value="NMC">NMC (Nursing and Midwifery Council)</option>
+      <option value="HCPC">HCPC (Health and Care Professions Council)</option>
+      <option value="GMC">GMC (General Medical Council)</option>
+    </select>
+  </div>
+</div>
+          
           
           <!-- NMC -->
           <div class="row" id="nmcSection">
@@ -472,7 +489,7 @@
       return null;
     }
     
-    // Show/hide qualification fields based on selection
+// Show/hide qualification fields based on selection
 function updateQualificationFields() {
   const qual = qualification.value;
   
@@ -481,6 +498,13 @@ function updateQualificationFields() {
   gmcSection.classList.add('hidden');
   nmcSection.classList.add('hidden');
   certExpirySection.classList.add('hidden');
+  
+  // Also hide registration type section
+  const registrationTypeSection = document.getElementById('registrationTypeSection');
+  const registrationType = document.getElementById('registrationType');
+  if (registrationTypeSection) {
+    registrationTypeSection.classList.add('hidden');
+  }
   
   // Show relevant fields based on qualification
   if (['Paramedic', 'Paramedic (Specialist)', 'Paramedic (HART)', 
@@ -496,12 +520,48 @@ function updateQualificationFields() {
     if (qual === 'Nurse (with FREC/PHTLS or similar)') {
       certExpirySection.classList.remove('hidden');
     }
+  } else if (['Advanced Nurse Practitioner (ANP)', 'Advanced Clinical Practitioner (ACP)'].includes(qual)) {
+    // Show registration type selector for ANP/ACP
+    if (registrationTypeSection) {
+      registrationTypeSection.classList.remove('hidden');
+      // Trigger the registration type change to show the correct field
+      if (registrationType && registrationType.value) {
+        updateRegistrationFieldForANPACP(registrationType.value);
+      }
+    }
   } else if (['ECA', 'CFR', 'AAP', 'EAA', 
               'FREC 3 (or similar level 3 certification)', 
               'FREC 4', 'PHTLS'].includes(qual)) {
     certExpirySection.classList.remove('hidden');
   }
 }
+
+// Function to update registration field based on type selection (for ANP/ACP)
+function updateRegistrationFieldForANPACP(regType) {
+  // Hide all registration sections first
+  hcpcSection.classList.add('hidden');
+  gmcSection.classList.add('hidden');
+  nmcSection.classList.add('hidden');
+  
+  // Show the appropriate section based on selection
+  if (regType === 'HCPC') {
+    hcpcSection.classList.remove('hidden');
+  } else if (regType === 'GMC') {
+    gmcSection.classList.remove('hidden');
+  } else if (regType === 'NMC') {
+    nmcSection.classList.remove('hidden');
+  }
+}
+
+// Add event listener for registration type change (for ANP/ACP)
+document.addEventListener('DOMContentLoaded', function() {
+  const registrationType = document.getElementById('registrationType');
+  if (registrationType) {
+    registrationType.addEventListener('change', function() {
+      updateRegistrationFieldForANPACP(this.value);
+    });
+  }
+});
     
     // Add event listener for qualification change
     qualification.addEventListener('change', updateQualificationFields);
@@ -595,6 +655,7 @@ function updateQualificationFields() {
       document.getElementById('hcpc').value = currentProfile.medicalQualifications?.hcpc || '';
       document.getElementById('gmc').value = currentProfile.medicalQualifications?.gmc || '';
       document.getElementById('nmc').value = currentProfile.medicalQualifications?.nmc || '';
+      document.getElementById('registrationType').value = currentProfile.medicalQualifications?.registrationType || '';
       document.getElementById('details').value = currentProfile.medicalQualifications?.details || '';
       document.getElementById('certExpiry').value = formatDate(currentProfile.medicalQualifications?.certExpiry);
       
@@ -637,6 +698,7 @@ function updateQualificationFields() {
           hcpc: document.getElementById('hcpc').value,
           gmc: document.getElementById('gmc').value,
           nmc: document.getElementById('nmc').value,
+          registrationType: document.getElementById('registrationType') ? document.getElementById('registrationType').value : '',
           details: document.getElementById('details').value,
           certExpiry: parseDateString(document.getElementById('certExpiry').value)
         };

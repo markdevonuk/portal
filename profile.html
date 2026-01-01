@@ -277,7 +277,9 @@
  			<option value="Medcomms">Medcomms (with no clinical certification)</option>
   			<option value="Non Clinical">Non Clinical (other)</option>
               <option value="AAP">AAP</option>
-              <option value="CFR">CFR</option>
+              <option value="Advanced Nurse Practitioner (ANP)">Advanced Nurse Practitioner (ANP)</option>
+			<option value="Advanced Clinical Practitioner (ACP)">Advanced Clinical Practitioner (ACP)</option>
+			<option value="CFR">CFR</option>
               <option value="Doctor">Doctor</option>
               <option value="Doctor (Critical Care/BASICS/Merit)">Doctor (Critical Care/BASICS/Merit)</option>
               <option value="Doctor (with FREC/PHTLS or similar)">Doctor (with FREC/PHTLS or similar)</option>
@@ -352,6 +354,22 @@
             <input type="text" class="form-control" id="gmc" name="gmc" placeholder="Your GMC registration number">
           </div>
         </div>
+        
+        
+        <!-- Registration Type Selector (for ANP/ACP) -->
+<div class="mb-3 hidden" id="registrationTypeSection">
+  <label class="form-label">Registration Type <span class="text-danger">*</span></label>
+  <div class="input-group">
+    <span class="input-group-text"><i class="bi bi-card-list"></i></span>
+    <select class="form-select" id="registrationType" name="registrationType">
+      <option value="">Select your registration type</option>
+      <option value="NMC">NMC (Nursing and Midwifery Council)</option>
+      <option value="HCPC">HCPC (Health and Care Professions Council)</option>
+      <option value="GMC">GMC (General Medical Council)</option>
+    </select>
+  </div>
+</div>
+        
         
         <!-- NMC Registration (conditional) -->
         <div class="mb-3 hidden" id="nmcSection">
@@ -1124,47 +1142,104 @@ function showInlineConfirmation(message, parentElement, isSubmission = false) {
       }
     }
 
-    // Show/hide registration fields based on qualification
-    qualification.addEventListener('change', function() {
-      const value = this.value;
-      logDebug('Qualification changed to:', value);
-      
-      // Reset all sections to hidden
-      hcpcSection.classList.add('hidden');
-      gmcSection.classList.add('hidden');
-      nmcSection.classList.add('hidden');
-      certExpirySection.classList.add('hidden');
-      
-      // Remove required attribute from all registration inputs
-      document.getElementById('hcpc').removeAttribute('required');
-      document.getElementById('gmc').removeAttribute('required');
-      document.getElementById('nmc').removeAttribute('required');
-      document.getElementById('certExpiry').removeAttribute('required');
-      
-      // Show appropriate sections based on qualification
-      if (['Paramedic', 'Paramedic (Specialist)', 'Paramedic (HART)', 
-           'Paramedic (Critical care)', 'Paramedic (in Primary Care)', 
-           'Paramedic (CTM/OO)'].includes(value)) {
-        hcpcSection.classList.remove('hidden');
-        document.getElementById('hcpc').setAttribute('required', 'required');
-      } else if (['Doctor', 'Doctor (Critical Care/BASICS/Merit)', 
-                  'Doctor (with FREC/PHTLS or similar)'].includes(value)) {
-        gmcSection.classList.remove('hidden');
-        document.getElementById('gmc').setAttribute('required', 'required');
-      } else if (['Nurse', 'Nurse (Ambulance Nurse)', 
-                  'Nurse (with FREC/PHTLS or similar)'].includes(value)) {
-        nmcSection.classList.remove('hidden');
-        document.getElementById('nmc').setAttribute('required', 'required');
-        
-        if (value === 'Nurse (with FREC/PHTLS or similar)') {
-          certExpirySection.classList.remove('hidden');
-          document.getElementById('certExpiry').setAttribute('required', 'required');
-        }
-      } else if (['FREC 3 (or similar level 3 certification)', 'FREC 4', 'PHTLS'].includes(value)) {
-        certExpirySection.classList.remove('hidden');
-        document.getElementById('certExpiry').setAttribute('required', 'required');
-      }
-    });
+// Show/hide registration fields based on qualification
+qualification.addEventListener('change', function() {
+  const value = this.value;
+  logDebug('Qualification changed to:', value);
+  
+  // Reset all sections to hidden
+  hcpcSection.classList.add('hidden');
+  gmcSection.classList.add('hidden');
+  nmcSection.classList.add('hidden');
+  certExpirySection.classList.add('hidden');
+  
+  // Also hide and reset the registration type section
+  const registrationTypeSection = document.getElementById('registrationTypeSection');
+  const registrationType = document.getElementById('registrationType');
+  if (registrationTypeSection) {
+    registrationTypeSection.classList.add('hidden');
+  }
+  if (registrationType) {
+    registrationType.value = '';
+  }
+  
+  // Remove required attribute from all registration inputs
+  document.getElementById('hcpc').removeAttribute('required');
+  document.getElementById('gmc').removeAttribute('required');
+  document.getElementById('nmc').removeAttribute('required');
+  document.getElementById('certExpiry').removeAttribute('required');
+  if (registrationType) {
+    registrationType.removeAttribute('required');
+  }
+  
+  // Show appropriate sections based on qualification
+  if (['Paramedic', 'Paramedic (Specialist)', 'Paramedic (HART)', 
+       'Paramedic (Critical care)', 'Paramedic (in Primary Care)', 
+       'Paramedic (CTM/OO)'].includes(value)) {
+    hcpcSection.classList.remove('hidden');
+    document.getElementById('hcpc').setAttribute('required', 'required');
+  } else if (['Doctor', 'Doctor (Critical Care/BASICS/Merit)', 
+              'Doctor (with FREC/PHTLS or similar)'].includes(value)) {
+    gmcSection.classList.remove('hidden');
+    document.getElementById('gmc').setAttribute('required', 'required');
+  } else if (['Nurse', 'Nurse (Ambulance Nurse)', 
+              'Nurse (with FREC/PHTLS or similar)'].includes(value)) {
+    nmcSection.classList.remove('hidden');
+    document.getElementById('nmc').setAttribute('required', 'required');
+    
+    if (value === 'Nurse (with FREC/PHTLS or similar)') {
+      certExpirySection.classList.remove('hidden');
+      document.getElementById('certExpiry').setAttribute('required', 'required');
+    }
+  } else if (['Advanced Nurse Practitioner (ANP)', 'Advanced Clinical Practitioner (ACP)'].includes(value)) {
+    // Show registration type selector for ANP/ACP
+    if (registrationTypeSection) {
+      registrationTypeSection.classList.remove('hidden');
+      registrationType.setAttribute('required', 'required');
+    }
+  } else if (['ECA', 'CFR', 'AAP', 'EAA', 
+              'FREC 3 (or similar level 3 certification)', 
+              'FREC 4', 'PHTLS', 'Technician'].includes(value)) {
+    certExpirySection.classList.remove('hidden');
+    document.getElementById('certExpiry').setAttribute('required', 'required');
+    
+    if (value === 'Technician') {
+      hcpcSection.classList.remove('hidden');
+      document.getElementById('hcpc').setAttribute('required', 'required');
+    }
+  }
+});
+
+// Add event listener for registration type change (for ANP/ACP)
+const registrationType = document.getElementById('registrationType');
+if (registrationType) {
+  registrationType.addEventListener('change', function() {
+    const value = this.value;
+    logDebug('Registration type changed to:', value);
+    
+    // Hide all registration sections first
+    hcpcSection.classList.add('hidden');
+    gmcSection.classList.add('hidden');
+    nmcSection.classList.add('hidden');
+    
+    // Remove required from all
+    document.getElementById('hcpc').removeAttribute('required');
+    document.getElementById('gmc').removeAttribute('required');
+    document.getElementById('nmc').removeAttribute('required');
+    
+    // Show the appropriate section based on selection
+    if (value === 'HCPC') {
+      hcpcSection.classList.remove('hidden');
+      document.getElementById('hcpc').setAttribute('required', 'required');
+    } else if (value === 'GMC') {
+      gmcSection.classList.remove('hidden');
+      document.getElementById('gmc').setAttribute('required', 'required');
+    } else if (value === 'NMC') {
+      nmcSection.classList.remove('hidden');
+      document.getElementById('nmc').setAttribute('required', 'required');
+    }
+  });
+}
 
 // Disable form if profile is approved or rejected
     function disableForm(profileStatus) {
@@ -1374,6 +1449,7 @@ if (profile.personalDetails.DOB) {
             document.getElementById('hcpc').value = profile.medicalQualifications.hcpc || '';
             document.getElementById('gmc').value = profile.medicalQualifications.gmc || '';
             document.getElementById('nmc').value = profile.medicalQualifications.nmc || '';
+            document.getElementById('registrationType').value = profile.medicalQualifications.registrationType || '';
             document.getElementById('details').value = profile.medicalQualifications.details || '';
             
 if (profile.medicalQualifications.certExpiry) {
@@ -1513,14 +1589,15 @@ saveAsDraftBtn.addEventListener('click', async () => {
       points: document.getElementById('points').value
     };
     
-    const medicalQualifications = {
-      qualification: document.getElementById('qualification').value,
-      hcpc: document.getElementById('hcpc').value,
-      gmc: document.getElementById('gmc').value,
-      nmc: document.getElementById('nmc').value,
-      details: document.getElementById('details').value,
-      certExpiry: parseDateString(document.getElementById('certExpiry').value)
-    };
+   const medicalQualifications = {
+  qualification: document.getElementById('qualification').value,
+  hcpc: document.getElementById('hcpc').value,
+  gmc: document.getElementById('gmc').value,
+  nmc: document.getElementById('nmc').value,
+  registrationType: document.getElementById('registrationType') ? document.getElementById('registrationType').value : '',
+  details: document.getElementById('details').value,
+  certExpiry: parseDateString(document.getElementById('certExpiry').value)
+};
     
     logDebug('Saving personal details:', personalDetails);
     logDebug('Saving driving details:', driving);
@@ -1609,14 +1686,15 @@ saveAsDraftBtn.addEventListener('click', async () => {
             dlNumber: document.getElementById('dlNumber').value,
             points: document.getElementById('points').value
           },
-          medicalQualifications: {
-            qualification: document.getElementById('qualification').value,
-            hcpc: document.getElementById('hcpc').value,
-            gmc: document.getElementById('gmc').value,
-            nmc: document.getElementById('nmc').value,
-            details: document.getElementById('details').value,
-            certExpiry: parseDateString(document.getElementById('certExpiry').value)
-          },
+        medicalQualifications: {
+  qualification: document.getElementById('qualification').value,
+  hcpc: document.getElementById('hcpc').value,
+  gmc: document.getElementById('gmc').value,
+  nmc: document.getElementById('nmc').value,
+  registrationType: document.getElementById('registrationType') ? document.getElementById('registrationType').value : '',
+  details: document.getElementById('details').value,
+  certExpiry: parseDateString(document.getElementById('certExpiry').value)
+},
           profilePhotoURL: profilePhotoURL.value
         };
         
