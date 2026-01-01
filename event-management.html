@@ -1245,6 +1245,9 @@ function attachFilterListeners() {
                   <button class="btn btn-outline-primary admin-action-btn manage-volunteers-btn" data-event-id="${event.id}">
                     <i class="bi bi-people"></i> Manage Volunteers
                   </button>
+                  <button class="btn btn-outline-primary admin-action-btn manage-rota-btn" data-event-id="${event.id}">
+  <i class="bi bi-calendar3"></i> Manage Rota (NOT READY YET)
+</button>
                   <button class="btn btn-outline-primary admin-action-btn message-volunteers-btn" data-event-id="${event.id}" ${event.volunteerCount === 0 ? 'disabled' : ''}>
                     <i class="bi bi-envelope"></i> Message Volunteers
                   </button>
@@ -1268,6 +1271,12 @@ function attachFilterListeners() {
             openManageVolunteersModal(button.dataset.eventId);
           });
         });
+        
+        document.querySelectorAll('.manage-rota-btn').forEach(button => {
+  button.addEventListener('click', () => {
+    window.location.href = `admin-event-rota.html?eventId=${button.dataset.eventId}`;
+  });
+});
         
         document.querySelectorAll('.message-volunteers-btn').forEach(button => {
           button.addEventListener('click', () => {

@@ -1,0 +1,2121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Event Rota - FMS Prehospital Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background:#f8f9fa; min-height:100vh; }
+    .navbar { 
+      background: linear-gradient(135deg, #00a896 0%, #028090 100%); 
+      box-shadow:0 2px 10px rgba(0,0,0,0.1); 
+    }
+    .nav-link { color: rgba(255,255,255,.85) !important; font-weight: 500; }
+    .nav-link:hover { color: #fff !important; }
+    .admin-card { 
+      background:#fff; 
+      border-radius:15px; 
+      box-shadow:0 5px 20px rgba(0,0,0,.08); 
+      padding:30px; 
+      margin:20px 0; 
+    }
+    .page-header { 
+      background:linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      color:#fff; 
+      border-radius:15px; 
+      padding:30px; 
+      margin:30px 0 20px 0; 
+    }
+    .btn-primary { 
+      background: linear-gradient(135deg, #00a896 0%, #028090 100%); 
+      border: none; 
+      font-weight: 600; 
+    }
+    .btn-primary:hover { 
+      transform: translateY(-2px); 
+      box-shadow: 0 5px 15px rgba(0,168,150,.4); 
+    }
+    .form-control:focus, .form-select:focus { 
+      border-color: #00a896; 
+      box-shadow: 0 0 0 0.2rem rgba(0,168,150,.25); 
+    }
+    .hidden { display: none !important; }
+    
+    /* Status badges */
+    .status-badge {
+      padding: 0.5rem 1rem;
+      border-radius: 50rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .status-draft {
+      background-color: #ffc107;
+      color: #000;
+    }
+    .status-published {
+      background-color: #28a745;
+      color: #fff;
+    }
+    
+    /* Tab navigation */
+    .rota-tabs {
+      border-bottom: 2px solid #dee2e6;
+      margin-bottom: 1.5rem;
+    }
+    .rota-tabs .nav-link {
+      color: #495057 !important;
+      border: none;
+      border-bottom: 3px solid transparent;
+      padding: 1rem 1.5rem;
+      font-weight: 600;
+      margin-bottom: -2px;
+    }
+    .rota-tabs .nav-link:hover {
+      color: #00a896 !important;
+      border-bottom-color: #dee2e6;
+    }
+    .rota-tabs .nav-link.active {
+      color: #00a896 !important;
+      border-bottom-color: #00a896;
+      background: transparent;
+    }
+    
+    /* Days list */
+    .day-item {
+      background: #fff;
+      border: 1px solid #dee2e6;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s;
+    }
+    .day-item:hover {
+      border-color: #00a896;
+      box-shadow: 0 2px 8px rgba(0,168,150,0.15);
+    }
+    .day-item .day-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .day-item .day-name {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+    .day-item .day-date {
+      color: #6c757d;
+      font-size: 0.95rem;
+    }
+    
+    /* Positions list */
+    .position-item {
+      background: #fff;
+      border: 1px solid #dee2e6;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.75rem;
+      transition: all 0.2s;
+    }
+    .position-item:hover {
+      border-color: #00a896;
+      box-shadow: 0 2px 8px rgba(0,168,150,0.15);
+    }
+    .position-item .position-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .position-item .position-name {
+      font-weight: 600;
+      font-size: 1.05rem;
+    }
+    .position-item .position-details {
+      color: #6c757d;
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+    .position-item .shift-times {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .shift-badge {
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    .shift-badge-early {
+      background-color: #e7f3ff;
+      color: #0d6efd;
+    }
+    .shift-badge-late {
+      background-color: #f0e8ff;
+      color: #6f42c1;
+    }
+    .shift-badge-night {
+      background-color: #2c3e50;
+      color: #fff;
+    }
+    
+    /* Category sections */
+    .category-section {
+      margin-bottom: 2rem;
+    }
+    .category-header {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-weight: 600;
+      color: #495057;
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    /* Rota editor */
+    .day-selector {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .day-selector select {
+      min-width: 250px;
+    }
+    .shift-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .shift-tab {
+      padding: 0.5rem 1.5rem;
+      border: 2px solid #dee2e6;
+      border-radius: 50rem;
+      background: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .shift-tab:hover {
+      border-color: #00a896;
+    }
+    .shift-tab.active {
+      background: linear-gradient(135deg, #00a896 0%, #028090 100%);
+      border-color: #00a896;
+      color: #fff;
+    }
+    .shift-tab.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    /* Position cards in editor */
+    .position-card {
+      background: #fff;
+      border: 1px solid #dee2e6;
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      transition: all 0.2s;
+    }
+    .position-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .position-card.card-leadership { background-color: #e7f3ff; border-color: #b8daff; }
+    .position-card.card-vehicles { background-color: #f0f0f0; border-color: #d0d0d0; }
+    .position-card.card-responders { background-color: #e8fbe8; border-color: #b8e6b8; }
+    .position-card.card-static { background-color: #ffe4e1; border-color: #f5c6c6; }
+    .position-card.card-stage { background-color: #f0e8ff; border-color: #d4c4f0; }
+    .position-card.card-medcomms { background-color: #fff8e7; border-color: #f0e0b0; }
+    .position-card.card-makeready { background-color: #ffffe0; border-color: #e0e0a0; }
+    
+    .position-card .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+    .position-card .position-title {
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 0.25rem;
+    }
+    .position-card .position-time {
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+    .position-card .crew-selects {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .position-card .crew-select-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .position-card .crew-label {
+      font-weight: 500;
+      min-width: 60px;
+      color: #495057;
+    }
+    .position-card .crew-select {
+      flex: 1;
+    }
+    
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 2rem;
+      color: #6c757d;
+    }
+    .empty-state i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+    .empty-state h5 {
+      margin-bottom: 0.5rem;
+    }
+    
+    /* Loading state */
+    .loading-state {
+      text-align: center;
+      padding: 3rem 2rem;
+    }
+    
+    /* Action buttons */
+    .btn-icon {
+      padding: 0.375rem 0.5rem;
+      line-height: 1;
+    }
+    
+    /* Section filter */
+    .section-filter {
+      min-width: 200px;
+    }
+    
+    /* Clone modal checkboxes */
+    .clone-day-item {
+      padding: 0.75rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+    }
+    .clone-day-item .form-check-label {
+      font-weight: 500;
+    }
+    .clone-day-item .day-date-small {
+      font-size: 0.85rem;
+      color: #6c757d;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="dashboard.html"><i class="bi bi-shield-lock"></i> FMS Prehospital Portal</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="event-management.html">
+              <i class="bi bi-arrow-left"></i> Back to Events
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="admin.html">
+              <i class="bi bi-gear"></i> Admin Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="dashboard.html">
+              <i class="bi bi-house-fill"></i> Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="logoutLink">
+              <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+          <h1 class="mb-2"><i class="bi bi-calendar3"></i> <span id="eventName">Event Rota</span></h1>
+          <p class="mb-0" id="eventDates">Loading event details...</p>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+          <span id="statusBadge" class="status-badge status-draft">Draft</span>
+          <button class="btn btn-light" id="toggleStatusBtn" onclick="togglePublishStatus()">
+            <i class="bi bi-globe"></i> Publish
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="alertContainer"></div>
+
+    <!-- Main Content -->
+    <div class="admin-card">
+      <!-- Tab Navigation -->
+      <ul class="nav rota-tabs" id="rotaTabs">
+        <li class="nav-item">
+          <a class="nav-link active" href="#" data-tab="setup" onclick="switchTab('setup')">
+            <i class="bi bi-gear"></i> Setup
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" data-tab="editor" onclick="switchTab('editor')">
+            <i class="bi bi-pencil-square"></i> Editor
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" data-tab="templates" onclick="switchTab('templates')">
+            <i class="bi bi-files"></i> Templates
+          </a>
+        </li>
+      </ul>
+
+      <!-- Setup Tab -->
+      <div id="setupTab" class="tab-content">
+        <div class="row">
+          <!-- Days Section -->
+          <div class="col-lg-5 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h4><i class="bi bi-calendar-week"></i> Days</h4>
+              <button class="btn btn-primary btn-sm" onclick="openAddDayModal()">
+                <i class="bi bi-plus-lg"></i> Add Day
+              </button>
+            </div>
+            <div id="daysList">
+              <div class="loading-state">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading days...</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Positions Section -->
+          <div class="col-lg-7 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h4><i class="bi bi-person-badge"></i> Positions</h4>
+              <div class="d-flex gap-2">
+                <button class="btn btn-outline-primary btn-sm" onclick="openLoadTemplateModal()">
+                  <i class="bi bi-download"></i> Load Template
+                </button>
+                <button class="btn btn-outline-primary btn-sm" onclick="openCloneFromEventModal()">
+                  <i class="bi bi-copy"></i> Clone from Event
+                </button>
+                <button class="btn btn-primary btn-sm" onclick="openAddPositionModal()">
+                  <i class="bi bi-plus-lg"></i> Add Position
+                </button>
+              </div>
+            </div>
+            <div id="positionsList">
+              <div class="loading-state">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading positions...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Editor Tab -->
+      <div id="editorTab" class="tab-content hidden">
+        <!-- Day and Shift Selectors -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+          <div class="day-selector">
+            <button class="btn btn-outline-primary" onclick="navigateDay(-1)" id="prevDayBtn">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <select id="editorDaySelect" class="form-select" onchange="loadEditorForDay()">
+              <option value="">Select a day...</option>
+            </select>
+            <button class="btn btn-outline-primary" onclick="navigateDay(1)" id="nextDayBtn">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+          
+          <div class="d-flex gap-2 align-items-center">
+            <select id="sectionFilter" class="form-select section-filter" onchange="filterEditorBySection()">
+              <option value="all">All Sections</option>
+              <option value="Leadership">Leadership</option>
+              <option value="Vehicles">Vehicles</option>
+              <option value="Responders">Responders</option>
+              <option value="Static Medical Points">Static Medical Points</option>
+              <option value="Stage Medical">Stage Medical</option>
+              <option value="Medcomms Team">Medcomms Team</option>
+              <option value="Make Ready Team">Make Ready Team</option>
+            </select>
+            <button class="btn btn-outline-secondary" onclick="openCloneDayModal()" id="cloneDayBtn" disabled>
+              <i class="bi bi-copy"></i> Clone Day
+            </button>
+          </div>
+        </div>
+
+        <!-- Shift Tabs -->
+        <div class="shift-tabs" id="shiftTabs">
+          <div class="shift-tab active" data-shift="early" onclick="selectShift('early')">
+            <i class="bi bi-sunrise"></i> Early
+          </div>
+          <div class="shift-tab" data-shift="late" onclick="selectShift('late')">
+            <i class="bi bi-sun"></i> Late
+          </div>
+          <div class="shift-tab" data-shift="night" onclick="selectShift('night')">
+            <i class="bi bi-moon-stars"></i> Night
+          </div>
+        </div>
+
+        <!-- Editor Content -->
+        <div id="editorContent">
+          <div class="empty-state">
+            <i class="bi bi-calendar-x"></i>
+            <h5>No Day Selected</h5>
+            <p>Select a day from the dropdown above to start editing the rota.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Templates Tab -->
+      <div id="templatesTab" class="tab-content hidden">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h4><i class="bi bi-files"></i> Rota Templates</h4>
+          <button class="btn btn-primary" onclick="saveAsTemplate()">
+            <i class="bi bi-save"></i> Save Current as Template
+          </button>
+        </div>
+        <div id="templatesList">
+          <div class="loading-state">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 text-muted">Loading templates...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Day Modal -->
+  <div class="modal fade" id="dayModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="dayModalTitle">Add Day</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="dayForm">
+            <input type="hidden" id="dayId">
+            <div class="mb-3">
+              <label for="dayDate" class="form-label">Date*</label>
+              <input type="date" class="form-control" id="dayDate" required>
+            </div>
+            <div class="mb-3">
+              <label for="dayName" class="form-label">Day Name</label>
+              <input type="text" class="form-control" id="dayName" readonly>
+              <div class="form-text">Automatically set based on the date selected</div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="saveDay()">Save Day</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Position Modal -->
+  <div class="modal fade" id="positionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="positionModalTitle">Add Position</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="positionForm">
+            <input type="hidden" id="positionId">
+            <div class="row mb-3">
+              <div class="col-md-8">
+                <label for="positionName" class="form-label">Position Name*</label>
+                <input type="text" class="form-control" id="positionName" required 
+                       placeholder="e.g., Duty Team Leader (01392 984194)">
+              </div>
+              <div class="col-md-4">
+                <label for="positionCategory" class="form-label">Category*</label>
+                <select class="form-select" id="positionCategory" required>
+                  <option value="">Select category...</option>
+                  <option value="Leadership">Leadership</option>
+                  <option value="Vehicles">Vehicles</option>
+                  <option value="Responders">Responders</option>
+                  <option value="Static Medical Points">Static Medical Points</option>
+                  <option value="Stage Medical">Stage Medical</option>
+                  <option value="Medcomms Team">Medcomms Team</option>
+                  <option value="Make Ready Team">Make Ready Team</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="positionCrewSlots" class="form-label">Crew Slots*</label>
+              <select class="form-select" id="positionCrewSlots" required>
+                <option value="1">1 Crew Member</option>
+                <option value="2">2 Crew Members</option>
+              </select>
+            </div>
+            
+            <hr>
+            <h6 class="mb-3">Shift Times</h6>
+            <p class="text-muted small mb-3">Configure which shifts this position works and their times. Leave unchecked if this position doesn't work that shift.</p>
+            
+            <!-- Early Shift -->
+            <div class="card mb-3">
+              <div class="card-body">
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" id="earlyShiftEnabled" checked>
+                  <label class="form-check-label fw-bold" for="earlyShiftEnabled">
+                    <i class="bi bi-sunrise text-primary"></i> Early Shift
+                  </label>
+                </div>
+                <div class="row" id="earlyShiftTimes">
+                  <div class="col-6">
+                    <label class="form-label">Start Time</label>
+                    <input type="time" class="form-control" id="earlyStart" value="08:00">
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label">End Time</label>
+                    <input type="time" class="form-control" id="earlyEnd" value="16:30">
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Late Shift -->
+            <div class="card mb-3">
+              <div class="card-body">
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" id="lateShiftEnabled" checked>
+                  <label class="form-check-label fw-bold" for="lateShiftEnabled">
+                    <i class="bi bi-sun text-warning"></i> Late Shift
+                  </label>
+                </div>
+                <div class="row" id="lateShiftTimes">
+                  <div class="col-6">
+                    <label class="form-label">Start Time</label>
+                    <input type="time" class="form-control" id="lateStart" value="16:30">
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label">End Time</label>
+                    <input type="time" class="form-control" id="lateEnd" value="22:00">
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Night Shift -->
+            <div class="card mb-3">
+              <div class="card-body">
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" id="nightShiftEnabled">
+                  <label class="form-check-label fw-bold" for="nightShiftEnabled">
+                    <i class="bi bi-moon-stars text-dark"></i> Night Shift
+                  </label>
+                </div>
+                <div class="row" id="nightShiftTimes">
+                  <div class="col-6">
+                    <label class="form-label">Start Time</label>
+                    <input type="time" class="form-control" id="nightStart" value="22:00">
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label">End Time</label>
+                    <input type="time" class="form-control" id="nightEnd" value="08:00">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="savePosition()">Save Position</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clone Day Modal -->
+  <div class="modal fade" id="cloneDayModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Clone Day Structure</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted">Clone the position structure (without crew assignments) from <strong id="cloneSourceDay"></strong> to the selected days:</p>
+          <div id="cloneDaysList">
+            <!-- Days will be inserted here -->
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="confirmCloneDay()">Clone Structure</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load Template Modal -->
+  <div class="modal fade" id="loadTemplateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Load Template</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted">Select a template to load positions from. This will replace any existing positions.</p>
+          <div id="loadTemplateList">
+            <div class="loading-state">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clone From Event Modal -->
+  <div class="modal fade" id="cloneFromEventModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Clone from Event</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted">Select an event to clone positions from. This will replace any existing positions.</p>
+          <div id="cloneFromEventList">
+            <div class="loading-state">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Save Template Modal -->
+  <div class="modal fade" id="saveTemplateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Save as Template</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="saveTemplateForm">
+            <div class="mb-3">
+              <label for="templateName" class="form-label">Template Name*</label>
+              <input type="text" class="form-control" id="templateName" required 
+                     placeholder="e.g., Festival Template 2025">
+            </div>
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle"></i> This will save all current positions and their shift configurations as a reusable template.
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="confirmSaveTemplate()">Save Template</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { 
+      getFirestore, 
+      collection, 
+      doc, 
+      getDoc,
+      getDocs,
+      setDoc,
+      addDoc,
+      deleteDoc,
+      updateDoc,
+      query,
+      where,
+      orderBy,
+      Timestamp,
+      serverTimestamp 
+    } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { firebaseConfig } from './firebase-config.js';
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Constants
+    const CATEGORY_ORDER = [
+      'Leadership',
+      'Vehicles', 
+      'Responders',
+      'Static Medical Points',
+      'Stage Medical',
+      'Medcomms Team',
+      'Make Ready Team'
+    ];
+
+    const CATEGORY_CARD_CLASSES = {
+      'Leadership': 'card-leadership',
+      'Vehicles': 'card-vehicles',
+      'Responders': 'card-responders',
+      'Static Medical Points': 'card-static',
+      'Stage Medical': 'card-stage',
+      'Medcomms Team': 'card-medcomms',
+      'Make Ready Team': 'card-makeready'
+    };
+
+    // State
+    let currentUser = null;
+    let isAdmin = false;
+    let eventId = null;
+    let eventData = null;
+    let rotaData = null;
+    let selectedCrewList = []; // Crew available for assignment
+    let currentTab = 'setup';
+    let currentShift = 'early';
+    let currentEditorDay = null;
+
+    // Get event ID from URL
+    function getEventIdFromURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('eventId');
+    }
+
+    // Initialize
+    async function init() {
+      eventId = getEventIdFromURL();
+      
+      if (!eventId) {
+        showAlert('No event specified. Redirecting...', 'danger');
+        setTimeout(() => window.location.href = 'admin-event-management.html', 2000);
+        return;
+      }
+
+      await loadEventData();
+      await loadRotaData();
+      await loadSelectedCrew();
+      setupEventListeners();
+      renderSetupTab();
+    }
+
+    // Load event data
+    async function loadEventData() {
+      try {
+        const eventDoc = await getDoc(doc(db, 'events', eventId));
+        
+        if (!eventDoc.exists()) {
+          showAlert('Event not found. Redirecting...', 'danger');
+          setTimeout(() => window.location.href = 'admin-event-management.html', 2000);
+          return;
+        }
+
+        eventData = { id: eventDoc.id, ...eventDoc.data() };
+        
+        // Update page header
+        document.getElementById('eventName').textContent = eventData.name;
+        
+        // Format dates
+        const startDate = eventData.startDate?.toDate ? eventData.startDate.toDate() : new Date(eventData.startDate);
+        const endDate = eventData.endDate?.toDate ? eventData.endDate.toDate() : new Date(eventData.endDate);
+        
+        const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+        const startStr = startDate.toLocaleDateString('en-GB', dateOptions);
+        const endStr = endDate.toLocaleDateString('en-GB', dateOptions);
+        
+        document.getElementById('eventDates').textContent = 
+          startStr === endStr ? startStr : `${startStr} - ${endStr}`;
+
+      } catch (error) {
+        console.error('Error loading event:', error);
+        showAlert('Error loading event: ' + error.message, 'danger');
+      }
+    }
+
+    // Load rota data
+    async function loadRotaData() {
+      try {
+        const rotaDoc = await getDoc(doc(db, 'eventRotas', eventId));
+        
+        if (rotaDoc.exists()) {
+          rotaData = rotaDoc.data();
+        } else {
+          // Create initial rota document
+          rotaData = {
+            status: 'draft',
+            days: [],
+            positions: [],
+            assignments: {},
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          };
+          await setDoc(doc(db, 'eventRotas', eventId), rotaData);
+        }
+
+        updateStatusDisplay();
+        
+      } catch (error) {
+        console.error('Error loading rota:', error);
+        showAlert('Error loading rota: ' + error.message, 'danger');
+      }
+    }
+
+    // Load selected crew for this event
+    async function loadSelectedCrew() {
+      try {
+        const volunteersQuery = query(
+          collection(db, 'eventVolunteers'),
+          where('eventId', '==', eventId),
+          where('selected', '==', true)
+        );
+        
+        const volunteersSnapshot = await getDocs(volunteersQuery);
+        
+        if (volunteersSnapshot.empty) {
+          selectedCrewList = [];
+          return;
+        }
+
+        // Get user IDs
+        const userIds = volunteersSnapshot.docs.map(doc => doc.data().userId);
+        
+        // Fetch user and profile data in parallel
+        const userPromises = userIds.map(userId => getDoc(doc(db, 'users', userId)));
+        const profilePromises = userIds.map(userId => getDoc(doc(db, 'profiles', userId)));
+        
+        const [userDocs, profileDocs] = await Promise.all([
+          Promise.all(userPromises),
+          Promise.all(profilePromises)
+        ]);
+
+        selectedCrewList = userIds.map((userId, index) => {
+          const userData = userDocs[index].exists() ? userDocs[index].data() : {};
+          const profileData = profileDocs[index].exists() ? profileDocs[index].data() : {};
+          
+          const firstName = userData.firstName || '';
+          const surname = userData.surname || '';
+          const name = `${firstName} ${surname}`.trim() || userData.email || 'Unknown';
+          
+          let qualification = 'Unknown';
+          if (profileData.medicalQualifications?.qualification) {
+            qualification = profileData.medicalQualifications.qualification;
+          }
+
+          return {
+            id: userId,
+            name: name,
+            qualification: qualification,
+            displayName: `${name} (${qualification})`
+          };
+        });
+
+        // Sort by name
+        selectedCrewList.sort((a, b) => a.name.localeCompare(b.name));
+
+      } catch (error) {
+        console.error('Error loading selected crew:', error);
+        showAlert('Error loading crew list: ' + error.message, 'warning');
+      }
+    }
+
+    // Update status display
+    function updateStatusDisplay() {
+      const statusBadge = document.getElementById('statusBadge');
+      const toggleBtn = document.getElementById('toggleStatusBtn');
+      
+      if (rotaData.status === 'published') {
+        statusBadge.textContent = 'Published';
+        statusBadge.className = 'status-badge status-published';
+        toggleBtn.innerHTML = '<i class="bi bi-pencil"></i> Unpublish';
+      } else {
+        statusBadge.textContent = 'Draft';
+        statusBadge.className = 'status-badge status-draft';
+        toggleBtn.innerHTML = '<i class="bi bi-globe"></i> Publish';
+      }
+    }
+
+    // Save rota data
+    async function saveRotaData() {
+      try {
+        rotaData.updatedAt = serverTimestamp();
+        await updateDoc(doc(db, 'eventRotas', eventId), rotaData);
+      } catch (error) {
+        console.error('Error saving rota:', error);
+        showAlert('Error saving rota: ' + error.message, 'danger');
+      }
+    }
+
+    // Toggle publish status
+    window.togglePublishStatus = async function() {
+      const newStatus = rotaData.status === 'published' ? 'draft' : 'published';
+      
+      if (newStatus === 'published') {
+        // Validate before publishing
+        if (rotaData.days.length === 0) {
+          showAlert('Cannot publish: No days have been added.', 'warning');
+          return;
+        }
+        if (rotaData.positions.length === 0) {
+          showAlert('Cannot publish: No positions have been added.', 'warning');
+          return;
+        }
+      }
+
+      rotaData.status = newStatus;
+      await saveRotaData();
+      updateStatusDisplay();
+      
+      showAlert(
+        newStatus === 'published' 
+          ? 'Rota published! Selected crew can now view it.' 
+          : 'Rota unpublished. Only admins can see it now.',
+        'success'
+      );
+    };
+
+    // Tab switching
+    window.switchTab = function(tab) {
+      currentTab = tab;
+      
+      // Update tab active state
+      document.querySelectorAll('.rota-tabs .nav-link').forEach(link => {
+        link.classList.toggle('active', link.dataset.tab === tab);
+      });
+
+      // Show/hide tab content
+      document.getElementById('setupTab').classList.toggle('hidden', tab !== 'setup');
+      document.getElementById('editorTab').classList.toggle('hidden', tab !== 'editor');
+      document.getElementById('templatesTab').classList.toggle('hidden', tab !== 'templates');
+
+      // Load content for tab
+      if (tab === 'setup') {
+        renderSetupTab();
+      } else if (tab === 'editor') {
+        renderEditorTab();
+      } else if (tab === 'templates') {
+        loadTemplates();
+      }
+    };
+
+    // ============================================
+    // SETUP TAB - Days Management
+    // ============================================
+
+    function renderSetupTab() {
+      renderDaysList();
+      renderPositionsList();
+    }
+
+    function renderDaysList() {
+      const container = document.getElementById('daysList');
+      
+      if (!rotaData.days || rotaData.days.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="bi bi-calendar-x"></i>
+            <h5>No Days Added</h5>
+            <p>Add days to start building your rota.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Sort days by date
+      const sortedDays = [...rotaData.days].sort((a, b) => {
+        const dateA = parseUKDate(a.date);
+        const dateB = parseUKDate(b.date);
+        return dateA - dateB;
+      });
+
+      let html = '';
+      sortedDays.forEach(day => {
+        html += `
+          <div class="day-item">
+            <div class="day-info">
+              <span class="day-name">${day.dayName}</span>
+              <span class="day-date">${day.date}</span>
+            </div>
+            <div class="day-actions">
+              <button class="btn btn-outline-secondary btn-icon btn-sm" onclick="editDay('${day.id}')" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-outline-danger btn-icon btn-sm" onclick="deleteDay('${day.id}')" title="Delete">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function parseUKDate(dateStr) {
+      // Parse DD/MM/YYYY format
+      const parts = dateStr.split('/');
+      return new Date(parts[2], parts[1] - 1, parts[0]);
+    }
+
+    function formatToUKDate(date) {
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    }
+
+    function getDayName(date) {
+      return date.toLocaleDateString('en-GB', { weekday: 'long' });
+    }
+
+    window.openAddDayModal = function() {
+      document.getElementById('dayForm').reset();
+      document.getElementById('dayId').value = '';
+      document.getElementById('dayModalTitle').textContent = 'Add Day';
+      document.getElementById('dayName').value = '';
+      
+      const modal = new bootstrap.Modal(document.getElementById('dayModal'));
+      modal.show();
+    };
+
+    window.editDay = function(dayId) {
+      const day = rotaData.days.find(d => d.id === dayId);
+      if (!day) return;
+
+      document.getElementById('dayId').value = dayId;
+      document.getElementById('dayModalTitle').textContent = 'Edit Day';
+      
+      // Convert UK date to input format
+      const dateParts = day.date.split('/');
+      document.getElementById('dayDate').value = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+      document.getElementById('dayName').value = day.dayName;
+
+      const modal = new bootstrap.Modal(document.getElementById('dayModal'));
+      modal.show();
+    };
+
+    window.saveDay = async function() {
+      const dayId = document.getElementById('dayId').value;
+      const dateInput = document.getElementById('dayDate').value;
+
+      if (!dateInput) {
+        showAlert('Please select a date.', 'warning');
+        return;
+      }
+
+      const date = new Date(dateInput);
+      const ukDate = formatToUKDate(date);
+      const dayName = getDayName(date);
+
+      // Check for duplicate dates
+      const existingDay = rotaData.days.find(d => d.date === ukDate && d.id !== dayId);
+      if (existingDay) {
+        showAlert('This date has already been added.', 'warning');
+        return;
+      }
+
+      if (dayId) {
+        // Edit existing day
+        const dayIndex = rotaData.days.findIndex(d => d.id === dayId);
+        if (dayIndex !== -1) {
+          rotaData.days[dayIndex].date = ukDate;
+          rotaData.days[dayIndex].dayName = dayName;
+        }
+      } else {
+        // Add new day
+        const newDay = {
+          id: 'day_' + Date.now(),
+          date: ukDate,
+          dayName: dayName
+        };
+        rotaData.days.push(newDay);
+      }
+
+      await saveRotaData();
+      renderDaysList();
+      updateEditorDaySelect();
+
+      const modal = bootstrap.Modal.getInstance(document.getElementById('dayModal'));
+      modal.hide();
+
+      showAlert(dayId ? 'Day updated successfully.' : 'Day added successfully.', 'success');
+    };
+
+    window.deleteDay = async function(dayId) {
+      if (!confirm('Are you sure you want to delete this day? Any crew assignments for this day will be lost.')) {
+        return;
+      }
+
+      // Remove day
+      rotaData.days = rotaData.days.filter(d => d.id !== dayId);
+
+      // Remove assignments for this day
+      const keysToRemove = Object.keys(rotaData.assignments).filter(key => key.startsWith(dayId + '_'));
+      keysToRemove.forEach(key => delete rotaData.assignments[key]);
+
+      await saveRotaData();
+      renderDaysList();
+      updateEditorDaySelect();
+
+      showAlert('Day deleted successfully.', 'success');
+    };
+
+    // ============================================
+    // SETUP TAB - Positions Management
+    // ============================================
+
+    function renderPositionsList() {
+      const container = document.getElementById('positionsList');
+      
+      if (!rotaData.positions || rotaData.positions.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="bi bi-person-x"></i>
+            <h5>No Positions Added</h5>
+            <p>Add positions or load from a template to get started.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Group positions by category
+      const grouped = {};
+      CATEGORY_ORDER.forEach(cat => grouped[cat] = []);
+
+      rotaData.positions.forEach(pos => {
+        if (grouped[pos.category]) {
+          grouped[pos.category].push(pos);
+        }
+      });
+
+      let html = '';
+      CATEGORY_ORDER.forEach(category => {
+        if (grouped[category].length === 0) return;
+
+        html += `
+          <div class="category-section">
+            <div class="category-header">
+              <span>${category}</span>
+              <span class="badge bg-secondary">${grouped[category].length}</span>
+            </div>
+        `;
+
+        grouped[category].forEach(pos => {
+          const shiftBadges = [];
+          if (pos.shifts?.early) {
+            shiftBadges.push(`<span class="shift-badge shift-badge-early">Early ${pos.shifts.early.start}-${pos.shifts.early.end}</span>`);
+          }
+          if (pos.shifts?.late) {
+            shiftBadges.push(`<span class="shift-badge shift-badge-late">Late ${pos.shifts.late.start}-${pos.shifts.late.end}</span>`);
+          }
+          if (pos.shifts?.night) {
+            shiftBadges.push(`<span class="shift-badge shift-badge-night">Night ${pos.shifts.night.start}-${pos.shifts.night.end}</span>`);
+          }
+
+          html += `
+            <div class="position-item">
+              <div class="position-header">
+                <div>
+                  <div class="position-name">${pos.name}</div>
+                  <div class="position-details">${pos.crewSlots} crew slot${pos.crewSlots > 1 ? 's' : ''}</div>
+                  <div class="shift-times">${shiftBadges.join('')}</div>
+                </div>
+                <div>
+                  <button class="btn btn-outline-secondary btn-icon btn-sm" onclick="editPosition('${pos.id}')" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-outline-danger btn-icon btn-sm" onclick="deletePosition('${pos.id}')" title="Delete">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        html += '</div>';
+      });
+
+      container.innerHTML = html;
+    }
+
+    window.openAddPositionModal = function() {
+      document.getElementById('positionForm').reset();
+      document.getElementById('positionId').value = '';
+      document.getElementById('positionModalTitle').textContent = 'Add Position';
+      
+      // Reset shift checkboxes
+      document.getElementById('earlyShiftEnabled').checked = true;
+      document.getElementById('lateShiftEnabled').checked = true;
+      document.getElementById('nightShiftEnabled').checked = false;
+      
+      // Reset default times
+      document.getElementById('earlyStart').value = '08:00';
+      document.getElementById('earlyEnd').value = '16:30';
+      document.getElementById('lateStart').value = '16:30';
+      document.getElementById('lateEnd').value = '22:00';
+      document.getElementById('nightStart').value = '22:00';
+      document.getElementById('nightEnd').value = '08:00';
+
+      const modal = new bootstrap.Modal(document.getElementById('positionModal'));
+      modal.show();
+    };
+
+    window.editPosition = function(positionId) {
+      const pos = rotaData.positions.find(p => p.id === positionId);
+      if (!pos) return;
+
+      document.getElementById('positionId').value = positionId;
+      document.getElementById('positionModalTitle').textContent = 'Edit Position';
+      document.getElementById('positionName').value = pos.name;
+      document.getElementById('positionCategory').value = pos.category;
+      document.getElementById('positionCrewSlots').value = pos.crewSlots;
+
+      // Set shift checkboxes and times
+      const earlyEnabled = pos.shifts?.early !== null && pos.shifts?.early !== undefined;
+      const lateEnabled = pos.shifts?.late !== null && pos.shifts?.late !== undefined;
+      const nightEnabled = pos.shifts?.night !== null && pos.shifts?.night !== undefined;
+
+      document.getElementById('earlyShiftEnabled').checked = earlyEnabled;
+      document.getElementById('lateShiftEnabled').checked = lateEnabled;
+      document.getElementById('nightShiftEnabled').checked = nightEnabled;
+
+      if (earlyEnabled && pos.shifts.early) {
+        document.getElementById('earlyStart').value = pos.shifts.early.start;
+        document.getElementById('earlyEnd').value = pos.shifts.early.end;
+      }
+      if (lateEnabled && pos.shifts.late) {
+        document.getElementById('lateStart').value = pos.shifts.late.start;
+        document.getElementById('lateEnd').value = pos.shifts.late.end;
+      }
+      if (nightEnabled && pos.shifts.night) {
+        document.getElementById('nightStart').value = pos.shifts.night.start;
+        document.getElementById('nightEnd').value = pos.shifts.night.end;
+      }
+
+      const modal = new bootstrap.Modal(document.getElementById('positionModal'));
+      modal.show();
+    };
+
+    window.savePosition = async function() {
+      const positionId = document.getElementById('positionId').value;
+      const name = document.getElementById('positionName').value.trim();
+      const category = document.getElementById('positionCategory').value;
+      const crewSlots = parseInt(document.getElementById('positionCrewSlots').value);
+
+      if (!name || !category) {
+        showAlert('Please fill in all required fields.', 'warning');
+        return;
+      }
+
+      // Build shifts object
+      const shifts = {};
+      
+      if (document.getElementById('earlyShiftEnabled').checked) {
+        shifts.early = {
+          start: document.getElementById('earlyStart').value,
+          end: document.getElementById('earlyEnd').value
+        };
+      } else {
+        shifts.early = null;
+      }
+
+      if (document.getElementById('lateShiftEnabled').checked) {
+        shifts.late = {
+          start: document.getElementById('lateStart').value,
+          end: document.getElementById('lateEnd').value
+        };
+      } else {
+        shifts.late = null;
+      }
+
+      if (document.getElementById('nightShiftEnabled').checked) {
+        shifts.night = {
+          start: document.getElementById('nightStart').value,
+          end: document.getElementById('nightEnd').value
+        };
+      } else {
+        shifts.night = null;
+      }
+
+      // Check at least one shift is enabled
+      if (!shifts.early && !shifts.late && !shifts.night) {
+        showAlert('Please enable at least one shift type.', 'warning');
+        return;
+      }
+
+      if (positionId) {
+        // Edit existing position
+        const posIndex = rotaData.positions.findIndex(p => p.id === positionId);
+        if (posIndex !== -1) {
+          rotaData.positions[posIndex] = {
+            ...rotaData.positions[posIndex],
+            name,
+            category,
+            crewSlots,
+            shifts
+          };
+        }
+      } else {
+        // Add new position
+        const newPosition = {
+          id: 'pos_' + Date.now(),
+          name,
+          category,
+          crewSlots,
+          shifts
+        };
+        rotaData.positions.push(newPosition);
+      }
+
+      await saveRotaData();
+      renderPositionsList();
+
+      const modal = bootstrap.Modal.getInstance(document.getElementById('positionModal'));
+      modal.hide();
+
+      showAlert(positionId ? 'Position updated successfully.' : 'Position added successfully.', 'success');
+    };
+
+    window.deletePosition = async function(positionId) {
+      if (!confirm('Are you sure you want to delete this position? Any crew assignments for this position will be lost.')) {
+        return;
+      }
+
+      // Remove position
+      rotaData.positions = rotaData.positions.filter(p => p.id !== positionId);
+
+      // Remove assignments for this position
+      const keysToRemove = Object.keys(rotaData.assignments).filter(key => key.includes('_' + positionId + '_'));
+      keysToRemove.forEach(key => delete rotaData.assignments[key]);
+
+      await saveRotaData();
+      renderPositionsList();
+
+      showAlert('Position deleted successfully.', 'success');
+    };
+
+    // ============================================
+    // EDITOR TAB
+    // ============================================
+
+    function renderEditorTab() {
+      updateEditorDaySelect();
+      
+      if (currentEditorDay) {
+        loadEditorForDay();
+      }
+    }
+
+    function updateEditorDaySelect() {
+      const select = document.getElementById('editorDaySelect');
+      
+      if (!rotaData.days || rotaData.days.length === 0) {
+        select.innerHTML = '<option value="">No days available</option>';
+        document.getElementById('cloneDayBtn').disabled = true;
+        return;
+      }
+
+      // Sort days by date
+      const sortedDays = [...rotaData.days].sort((a, b) => {
+        const dateA = parseUKDate(a.date);
+        const dateB = parseUKDate(b.date);
+        return dateA - dateB;
+      });
+
+      let html = '<option value="">Select a day...</option>';
+      sortedDays.forEach(day => {
+        html += `<option value="${day.id}">${day.dayName} ${day.date}</option>`;
+      });
+
+      select.innerHTML = html;
+
+      // Restore selection if valid
+      if (currentEditorDay && rotaData.days.some(d => d.id === currentEditorDay)) {
+        select.value = currentEditorDay;
+      }
+    }
+
+    window.loadEditorForDay = function() {
+      const dayId = document.getElementById('editorDaySelect').value;
+      
+      if (!dayId) {
+        document.getElementById('editorContent').innerHTML = `
+          <div class="empty-state">
+            <i class="bi bi-calendar-x"></i>
+            <h5>No Day Selected</h5>
+            <p>Select a day from the dropdown above to start editing the rota.</p>
+          </div>
+        `;
+        document.getElementById('cloneDayBtn').disabled = true;
+        return;
+      }
+
+      currentEditorDay = dayId;
+      document.getElementById('cloneDayBtn').disabled = false;
+      
+      renderEditorContent();
+    };
+
+    window.navigateDay = function(direction) {
+      const select = document.getElementById('editorDaySelect');
+      const options = Array.from(select.options).filter(o => o.value);
+      const currentIndex = options.findIndex(o => o.value === select.value);
+      
+      const newIndex = currentIndex + direction;
+      if (newIndex >= 0 && newIndex < options.length) {
+        select.value = options[newIndex].value;
+        loadEditorForDay();
+      }
+    };
+
+    window.selectShift = function(shift) {
+      currentShift = shift;
+      
+      document.querySelectorAll('.shift-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.shift === shift);
+      });
+
+      renderEditorContent();
+    };
+
+    window.filterEditorBySection = function() {
+      renderEditorContent();
+    };
+
+    function renderEditorContent() {
+      const container = document.getElementById('editorContent');
+      const sectionFilter = document.getElementById('sectionFilter').value;
+
+      if (!currentEditorDay || !rotaData.positions || rotaData.positions.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="bi bi-person-x"></i>
+            <h5>No Positions</h5>
+            <p>Add positions in the Setup tab first.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Filter positions that have this shift type
+      let positions = rotaData.positions.filter(pos => pos.shifts && pos.shifts[currentShift]);
+
+      // Apply section filter
+      if (sectionFilter !== 'all') {
+        positions = positions.filter(pos => pos.category === sectionFilter);
+      }
+
+      if (positions.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="bi bi-calendar-x"></i>
+            <h5>No Positions for ${currentShift.charAt(0).toUpperCase() + currentShift.slice(1)} Shift</h5>
+            <p>No positions are configured for this shift type${sectionFilter !== 'all' ? ' in this section' : ''}.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Group by category
+      const grouped = {};
+      CATEGORY_ORDER.forEach(cat => grouped[cat] = []);
+      positions.forEach(pos => {
+        if (grouped[pos.category]) {
+          grouped[pos.category].push(pos);
+        }
+      });
+
+      let html = '';
+      CATEGORY_ORDER.forEach(category => {
+        if (grouped[category].length === 0) return;
+
+        html += `
+          <div class="category-section">
+            <div class="category-header">
+              <span>${category}</span>
+            </div>
+            <div class="row">
+        `;
+
+        grouped[category].forEach(pos => {
+          const shiftTimes = pos.shifts[currentShift];
+          const assignmentKey = `${currentEditorDay}_${pos.id}_${currentShift}`;
+          const assignment = rotaData.assignments[assignmentKey] || { crew1: null, crew2: null };
+
+          html += `
+            <div class="col-md-6 mb-3">
+              <div class="position-card ${CATEGORY_CARD_CLASSES[category] || ''}">
+                <div class="card-header">
+                  <div>
+                    <div class="position-title">${pos.name}</div>
+                    <div class="position-time">${shiftTimes.start} - ${shiftTimes.end}</div>
+                  </div>
+                </div>
+                <div class="crew-selects">
+                  <div class="crew-select-row">
+                    <span class="crew-label">Crew 1:</span>
+                    <select class="form-select crew-select" onchange="updateAssignment('${assignmentKey}', 'crew1', this.value)">
+                      <option value="">-- Select --</option>
+                      ${selectedCrewList.map(crew => `
+                        <option value="${crew.id}" ${assignment.crew1 === crew.id ? 'selected' : ''}>
+                          ${crew.displayName}
+                        </option>
+                      `).join('')}
+                    </select>
+                  </div>
+                  ${pos.crewSlots >= 2 ? `
+                    <div class="crew-select-row">
+                      <span class="crew-label">Crew 2:</span>
+                      <select class="form-select crew-select" onchange="updateAssignment('${assignmentKey}', 'crew2', this.value)">
+                        <option value="">-- Select --</option>
+                        ${selectedCrewList.map(crew => `
+                          <option value="${crew.id}" ${assignment.crew2 === crew.id ? 'selected' : ''}>
+                            ${crew.displayName}
+                          </option>
+                        `).join('')}
+                      </select>
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        html += '</div></div>';
+      });
+
+      container.innerHTML = html;
+    }
+
+    window.updateAssignment = async function(key, crewSlot, userId) {
+      if (!rotaData.assignments[key]) {
+        rotaData.assignments[key] = { crew1: null, crew2: null };
+      }
+
+      rotaData.assignments[key][crewSlot] = userId || null;
+
+      await saveRotaData();
+    };
+
+    // ============================================
+    // CLONE DAY
+    // ============================================
+
+    window.openCloneDayModal = function() {
+      if (!currentEditorDay) {
+        showAlert('Please select a day first.', 'warning');
+        return;
+      }
+
+      const sourceDay = rotaData.days.find(d => d.id === currentEditorDay);
+      if (!sourceDay) return;
+
+      document.getElementById('cloneSourceDay').textContent = `${sourceDay.dayName} ${sourceDay.date}`;
+
+      // Build list of other days
+      const otherDays = rotaData.days.filter(d => d.id !== currentEditorDay);
+      
+      if (otherDays.length === 0) {
+        document.getElementById('cloneDaysList').innerHTML = `
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No other days to clone to. Add more days in the Setup tab.
+          </div>
+        `;
+      } else {
+        // Sort by date
+        const sortedDays = otherDays.sort((a, b) => parseUKDate(a.date) - parseUKDate(b.date));
+        
+        let html = '';
+        sortedDays.forEach(day => {
+          html += `
+            <div class="clone-day-item">
+              <div class="form-check">
+                <input class="form-check-input clone-day-checkbox" type="checkbox" value="${day.id}" id="clone-${day.id}">
+                <label class="form-check-label" for="clone-${day.id}">
+                  ${day.dayName}
+                  <span class="day-date-small">${day.date}</span>
+                </label>
+              </div>
+            </div>
+          `;
+        });
+        document.getElementById('cloneDaysList').innerHTML = html;
+      }
+
+      const modal = new bootstrap.Modal(document.getElementById('cloneDayModal'));
+      modal.show();
+    };
+
+    window.confirmCloneDay = async function() {
+      const selectedDays = Array.from(document.querySelectorAll('.clone-day-checkbox:checked')).map(cb => cb.value);
+      
+      if (selectedDays.length === 0) {
+        showAlert('Please select at least one day to clone to.', 'warning');
+        return;
+      }
+
+      // Note: We're cloning structure only, not assignments
+      // The positions structure is already shared across all days
+      // This clone function would be more relevant if we had day-specific position configurations
+      // For now, we can use it to clear/reset assignments for selected days
+
+      showAlert(`Day structure is shared across all days. Positions are already available for all days.`, 'info');
+
+      const modal = bootstrap.Modal.getInstance(document.getElementById('cloneDayModal'));
+      modal.hide();
+    };
+
+    // ============================================
+    // TEMPLATES
+    // ============================================
+
+    async function loadTemplates() {
+      const container = document.getElementById('templatesList');
+      
+      try {
+        const templatesQuery = query(collection(db, 'rotaTemplates'), orderBy('createdAt', 'desc'));
+        const templatesSnapshot = await getDocs(templatesQuery);
+
+        if (templatesSnapshot.empty) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="bi bi-files"></i>
+              <h5>No Templates</h5>
+              <p>Save your current rota as a template to reuse it in future events.</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<div class="list-group">';
+        templatesSnapshot.forEach(templateDoc => {
+          const template = templateDoc.data();
+          const positionCount = template.positions?.length || 0;
+          const createdDate = template.createdAt?.toDate?.() 
+            ? template.createdAt.toDate().toLocaleDateString('en-GB')
+            : 'Unknown';
+
+          html += `
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="mb-1">${template.name}</h6>
+                <small class="text-muted">${positionCount} positions • Created ${createdDate}</small>
+              </div>
+              <div>
+                <button class="btn btn-outline-primary btn-sm me-2" onclick="loadTemplate('${templateDoc.id}')">
+                  <i class="bi bi-download"></i> Load
+                </button>
+                <button class="btn btn-outline-danger btn-sm" onclick="deleteTemplate('${templateDoc.id}')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        });
+        html += '</div>';
+
+        container.innerHTML = html;
+
+      } catch (error) {
+        console.error('Error loading templates:', error);
+        container.innerHTML = `
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle"></i> Error loading templates: ${error.message}
+          </div>
+        `;
+      }
+    }
+
+    window.saveAsTemplate = function() {
+      if (!rotaData.positions || rotaData.positions.length === 0) {
+        showAlert('No positions to save. Add positions first.', 'warning');
+        return;
+      }
+
+      document.getElementById('templateName').value = '';
+      const modal = new bootstrap.Modal(document.getElementById('saveTemplateModal'));
+      modal.show();
+    };
+
+    window.confirmSaveTemplate = async function() {
+      const name = document.getElementById('templateName').value.trim();
+      
+      if (!name) {
+        showAlert('Please enter a template name.', 'warning');
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, 'rotaTemplates'), {
+          name: name,
+          positions: rotaData.positions,
+          createdBy: currentUser.uid,
+          createdAt: serverTimestamp()
+        });
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('saveTemplateModal'));
+        modal.hide();
+
+        showAlert('Template saved successfully!', 'success');
+        loadTemplates();
+
+      } catch (error) {
+        console.error('Error saving template:', error);
+        showAlert('Error saving template: ' + error.message, 'danger');
+      }
+    };
+
+    window.loadTemplate = async function(templateId) {
+      if (rotaData.positions && rotaData.positions.length > 0) {
+        if (!confirm('This will replace all existing positions. Continue?')) {
+          return;
+        }
+      }
+
+      try {
+        const templateDoc = await getDoc(doc(db, 'rotaTemplates', templateId));
+        
+        if (!templateDoc.exists()) {
+          showAlert('Template not found.', 'danger');
+          return;
+        }
+
+        const template = templateDoc.data();
+        
+        // Copy positions with new IDs
+        rotaData.positions = template.positions.map(pos => ({
+          ...pos,
+          id: 'pos_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+        }));
+
+        // Clear all assignments since position IDs changed
+        rotaData.assignments = {};
+
+        await saveRotaData();
+
+        showAlert(`Loaded ${rotaData.positions.length} positions from template.`, 'success');
+        renderPositionsList();
+
+        // Close modal if open
+        const modal = bootstrap.Modal.getInstance(document.getElementById('loadTemplateModal'));
+        if (modal) modal.hide();
+
+      } catch (error) {
+        console.error('Error loading template:', error);
+        showAlert('Error loading template: ' + error.message, 'danger');
+      }
+    };
+
+    window.deleteTemplate = async function(templateId) {
+      if (!confirm('Are you sure you want to delete this template?')) {
+        return;
+      }
+
+      try {
+        await deleteDoc(doc(db, 'rotaTemplates', templateId));
+        showAlert('Template deleted.', 'success');
+        loadTemplates();
+      } catch (error) {
+        console.error('Error deleting template:', error);
+        showAlert('Error deleting template: ' + error.message, 'danger');
+      }
+    };
+
+    window.openLoadTemplateModal = async function() {
+      const container = document.getElementById('loadTemplateList');
+      container.innerHTML = `
+        <div class="loading-state">
+          <div class="spinner-border text-primary" role="status"></div>
+        </div>
+      `;
+
+      const modal = new bootstrap.Modal(document.getElementById('loadTemplateModal'));
+      modal.show();
+
+      try {
+        const templatesQuery = query(collection(db, 'rotaTemplates'), orderBy('createdAt', 'desc'));
+        const templatesSnapshot = await getDocs(templatesQuery);
+
+        if (templatesSnapshot.empty) {
+          container.innerHTML = `
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle"></i> No templates available. Save a template first.
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<div class="list-group">';
+        templatesSnapshot.forEach(templateDoc => {
+          const template = templateDoc.data();
+          html += `
+            <button type="button" class="list-group-item list-group-item-action" onclick="loadTemplate('${templateDoc.id}')">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 class="mb-1">${template.name}</h6>
+                  <small class="text-muted">${template.positions?.length || 0} positions</small>
+                </div>
+                <i class="bi bi-chevron-right"></i>
+              </div>
+            </button>
+          `;
+        });
+        html += '</div>';
+
+        container.innerHTML = html;
+
+      } catch (error) {
+        container.innerHTML = `
+          <div class="alert alert-danger">Error loading templates: ${error.message}</div>
+        `;
+      }
+    };
+
+    window.openCloneFromEventModal = async function() {
+      const container = document.getElementById('cloneFromEventList');
+      container.innerHTML = `
+        <div class="loading-state">
+          <div class="spinner-border text-primary" role="status"></div>
+        </div>
+      `;
+
+      const modal = new bootstrap.Modal(document.getElementById('cloneFromEventModal'));
+      modal.show();
+
+      try {
+        // Get all events with rotas
+        const eventsQuery = query(collection(db, 'events'), orderBy('startDate', 'desc'));
+        const eventsSnapshot = await getDocs(eventsQuery);
+
+        const eventsWithRotas = [];
+
+        for (const eventDoc of eventsSnapshot.docs) {
+          if (eventDoc.id === eventId) continue; // Skip current event
+
+          const rotaDoc = await getDoc(doc(db, 'eventRotas', eventDoc.id));
+          if (rotaDoc.exists() && rotaDoc.data().positions?.length > 0) {
+            eventsWithRotas.push({
+              id: eventDoc.id,
+              name: eventDoc.data().name,
+              positionCount: rotaDoc.data().positions.length
+            });
+          }
+        }
+
+        if (eventsWithRotas.length === 0) {
+          container.innerHTML = `
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle"></i> No other events with rotas found.
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<div class="list-group">';
+        eventsWithRotas.forEach(event => {
+          html += `
+            <button type="button" class="list-group-item list-group-item-action" onclick="cloneFromEvent('${event.id}')">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 class="mb-1">${event.name}</h6>
+                  <small class="text-muted">${event.positionCount} positions</small>
+                </div>
+                <i class="bi bi-chevron-right"></i>
+              </div>
+            </button>
+          `;
+        });
+        html += '</div>';
+
+        container.innerHTML = html;
+
+      } catch (error) {
+        container.innerHTML = `
+          <div class="alert alert-danger">Error loading events: ${error.message}</div>
+        `;
+      }
+    };
+
+    window.cloneFromEvent = async function(sourceEventId) {
+      if (rotaData.positions && rotaData.positions.length > 0) {
+        if (!confirm('This will replace all existing positions. Continue?')) {
+          return;
+        }
+      }
+
+      try {
+        const sourceRotaDoc = await getDoc(doc(db, 'eventRotas', sourceEventId));
+        
+        if (!sourceRotaDoc.exists()) {
+          showAlert('Source rota not found.', 'danger');
+          return;
+        }
+
+        const sourceRota = sourceRotaDoc.data();
+        
+        // Copy positions with new IDs
+        rotaData.positions = sourceRota.positions.map(pos => ({
+          ...pos,
+          id: 'pos_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+        }));
+
+        // Clear assignments
+        rotaData.assignments = {};
+
+        await saveRotaData();
+
+        showAlert(`Cloned ${rotaData.positions.length} positions from event.`, 'success');
+        renderPositionsList();
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('cloneFromEventModal'));
+        if (modal) modal.hide();
+
+      } catch (error) {
+        console.error('Error cloning from event:', error);
+        showAlert('Error cloning: ' + error.message, 'danger');
+      }
+    };
+
+    // ============================================
+    // UTILITIES
+    // ============================================
+
+    function showAlert(message, type = 'info') {
+      const container = document.getElementById('alertContainer');
+      const alert = document.createElement('div');
+      alert.className = `alert alert-${type} alert-dismissible fade show`;
+      alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      `;
+      
+      container.appendChild(alert);
+      
+      setTimeout(() => {
+        alert.classList.remove('show');
+        setTimeout(() => alert.remove(), 150);
+      }, 5000);
+    }
+
+    function setupEventListeners() {
+      // Day date input - auto-fill day name
+      document.getElementById('dayDate').addEventListener('change', function() {
+        if (this.value) {
+          const date = new Date(this.value);
+          document.getElementById('dayName').value = getDayName(date);
+        }
+      });
+
+      // Shift checkbox toggles
+      ['early', 'late', 'night'].forEach(shift => {
+        const checkbox = document.getElementById(`${shift}ShiftEnabled`);
+        const timesDiv = document.getElementById(`${shift}ShiftTimes`);
+        
+        checkbox?.addEventListener('change', function() {
+          timesDiv.style.opacity = this.checked ? '1' : '0.5';
+          timesDiv.querySelectorAll('input').forEach(input => {
+            input.disabled = !this.checked;
+          });
+        });
+      });
+
+      // Logout
+      document.getElementById('logoutLink').addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+          await signOut(auth);
+          window.location.href = 'index.html';
+        } catch (error) {
+          showAlert('Logout failed: ' + error.message, 'danger');
+        }
+      });
+    }
+
+    // Check admin status
+    async function checkAdminStatus() {
+      try {
+        if (!currentUser) return false;
+        
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        
+        if (!userDoc.exists()) return false;
+        
+        isAdmin = userDoc.data().isAdmin === true;
+        
+        if (!isAdmin) {
+          window.location.href = 'dashboard.html';
+        }
+        
+        return isAdmin;
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        return false;
+      }
+    }
+
+    // Auth state listener
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        const isUserAdmin = await checkAdminStatus();
+        
+        if (isUserAdmin) {
+          await init();
+        }
+      } else {
+        window.location.href = 'index.html';
+      }
+    });
+  </script>
+</body>
+</html>
