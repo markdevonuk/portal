@@ -37,16 +37,12 @@
       transform: translateY(-2px); 
       box-shadow: 0 5px 15px rgba(0,168,150,.4); 
     }
-    .form-control:focus { 
-      border-color: #00a896; 
-      box-shadow: 0 0 0 0.2rem rgba(0,168,150,.25); 
-    }
     .event-card {
       background: #fff;
       border-radius: 15px;
       box-shadow: 0 5px 20px rgba(0,0,0,.08);
       padding: 25px;
-      margin-bottom: 25px;
+      height: 100%;
       transition: transform .3s;
     }
     .event-card:hover {
@@ -60,32 +56,45 @@
     .event-location {
       color: #495057;
       font-size: 0.95rem;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
     }
     .event-icon {
-      font-size: 2.5rem;
+      font-size: 2rem;
       color: #00a896;
+      margin-bottom: 10px;
+    }
+    .event-description {
+      color: #6c757d;
+      font-size: 0.9rem;
       margin-bottom: 15px;
+    }
+    .section-divider {
+      border-top: 2px solid #f0f0f0;
+      margin: 30px 0;
+      padding-top: 10px;
+    }
+    .hidden { display: none !important; }
+    .selected-badge {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: #28a745;
+      color: #fff;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
     }
     .volunteered-badge {
       position: absolute;
       top: 15px;
       right: 15px;
-      background-color: #28a745;
-      color: white;
-      padding: 5px 10px;
-      border-radius: 12px;
-      font-size: 0.8rem;
-    }
-    .selected-badge {
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      background-color: #ffc107;
+      background: #ffc107;
       color: #212529;
-      padding: 5px 10px;
-      border-radius: 12px;
+      padding: 5px 12px;
+      border-radius: 20px;
       font-size: 0.8rem;
+      font-weight: 600;
     }
     .btn-loading { position: relative; pointer-events: none; opacity: .7; }
     .btn-loading::after { 
@@ -94,16 +103,6 @@
       border-top-color:transparent; animation:spinner .6s linear infinite; 
     }
     @keyframes spinner { to { transform: rotate(360deg); } }
-    .section-divider {
-      border-top: 2px solid #f0f0f0;
-      margin: 30px 0;
-      padding-top: 10px;
-    }
-    .hidden { display: none !important; }
-    .event-description {
-      margin-bottom: 20px;
-      color: #495057;
-    }
     
     /* Team badge styling */
     .team-badge {
@@ -125,10 +124,39 @@
 
     .event-teams {
       margin-top: 8px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     .event-teams-label {
+      font-size: 0.85rem;
+      color: #6c757d;
+      margin-right: 0.5rem;
+    }
+    
+    /* Team Leader badge styling */
+    .leader-badge {
+      display: inline-block;
+      padding: 0.3em 0.6em;
+      font-size: 80%;
+      font-weight: 600;
+      line-height: 1;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: baseline;
+      border-radius: 0.25rem;
+      background-color: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffc107;
+      margin-right: 0.3em;
+      margin-bottom: 0.3em;
+    }
+
+    .event-leaders {
+      margin-top: 8px;
+      margin-bottom: 10px;
+    }
+
+    .event-leaders-label {
       font-size: 0.85rem;
       color: #6c757d;
       margin-right: 0.5rem;
@@ -144,13 +172,6 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto">
-         
-          <!-- Admin-only link -->
-          <li class="nav-item admin-only hidden">
-            <a class="nav-link" href="admin.html">
-              <i class="bi bi-gear"></i> Admin
-            </a>
-          </li>
           <li class="nav-item">
             <a class="nav-link" href="dashboard.html">
               <i class="bi bi-house-fill"></i> Dashboard
@@ -225,65 +246,45 @@
 
   <!-- Volunteer Modal -->
   <div class="modal fade" id="volunteerModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Volunteer for Event</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <div id="volunteerEventDetails">
-            <h4 id="volunteerEventName"></h4>
-            <div id="volunteerEventTeams" class="event-teams"></div>
-            <div class="mb-3">
-              <i class="bi bi-geo-alt"></i> <span id="volunteerEventLocation"></span>
-            </div>
-            <div class="mb-3">
-              <i class="bi bi-calendar-date"></i> <span id="volunteerEventDates"></span>
-            </div>
-            <p id="volunteerEventDescription" class="mb-4"></p>
-            
-            <div class="alert alert-info">
-              <i class="bi bi-info-circle"></i> 
-              <strong>Volunteering Information:</strong> By volunteering, you agree to be available for the entire event duration if selected. The team leaders will review all volunteer applications.
-            </div>
+          <p>You are volunteering for: <strong id="volunteerEventName"></strong></p>
+          <div class="mb-3">
+            <label for="volunteerNotes" class="form-label">Notes (optional)</label>
+            <textarea class="form-control" id="volunteerNotes" rows="3" placeholder="Add any notes or comments..."></textarea>
           </div>
-          
-          <form id="volunteerForm">
-            <input type="hidden" id="volunteerEventId">
-            
-            <div class="mb-3">
-              <label for="volunteerNotes" class="form-label">Additional notes (optional):</label>
-              <textarea class="form-control" id="volunteerNotes" rows="3" placeholder="Any specific requirements or information"></textarea>
-            </div>
-          </form>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
           <button type="button" class="btn btn-primary" id="confirmVolunteerBtn">
-            <i class="bi bi-check-circle"></i> Confirm Volunteer Registration
+            <i class="bi bi-check-circle"></i> Confirm Volunteer
           </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Cancel Volunteering Modal -->
-  <div class="modal fade" id="cancelVolunteerModal" tabindex="-1" aria-hidden="true">
+  <!-- Withdraw Modal -->
+  <div class="modal fade" id="withdrawModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Cancel Volunteering</h5>
+          <h5 class="modal-title">Withdraw from Event</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <p>Are you sure you want to cancel your volunteering for <strong id="cancelEventName"></strong>?</p>
-          <p class="text-danger">You cannot cancel within 4 weeks of the event date. Please contact prehospital@festival-medical.org urgently to discuss your issues.</p>
+          <p>Are you sure you want to withdraw from <strong id="withdrawEventName"></strong>?</p>
+          <p class="text-muted">This will remove you from the volunteer list for this event.</p>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep My Volunteering</button>
-          <button type="button" class="btn btn-danger" id="confirmCancelBtn">
-            <i class="bi bi-x-circle"></i> Confirm Cancellation
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmWithdrawBtn">
+            <i class="bi bi-x-circle"></i> Confirm Withdraw
           </button>
         </div>
       </div>
@@ -301,14 +302,11 @@
       doc, 
       getDoc,
       getDocs,
-      setDoc,
       addDoc,
       deleteDoc,
-      updateDoc,
       query,
       where,
       orderBy,
-      Timestamp,
       serverTimestamp 
     } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
     import { firebaseConfig } from './firebase-config.js';
@@ -320,33 +318,24 @@
 
     // DOM Elements
     const myEventsList = document.getElementById('myEventsList');
-    const loadingMyEvents = document.getElementById('loadingMyEvents');
-    const noEventsMessage = document.getElementById('noEventsMessage');
     const availableEventsList = document.getElementById('availableEventsList');
+    const loadingMyEvents = document.getElementById('loadingMyEvents');
     const loadingAvailableEvents = document.getElementById('loadingAvailableEvents');
+    const noEventsMessage = document.getElementById('noEventsMessage');
     const noAvailableEventsMessage = document.getElementById('noAvailableEventsMessage');
     const logoutLink = document.getElementById('logoutLink');
     const alertContainer = document.getElementById('alertContainer');
     const confirmVolunteerBtn = document.getElementById('confirmVolunteerBtn');
-    const confirmCancelBtn = document.getElementById('confirmCancelBtn');
-
-    // Current user info
+    const confirmWithdrawBtn = document.getElementById('confirmWithdrawBtn');
+    
+    // Current user and data
     let currentUser = null;
-    let userProfile = null;
-    let isAdmin = false;
-    let availableTeams = []; // Store loaded teams
-
-    // Helper Functions
-    function setButtonLoading(buttonElement, isLoading) {
-      if (isLoading) {
-        buttonElement.classList.add('btn-loading');
-        buttonElement.disabled = true;
-      } else {
-        buttonElement.classList.remove('btn-loading');
-        buttonElement.disabled = false;
-      }
-    }
-
+    let currentEventId = null;
+    let currentVolunteerId = null;
+    let availableTeams = [];
+    let allUsers = []; // Store all users for leader name lookup
+    
+    // Helper functions
     function showAlert(message, type = 'info') {
       const alert = document.createElement('div');
       alert.className = `alert alert-${type} alert-dismissible fade show`;
@@ -357,16 +346,23 @@
       
       alertContainer.appendChild(alert);
       
-      // Auto dismiss after 5 seconds
       setTimeout(() => {
         alert.classList.remove('show');
         setTimeout(() => alert.remove(), 150);
       }, 5000);
     }
 
-    function formatDate(dateString) {
-      if (!dateString) return '';
-      const date = new Date(dateString);
+    function setButtonLoading(buttonElement, isLoading) {
+      if (isLoading) {
+        buttonElement.classList.add('btn-loading');
+        buttonElement.disabled = true;
+      } else {
+        buttonElement.classList.remove('btn-loading');
+        buttonElement.disabled = false;
+      }
+    }
+
+    function formatDate(date) {
       return date.toLocaleDateString('en-GB', { 
         day: 'numeric', 
         month: 'long', 
@@ -374,7 +370,7 @@
       });
     }
 
-    // Get team names from IDs (for display)
+    // Get team names from IDs
     function getTeamNames(teamIds) {
       if (!teamIds || !Array.isArray(teamIds)) return [];
       
@@ -399,6 +395,52 @@
       `;
     }
 
+    // Load all users for leader name lookup
+    async function loadAllUsers() {
+      try {
+        const usersRef = collection(db, 'users');
+        const usersSnapshot = await getDocs(usersRef);
+        
+        allUsers = [];
+        usersSnapshot.forEach(userDoc => {
+          const userData = userDoc.data();
+          allUsers.push({
+            id: userDoc.id,
+            firstName: userData.firstName || '',
+            surname: userData.surname || '',
+            name: `${userData.firstName || ''} ${userData.surname || ''}`.trim()
+          });
+        });
+      } catch (error) {
+        console.error('Error loading users:', error);
+      }
+    }
+
+    // Get leader names from IDs
+    function getLeaderNames(leaderIds) {
+      if (!leaderIds || !Array.isArray(leaderIds)) return [];
+      
+      return leaderIds.map(leaderId => {
+        const user = allUsers.find(u => u.id === leaderId);
+        return user ? user.name : null;
+      }).filter(name => name !== null);
+    }
+
+    // Build leader badges HTML
+    function buildLeaderBadgesHtml(assignedLeaders) {
+      if (!assignedLeaders || assignedLeaders.length === 0) return '';
+      
+      const leaderNames = getLeaderNames(assignedLeaders);
+      if (leaderNames.length === 0) return '';
+      
+      return `
+        <div class="event-leaders">
+          <span class="event-leaders-label"><i class="bi bi-person-badge-fill"></i> Team Leaders:</span>
+          ${leaderNames.map(name => `<span class="leader-badge">${name}</span>`).join('')}
+        </div>
+      `;
+    }
+
     // Load Events
     async function loadEvents() {
       try {
@@ -410,6 +452,9 @@
         } catch (err) {
           console.warn('Could not load teams:', err);
         }
+        
+        // Load all users (needed for displaying leader names)
+        await loadAllUsers();
         
         await loadMyEvents();
         await loadAvailableEvents();
@@ -458,7 +503,8 @@
               volunteerStatus: volunteerData.selected ? 'selected' : 'volunteered',
               volunteeredAt: volunteerData.volunteeredAt,
               selectedAt: volunteerData.selectedAt,
-              notes: volunteerData.notes || ''
+              notes: volunteerData.notes || '',
+              volunteerId: volunteerDoc.id
             });
           }
         }
@@ -485,6 +531,9 @@
           // Build team badges HTML
           const teamBadgesHtml = buildTeamBadgesHtml(event.requiredTeams);
           
+          // Build leader badges HTML
+          const leaderBadgesHtml = buildLeaderBadgesHtml(event.assignedLeaders);
+          
           const eventCard = document.createElement('div');
           eventCard.className = 'col-md-6 mb-4';
           
@@ -501,6 +550,7 @@
                 </div>
               </div>
               ${teamBadgesHtml}
+              ${leaderBadgesHtml}
               <div class="event-location">
                 <i class="bi bi-geo-alt"></i> ${event.location || 'Location TBD'}
               </div>
@@ -512,15 +562,12 @@
               
               <div class="d-flex justify-content-between align-items-center">
                 ${event.website ? `
-                  <a href="${event.website}" target="_blank" class="btn btn-sm btn-outline-primary">
-                    <i class="bi bi-link-45deg"></i> Visit Website
+                  <a href="${event.website}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-link-45deg"></i> Event Website
                   </a>
-                ` : `
-                  <span></span>
-                `}
-                
-                <button class="btn btn-sm btn-outline-danger cancel-volunteer-btn" data-event-id="${event.id}" data-event-name="${event.name}">
-                  <i class="bi bi-x-circle"></i> Cancel Volunteering
+                ` : '<div></div>'}
+                <button class="btn btn-outline-danger btn-sm withdraw-btn" data-event-id="${event.id}" data-event-name="${event.name}" data-volunteer-id="${event.volunteerId}">
+                  <i class="bi bi-x-circle"></i> Withdraw
                 </button>
               </div>
             </div>
@@ -529,10 +576,15 @@
           myEventsList.appendChild(eventCard);
         });
         
-        // Add event listeners to cancel buttons
-        document.querySelectorAll('.cancel-volunteer-btn').forEach(button => {
+        // Add event listeners for withdraw buttons
+        document.querySelectorAll('.withdraw-btn').forEach(button => {
           button.addEventListener('click', () => {
-            openCancelModal(button.dataset.eventId, button.dataset.eventName);
+            currentEventId = button.dataset.eventId;
+            currentVolunteerId = button.dataset.volunteerId;
+            document.getElementById('withdrawEventName').textContent = button.dataset.eventName;
+            
+            const modal = new bootstrap.Modal(document.getElementById('withdrawModal'));
+            modal.show();
           });
         });
         
@@ -545,7 +597,7 @@
       }
     }
 
-    // Load available events the user hasn't volunteered for
+    // Load available events
     async function loadAvailableEvents() {
       try {
         loadingAvailableEvents.classList.remove('hidden');
@@ -553,7 +605,12 @@
         noAvailableEventsMessage.classList.add('hidden');
         
         // Get all events
-        const eventsSnapshot = await getDocs(collection(db, 'events'));
+        const eventsQuery = query(
+          collection(db, 'events'),
+          orderBy('startDate', 'asc')
+        );
+        
+        const eventsSnapshot = await getDocs(eventsQuery);
         
         // Get events the user has already volunteered for
         const volunteerQuery = query(
@@ -562,9 +619,13 @@
         );
         
         const volunteerSnapshot = await getDocs(volunteerQuery);
-        const volunteeredEventIds = volunteerSnapshot.docs.map(doc => doc.data().eventId);
+        const volunteeredEventIds = new Set();
         
-        // Filter events to only include those the user hasn't volunteered for
+        volunteerSnapshot.forEach(doc => {
+          volunteeredEventIds.add(doc.data().eventId);
+        });
+        
+        // Filter to only show events the user hasn't volunteered for
         // and that haven't ended yet
         const now = new Date();
         const availableEvents = [];
@@ -573,12 +634,12 @@
           const event = eventDoc.data();
           const eventId = eventDoc.id;
           
-          // Skip events the user has already volunteered for
-          if (volunteeredEventIds.includes(eventId)) {
+          // Skip if already volunteered
+          if (volunteeredEventIds.has(eventId)) {
             return;
           }
           
-          // Skip events that have already ended
+          // Skip if event has ended
           const endDate = event.endDate?.toDate ? event.endDate.toDate() : null;
           if (endDate && endDate < now) {
             return;
@@ -612,6 +673,9 @@
           // Build team badges HTML
           const teamBadgesHtml = buildTeamBadgesHtml(event.requiredTeams);
           
+          // Build leader badges HTML
+          const leaderBadgesHtml = buildLeaderBadgesHtml(event.assignedLeaders);
+          
           const eventCard = document.createElement('div');
           eventCard.className = 'col-md-6 mb-4';
           
@@ -624,6 +688,7 @@
                 </div>
               </div>
               ${teamBadgesHtml}
+              ${leaderBadgesHtml}
               <div class="event-location">
                 <i class="bi bi-geo-alt"></i> ${event.location || 'Location TBD'}
               </div>
@@ -634,14 +699,11 @@
               
               <div class="d-flex justify-content-between align-items-center">
                 ${event.website ? `
-                  <a href="${event.website}" target="_blank" class="btn btn-sm btn-outline-primary">
-                    <i class="bi bi-link-45deg"></i> Visit Website
+                  <a href="${event.website}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-link-45deg"></i> Event Website
                   </a>
-                ` : `
-                  <span></span>
-                `}
-                
-                <button class="btn btn-sm btn-primary volunteer-btn" data-event-id="${event.id}">
+                ` : '<div></div>'}
+                <button class="btn btn-primary btn-sm volunteer-btn" data-event-id="${event.id}" data-event-name="${event.name}">
                   <i class="bi bi-hand-thumbs-up"></i> Volunteer
                 </button>
               </div>
@@ -651,10 +713,15 @@
           availableEventsList.appendChild(eventCard);
         });
         
-        // Add event listeners to volunteer buttons
+        // Add event listeners for volunteer buttons
         document.querySelectorAll('.volunteer-btn').forEach(button => {
           button.addEventListener('click', () => {
-            openVolunteerModal(button.dataset.eventId);
+            currentEventId = button.dataset.eventId;
+            document.getElementById('volunteerEventName').textContent = button.dataset.eventName;
+            document.getElementById('volunteerNotes').value = '';
+            
+            const modal = new bootstrap.Modal(document.getElementById('volunteerModal'));
+            modal.show();
           });
         });
         
@@ -667,224 +734,61 @@
       }
     }
 
-    // Open volunteer modal for an event
-    async function openVolunteerModal(eventId) {
-      try {
-        // Get event details
-        const eventDoc = await getDoc(doc(db, 'events', eventId));
-        
-        if (!eventDoc.exists()) {
-          showAlert('Event not found.', 'danger');
-          return;
-        }
-        
-        const event = eventDoc.data();
-        
-        // Update modal with event details
-        document.getElementById('volunteerEventId').value = eventId;
-        document.getElementById('volunteerEventName').textContent = event.name;
-        document.getElementById('volunteerEventLocation').textContent = event.location || 'Location TBD';
-        
-        // Add team badges to modal
-        const teamsContainer = document.getElementById('volunteerEventTeams');
-        if (event.requiredTeams && event.requiredTeams.length > 0) {
-          const teamNames = getTeamNames(event.requiredTeams);
-          if (teamNames.length > 0) {
-            teamsContainer.innerHTML = `
-              <span class="event-teams-label"><i class="bi bi-people-fill"></i> Teams:</span>
-              ${teamNames.map(name => `<span class="team-badge">${name}</span>`).join('')}
-            `;
-          } else {
-            teamsContainer.innerHTML = '';
-          }
-        } else {
-          teamsContainer.innerHTML = '';
-        }
-        
-        const startDate = event.startDate?.toDate ? formatDate(event.startDate.toDate()) : 'TBD';
-        const endDate = event.endDate?.toDate ? formatDate(event.endDate.toDate()) : 'TBD';
-        const dateDisplay = startDate === endDate ? startDate : `${startDate} - ${endDate}`;
-        document.getElementById('volunteerEventDates').textContent = dateDisplay;
-        
-        document.getElementById('volunteerEventDescription').textContent = event.description || 'No description available.';
-        
-        // Reset form
-        document.getElementById('volunteerNotes').value = '';
-        
-        // Show modal
-        const volunteerModal = new bootstrap.Modal(document.getElementById('volunteerModal'));
-        volunteerModal.show();
-        
-      } catch (error) {
-        console.error('Error opening volunteer modal:', error);
-        showAlert('Error loading event details: ' + error.message, 'danger');
-      }
-    }
-
-    // Open cancel volunteer modal
-    function openCancelModal(eventId, eventName) {
-      document.getElementById('cancelEventName').textContent = eventName;
-      
-      // Set up confirm button
-      const confirmCancelBtn = document.getElementById('confirmCancelBtn');
-      confirmCancelBtn.dataset.eventId = eventId;
-      
-      // Show modal
-      const cancelModal = new bootstrap.Modal(document.getElementById('cancelVolunteerModal'));
-      cancelModal.show();
-    }
-
-    // Submit volunteer form
-    async function submitVolunteerForm() {
+    // Volunteer for event
+    async function volunteerForEvent() {
       try {
         setButtonLoading(confirmVolunteerBtn, true);
         
-        const eventId = document.getElementById('volunteerEventId').value;
         const notes = document.getElementById('volunteerNotes').value.trim();
         
-        // Get event details
-        const eventDoc = await getDoc(doc(db, 'events', eventId));
-        
-        if (!eventDoc.exists()) {
-          showAlert('Event not found.', 'danger');
-          setButtonLoading(confirmVolunteerBtn, false);
-          return;
-        }
-        
-        const event = eventDoc.data();
-        
-        // Create volunteer document
-        const volunteerData = {
+        // Add volunteer record
+        await addDoc(collection(db, 'eventVolunteers'), {
+          eventId: currentEventId,
           userId: currentUser.uid,
-          eventId: eventId,
           notes: notes,
           selected: false,
-          volunteeredAt: serverTimestamp(),
-          selectedAt: null
-        };
-        
-        // Add to eventVolunteers collection
-        await addDoc(collection(db, 'eventVolunteers'), volunteerData);
+          volunteeredAt: serverTimestamp()
+        });
         
         // Close modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('volunteerModal'));
         modal.hide();
         
-        // Show success message
-        showAlert(`Successfully volunteered for ${event.name}!`, 'success');
+        showAlert('You have successfully volunteered for this event!', 'success');
         
         // Reload events
         await loadEvents();
         
       } catch (error) {
-        console.error('Error submitting volunteer form:', error);
-        showAlert('Error submitting volunteer form: ' + error.message, 'danger');
+        console.error('Error volunteering for event:', error);
+        showAlert('Error volunteering: ' + error.message, 'danger');
       } finally {
         setButtonLoading(confirmVolunteerBtn, false);
       }
     }
 
-    // Cancel volunteering
-    async function cancelVolunteering() {
+    // Withdraw from event
+    async function withdrawFromEvent() {
       try {
-        setButtonLoading(confirmCancelBtn, true);
+        setButtonLoading(confirmWithdrawBtn, true);
         
-        const eventId = confirmCancelBtn.dataset.eventId;
-        
-        // Get event to check dates
-        const eventDoc = await getDoc(doc(db, 'events', eventId));
-        
-        if (!eventDoc.exists()) {
-          showAlert('Event not found.', 'danger');
-          setButtonLoading(confirmCancelBtn, false);
-          return;
-        }
-        
-        const event = eventDoc.data();
-        
-        // Check if event is within 4 weeks
-        const now = new Date();
-        const eventStartDate = event.startDate?.toDate ? event.startDate.toDate() : null;
-        
-        if (eventStartDate) {
-          const fourWeeksFromNow = new Date(now.getTime() + (4 * 7 * 24 * 60 * 60 * 1000));
-          
-          if (eventStartDate < fourWeeksFromNow) {
-            showAlert('Cannot cancel volunteering within 4 weeks of the event. Contact prehospital@festival-medical.org to discuss.', 'danger');
-            setButtonLoading(confirmCancelBtn, false);
-            
-            // Close modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('cancelVolunteerModal'));
-            modal.hide();
-            
-            return;
-          }
-        }
-        
-        // Find the volunteer document to delete
-        const volunteerQuery = query(
-          collection(db, 'eventVolunteers'),
-          where('userId', '==', currentUser.uid),
-          where('eventId', '==', eventId)
-        );
-        
-        const volunteerSnapshot = await getDocs(volunteerQuery);
-        
-        if (volunteerSnapshot.empty) {
-          showAlert('Volunteer record not found.', 'danger');
-          setButtonLoading(confirmCancelBtn, false);
-          return;
-        }
-        
-        // Delete all matching volunteer records (should only be one)
-        const deletePromises = volunteerSnapshot.docs.map(doc => deleteDoc(doc.ref));
-        await Promise.all(deletePromises);
+        // Delete volunteer record
+        await deleteDoc(doc(db, 'eventVolunteers', currentVolunteerId));
         
         // Close modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('cancelVolunteerModal'));
+        const modal = bootstrap.Modal.getInstance(document.getElementById('withdrawModal'));
         modal.hide();
         
-        // Show success message
-        showAlert(`Successfully cancelled volunteering for ${event.name}.`, 'success');
+        showAlert('You have withdrawn from this event.', 'success');
         
         // Reload events
         await loadEvents();
         
       } catch (error) {
-        console.error('Error cancelling volunteering:', error);
-        showAlert('Error cancelling volunteering: ' + error.message, 'danger');
+        console.error('Error withdrawing from event:', error);
+        showAlert('Error withdrawing: ' + error.message, 'danger');
       } finally {
-        setButtonLoading(confirmCancelBtn, false);
-      }
-    }
-
-    // Get user profile and check admin status
-    async function getUserProfile() {
-      try {
-        if (!currentUser) return;
-        
-        // Get user document
-        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-        
-        if (userDoc.exists()) {
-          userProfile = userDoc.data();
-          
-          // Check if user is admin
-          isAdmin = userDoc.data().isAdmin === true;
-          
-          // Show admin link if admin
-          const adminOnlyElements = document.querySelectorAll('.admin-only');
-          adminOnlyElements.forEach(el => {
-            if (isAdmin) {
-              el.classList.remove('hidden');
-            } else {
-              el.classList.add('hidden');
-            }
-          });
-        }
-        
-      } catch (error) {
-        console.error('Error getting user profile:', error);
+        setButtonLoading(confirmWithdrawBtn, false);
       }
     }
 
@@ -899,14 +803,13 @@
       }
     });
 
-    confirmVolunteerBtn.addEventListener('click', submitVolunteerForm);
-    confirmCancelBtn.addEventListener('click', cancelVolunteering);
+    confirmVolunteerBtn.addEventListener('click', volunteerForEvent);
+    confirmWithdrawBtn.addEventListener('click', withdrawFromEvent);
 
     // Initialize
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         currentUser = user;
-        await getUserProfile();
         await loadEvents();
       } else {
         window.location.href = 'index.html';
