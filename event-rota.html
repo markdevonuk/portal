@@ -44,33 +44,159 @@
       font-weight: 500;
     }
     
-    /* Shift tabs */
-    .shift-tabs {
-      display: flex;
-      justify-content: center;
-      gap: 0.5rem;
+    /* My Shifts section */
+    .my-shifts-section {
+      background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+      border: 2px solid #4caf50;
+      border-radius: 12px;
+      padding: 1.25rem;
       margin-bottom: 1.5rem;
-      flex-wrap: wrap;
     }
-    .shift-tab {
-      padding: 0.6rem 1.5rem;
-      border: 2px solid #dee2e6;
-      border-radius: 50rem;
+    .my-shifts-header {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #2e7d32;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .my-shifts-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .my-shift-card {
       background: #fff;
-      font-weight: 600;
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      min-width: 200px;
+      flex: 1;
+      max-width: 300px;
       cursor: pointer;
       transition: all 0.2s;
+      text-decoration: none;
+      color: inherit;
+      border-left: 4px solid #4caf50;
     }
-    .shift-tab:hover {
-      border-color: #00a896;
+    .my-shift-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
-    .shift-tab.active {
-      background: linear-gradient(135deg, #00a896 0%, #028090 100%);
-      border-color: #00a896;
+    .my-shift-card.shift-type-early {
+      border-left-color: #ff9800;
+    }
+    .my-shift-card.shift-type-late {
+      border-left-color: #2196f3;
+    }
+    .my-shift-card.shift-type-night {
+      border-left-color: #673ab7;
+    }
+    .my-shift-card .shift-type-badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.25rem;
+    }
+    .my-shift-card .shift-type-badge.early { color: #e65100; }
+    .my-shift-card .shift-type-badge.late { color: #1565c0; }
+    .my-shift-card .shift-type-badge.night { color: #4527a0; }
+    .my-shift-card .position-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
+    }
+    .my-shift-card .position-time {
+      font-size: 0.85rem;
+      color: #666;
+    }
+    .my-shift-card .position-category {
+      font-size: 0.75rem;
+      color: #888;
+      margin-top: 0.25rem;
+    }
+    .no-shifts-message {
+      color: #666;
+      font-style: italic;
+    }
+    
+    /* Shift jump links */
+    .shift-jump-links {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 10px;
+    }
+    .jump-label {
+      font-weight: 500;
+      color: #6c757d;
+    }
+    .shift-jump-link {
+      padding: 0.5rem 1rem;
+      border-radius: 50rem;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .shift-jump-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .shift-jump-link.shift-early {
+      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+      color: #8b4513;
+    }
+    .shift-jump-link.shift-late {
+      background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+      color: #2d5a5a;
+    }
+    .shift-jump-link.shift-night {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: #fff;
     }
-    .shift-tab .badge {
-      margin-left: 0.5rem;
+    .shift-jump-link.shift-night .badge {
+      background: rgba(255,255,255,0.3) !important;
+      color: #fff !important;
+    }
+    
+    /* Shift section headers */
+    .shift-section {
+      margin-bottom: 2.5rem;
+      scroll-margin-top: 20px;
+    }
+    .shift-header {
+      padding: 1rem 1.25rem;
+      border-radius: 10px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .shift-header-early {
+      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+      color: #8b4513;
+    }
+    .shift-header-late {
+      background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+      color: #2d5a5a;
+    }
+    .shift-header-night {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
     }
     
     /* Section filter */
@@ -263,12 +389,17 @@
       .day-navigation {
         flex-wrap: wrap;
       }
-      .shift-tabs {
-        gap: 0.25rem;
+      .shift-jump-links {
+        gap: 0.5rem;
+        padding: 0.75rem;
       }
-      .shift-tab {
-        padding: 0.5rem 1rem;
+      .shift-jump-link {
+        padding: 0.4rem 0.75rem;
         font-size: 0.9rem;
+      }
+      .shift-header {
+        font-size: 1.1rem;
+        padding: 0.75rem 1rem;
       }
     }
   </style>
@@ -385,7 +516,6 @@
     let rotaData = null;
     let crewLookup = {}; // userId -> { name, qualification }
     let currentDay = null;
-    let currentShift = 'early';
 
     // Get event ID from URL
     function getEventIdFromURL() {
@@ -568,6 +698,98 @@
       }
     }
 
+    // Render My Shifts section at the top
+    function renderMyShiftsSection() {
+      const myShifts = [];
+      
+      const shifts = [
+        { key: 'early', name: 'Early', icon: 'bi-sunrise' },
+        { key: 'late', name: 'Late', icon: 'bi-sun' },
+        { key: 'night', name: 'Night', icon: 'bi-moon-stars' }
+      ];
+      
+      // Find all positions where current user is assigned
+      shifts.forEach(shift => {
+        rotaData.positions.forEach(pos => {
+          if (!pos.shifts || !pos.shifts[shift.key]) return;
+          
+          // Check if position is disabled for this day/shift
+          const disabledKey = `${currentDay}_${shift.key}`;
+          const isDisabled = rotaData.disabledPositions?.[disabledKey]?.includes(pos.id);
+          if (isDisabled) return;
+          
+          const assignmentKey = `${currentDay}_${pos.id}_${shift.key}`;
+          const assignment = rotaData.assignments?.[assignmentKey] || {};
+          
+          // Check if current user is assigned
+          if (assignment.crew1 === currentUser.uid || assignment.crew2 === currentUser.uid) {
+            const displayName = assignment.overrideName || pos.name;
+            const defaultTimes = pos.shifts[shift.key];
+            const startTime = assignment.startTime || defaultTimes.start;
+            const endTime = assignment.endTime || defaultTimes.end;
+            
+            myShifts.push({
+              positionId: pos.id,
+              positionName: displayName,
+              category: pos.category,
+              shiftKey: shift.key,
+              shiftName: shift.name,
+              shiftIcon: shift.icon,
+              startTime,
+              endTime
+            });
+          }
+        });
+      });
+      
+      // Sort by shift time (early, late, night) then by start time
+      const shiftOrder = { early: 1, late: 2, night: 3 };
+      myShifts.sort((a, b) => {
+        if (shiftOrder[a.shiftKey] !== shiftOrder[b.shiftKey]) {
+          return shiftOrder[a.shiftKey] - shiftOrder[b.shiftKey];
+        }
+        return a.startTime.localeCompare(b.startTime);
+      });
+      
+      let html = `
+        <div class="my-shifts-section">
+          <div class="my-shifts-header">
+            <i class="bi bi-star-fill"></i> My Shifts Today
+          </div>
+      `;
+      
+      if (myShifts.length === 0) {
+        html += `
+          <p class="no-shifts-message">
+            <i class="bi bi-info-circle"></i> You don't have any shifts assigned for this day.
+          </p>
+        `;
+      } else {
+        html += '<div class="my-shifts-grid">';
+        
+        myShifts.forEach(shift => {
+          html += `
+            <a href="#shift-${shift.shiftKey}" class="my-shift-card shift-type-${shift.shiftKey}">
+              <div class="shift-type-badge ${shift.shiftKey}">
+                <i class="bi ${shift.shiftIcon}"></i> ${shift.shiftName} Shift
+              </div>
+              <div class="position-name">${shift.positionName}</div>
+              <div class="position-time">
+                <i class="bi bi-clock"></i> ${shift.startTime} - ${shift.endTime}
+              </div>
+              <div class="position-category">${shift.category}</div>
+            </a>
+          `;
+        });
+        
+        html += '</div>';
+      }
+      
+      html += '</div>';
+      
+      return html;
+    }
+
     // Render the rota
     function renderRota() {
       const container = document.getElementById('mainContent');
@@ -598,6 +820,12 @@
 
       html += '<div class="rota-card">';
 
+      // My Shifts section
+      const myShiftsHtml = renderMyShiftsSection();
+      if (myShiftsHtml) {
+        html += myShiftsHtml;
+      }
+
       // Day navigation
       html += `
         <div class="day-navigation">
@@ -617,7 +845,7 @@
         </div>
       `;
 
-      // Calculate shift counts for tabs
+      // Calculate shift counts
       const shiftCounts = { early: 0, late: 0, night: 0 };
       rotaData.positions.forEach(pos => {
         ['early', 'late', 'night'].forEach(shift => {
@@ -631,21 +859,25 @@
         });
       });
 
-      // Shift tabs
+      // Jump links to shift sections
       html += `
-        <div class="shift-tabs">
-          <div class="shift-tab ${currentShift === 'early' ? 'active' : ''}" data-shift="early" onclick="changeShift('early')">
-            <i class="bi bi-sunrise"></i> Early
-            <span class="badge ${currentShift === 'early' ? 'bg-light text-dark' : 'bg-secondary'}">${shiftCounts.early}</span>
-          </div>
-          <div class="shift-tab ${currentShift === 'late' ? 'active' : ''}" data-shift="late" onclick="changeShift('late')">
-            <i class="bi bi-sun"></i> Late
-            <span class="badge ${currentShift === 'late' ? 'bg-light text-dark' : 'bg-secondary'}">${shiftCounts.late}</span>
-          </div>
-          <div class="shift-tab ${currentShift === 'night' ? 'active' : ''}" data-shift="night" onclick="changeShift('night')">
-            <i class="bi bi-moon-stars"></i> Night
-            <span class="badge ${currentShift === 'night' ? 'bg-light text-dark' : 'bg-secondary'}">${shiftCounts.night}</span>
-          </div>
+        <div class="shift-jump-links">
+          <span class="jump-label">Jump to:</span>
+          ${shiftCounts.early > 0 ? `
+            <a href="#shift-early" class="shift-jump-link shift-early">
+              <i class="bi bi-sunrise"></i> Early <span class="badge bg-secondary">${shiftCounts.early}</span>
+            </a>
+          ` : ''}
+          ${shiftCounts.late > 0 ? `
+            <a href="#shift-late" class="shift-jump-link shift-late">
+              <i class="bi bi-sun"></i> Late <span class="badge bg-secondary">${shiftCounts.late}</span>
+            </a>
+          ` : ''}
+          ${shiftCounts.night > 0 ? `
+            <a href="#shift-night" class="shift-jump-link shift-night">
+              <i class="bi bi-moon-stars"></i> Night <span class="badge bg-secondary">${shiftCounts.night}</span>
+            </a>
+          ` : ''}
         </div>
       `;
 
@@ -659,27 +891,57 @@
         </div>
       `;
 
-      // Rota content
+      // Rota content - all shifts
       html += '<div id="rotaContent"></div>';
 
       html += '</div>'; // End rota-card
 
       container.innerHTML = html;
 
-      // Render the actual positions
-      renderPositions();
+      // Render all shifts
+      renderAllShifts();
     }
 
-    // Render positions for current day/shift
-    function renderPositions() {
+    // Render all shifts for the current day
+    function renderAllShifts() {
       const container = document.getElementById('rotaContent');
       const sectionFilter = document.getElementById('sectionFilter')?.value || 'all';
+      
+      let html = '';
+      
+      const shifts = [
+        { key: 'early', name: 'Early Shift', icon: 'bi-sunrise' },
+        { key: 'late', name: 'Late Shift', icon: 'bi-sun' },
+        { key: 'night', name: 'Night Shift', icon: 'bi-moon-stars' }
+      ];
+      
+      shifts.forEach(shift => {
+        const shiftHtml = renderShiftSection(shift.key, shift.name, shift.icon, sectionFilter);
+        if (shiftHtml) {
+          html += shiftHtml;
+        }
+      });
+      
+      if (!html) {
+        html = `
+          <div class="empty-state">
+            <i class="bi bi-calendar-x"></i>
+            <h5>No Positions</h5>
+            <p>No active positions for this day${sectionFilter !== 'all' ? ' in this section' : ''}.</p>
+          </div>
+        `;
+      }
+      
+      container.innerHTML = html;
+    }
 
+    // Render a single shift section
+    function renderShiftSection(shiftKey, shiftName, shiftIcon, sectionFilter) {
       // Filter positions for this shift
-      let positions = rotaData.positions.filter(pos => pos.shifts && pos.shifts[currentShift]);
+      let positions = rotaData.positions.filter(pos => pos.shifts && pos.shifts[shiftKey]);
 
       // Check disabled positions
-      const disabledKey = `${currentDay}_${currentShift}`;
+      const disabledKey = `${currentDay}_${shiftKey}`;
       const disabledList = rotaData.disabledPositions?.[disabledKey] || [];
       positions = positions.filter(pos => !disabledList.includes(pos.id));
 
@@ -689,14 +951,7 @@
       }
 
       if (positions.length === 0) {
-        container.innerHTML = `
-          <div class="empty-state">
-            <i class="bi bi-calendar-x"></i>
-            <h5>No Positions</h5>
-            <p>No active positions for this shift${sectionFilter !== 'all' ? ' in this section' : ''}.</p>
-          </div>
-        `;
-        return;
+        return ''; // No positions for this shift
       }
 
       // Group by category
@@ -708,13 +963,19 @@
         }
       });
 
-      let html = '';
+      let html = `
+        <div class="shift-section" id="shift-${shiftKey}">
+          <div class="shift-header shift-header-${shiftKey}">
+            <i class="bi ${shiftIcon}"></i> ${shiftName}
+            <span class="badge bg-light text-dark ms-2">${positions.length} positions</span>
+          </div>
+      `;
 
       CATEGORY_ORDER.forEach(category => {
         if (grouped[category].length === 0) return;
 
         html += `
-          <div class="category-section" id="section-${category.replace(/\s+/g, '-')}">
+          <div class="category-section">
             <div class="category-header">
               <i class="bi bi-people-fill"></i> ${category}
             </div>
@@ -722,14 +983,14 @@
         `;
 
         grouped[category].forEach(pos => {
-          const assignmentKey = `${currentDay}_${pos.id}_${currentShift}`;
+          const assignmentKey = `${currentDay}_${pos.id}_${shiftKey}`;
           const assignment = rotaData.assignments?.[assignmentKey] || {};
           
           // Get display name (with possible override)
           const displayName = assignment.overrideName || pos.name;
           
           // Get times (with possible override)
-          const defaultTimes = pos.shifts[currentShift];
+          const defaultTimes = pos.shifts[shiftKey];
           const startTime = assignment.startTime || defaultTimes.start;
           const endTime = assignment.endTime || defaultTimes.end;
 
@@ -767,7 +1028,9 @@
         html += '</div></div>';
       });
 
-      container.innerHTML = html;
+      html += '</div>'; // End shift-section
+
+      return html;
     }
 
     // Render a crew member
@@ -809,19 +1072,8 @@
       }
     };
 
-    window.changeShift = function(shift) {
-      currentShift = shift;
-      
-      // Update tab styling
-      document.querySelectorAll('.shift-tab').forEach(tab => {
-        tab.classList.toggle('active', tab.dataset.shift === shift);
-      });
-      
-      renderPositions();
-    };
-
     window.filterSection = function(section) {
-      renderPositions();
+      renderAllShifts();
     };
 
     // Parse UK date
