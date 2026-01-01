@@ -867,21 +867,35 @@ function attachFilterListeners() {
           return;
         }
         
-        // Process events and get volunteer counts
+        // ============================================================
+        // PERFORMANCE FIX: Fetch all volunteer counts in PARALLEL
+        // instead of one-by-one sequentially
+        // ============================================================
+        
         currentEvents = [];
         const events = [];
         
-        for (const eventDoc of eventsSnapshot.docs) {
-          const eventData = eventDoc.data();
-          const eventId = eventDoc.id;
-          
-          // Get volunteer count for this event
+        // Step 1: Collect all event data first
+        const eventDocsData = eventsSnapshot.docs.map(eventDoc => ({
+          id: eventDoc.id,
+          data: eventDoc.data()
+        }));
+        
+        // Step 2: Create all volunteer count queries at once
+        const volunteerPromises = eventDocsData.map(event => {
           const volunteersQuery = query(
             collection(db, 'eventVolunteers'),
-            where('eventId', '==', eventId)
+            where('eventId', '==', event.id)
           );
-          
-          const volunteersSnapshot = await getDocs(volunteersQuery);
+          return getDocs(volunteersQuery);
+        });
+        
+        // Step 3: Execute ALL volunteer queries in parallel (this is the key improvement!)
+        const volunteerSnapshots = await Promise.all(volunteerPromises);
+        
+        // Step 4: Process results (all data already loaded)
+        eventDocsData.forEach((eventInfo, index) => {
+          const volunteersSnapshot = volunteerSnapshots[index];
           const totalVolunteers = volunteersSnapshot.size;
           
           // Count selected volunteers
@@ -893,15 +907,15 @@ function attachFilterListeners() {
           });
           
           const event = {
-            id: eventId,
-            ...eventData,
+            id: eventInfo.id,
+            ...eventInfo.data,
             volunteerCount: totalVolunteers,
             selectedCount: selectedVolunteers
           };
           
           events.push(event);
           currentEvents.push(event);
-        }
+        });
         
         // Display the events
         events.forEach(event => {
