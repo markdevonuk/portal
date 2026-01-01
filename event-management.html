@@ -248,6 +248,108 @@
   text-align: center;
   padding: 15px;
 }
+
+/* Team Leader selection styles */
+.leader-search-container {
+  position: relative;
+}
+
+.leader-search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #dee2e6;
+  border-top: none;
+  border-radius: 0 0 0.375rem 0.375rem;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.leader-search-item {
+  padding: 10px 15px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s;
+}
+
+.leader-search-item:hover {
+  background-color: #f8f9fa;
+}
+
+.leader-search-item:last-child {
+  border-bottom: none;
+}
+
+.leader-search-item .name {
+  font-weight: 500;
+}
+
+.leader-search-item .email {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.selected-leaders {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.selected-leader-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background-color: #e7f5ff;
+  border: 1px solid #b8daff;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  color: #0c5460;
+}
+
+.selected-leader-tag .remove-leader {
+  cursor: pointer;
+  color: #dc3545;
+  font-weight: bold;
+  margin-left: 4px;
+}
+
+.selected-leader-tag .remove-leader:hover {
+  color: #a71d2a;
+}
+
+.event-leaders {
+  margin-top: 8px;
+  margin-bottom: 10px;
+}
+
+.event-leaders-label {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-right: 0.5rem;
+}
+
+.leader-badge {
+  display: inline-block;
+  padding: 0.3em 0.6em;
+  font-size: 80%;
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.25rem;
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffc107;
+  margin-right: 0.3em;
+  margin-bottom: 0.3em;
+}
   </style>
 </head>
 <body>
@@ -377,6 +479,17 @@
                   <span class="ms-2 text-muted">Loading teams...</span>
                 </div>
               </div>
+            </div>
+            
+            <!-- Assigned Team Leaders Section -->
+            <div class="mb-3">
+              <label class="form-label"><i class="bi bi-person-badge-fill"></i> Assigned Team Leaders</label>
+              <div class="form-text mb-2">Search and select team leaders for this event</div>
+              <div class="leader-search-container">
+                <input type="text" class="form-control" id="leaderSearchInput" placeholder="Search by name or email...">
+                <div id="leaderSearchResults" class="leader-search-results" style="display: none;"></div>
+              </div>
+              <div id="selectedLeadersContainer" class="selected-leaders"></div>
             </div>
           </form>
         </div>
@@ -607,6 +720,8 @@ prehospital@festival-medical.org</textarea>
     let currentEventId = null;
     let currentEventVolunteers = [];
     let availableTeams = []; // Store loaded teams
+    let allUsers = []; // Store all users for leader search
+    let selectedLeaders = []; // Store selected leaders for current event
     
     // Helper Functions
     function setButtonLoading(buttonElement, isLoading) {
@@ -836,6 +951,151 @@ function attachFilterListeners() {
       }).filter(name => name !== null);
     }
 
+    // Load all users for leader search
+    async function loadAllUsers() {
+      try {
+        const usersRef = collection(db, 'users');
+        const usersSnapshot = await getDocs(usersRef);
+        
+        allUsers = [];
+        usersSnapshot.forEach(userDoc => {
+          const userData = userDoc.data();
+          allUsers.push({
+            id: userDoc.id,
+            firstName: userData.firstName || '',
+            surname: userData.surname || '',
+            email: userData.email || '',
+            name: `${userData.firstName || ''} ${userData.surname || ''}`.trim()
+          });
+        });
+        
+        // Sort by name
+        allUsers.sort((a, b) => a.name.localeCompare(b.name));
+        
+      } catch (error) {
+        console.error('Error loading users:', error);
+      }
+    }
+
+    // Search users for leader selection
+    function searchLeaders(searchTerm) {
+      if (!searchTerm || searchTerm.length < 2) {
+        return [];
+      }
+      
+      const term = searchTerm.toLowerCase();
+      
+      return allUsers.filter(user => {
+        // Don't show already selected leaders
+        if (selectedLeaders.some(l => l.id === user.id)) {
+          return false;
+        }
+        
+        const name = user.name.toLowerCase();
+        const email = user.email.toLowerCase();
+        
+        return name.includes(term) || email.includes(term);
+      }).slice(0, 10); // Limit to 10 results
+    }
+
+    // Display leader search results
+    function displayLeaderSearchResults(results) {
+      const resultsContainer = document.getElementById('leaderSearchResults');
+      
+      if (results.length === 0) {
+        resultsContainer.style.display = 'none';
+        return;
+      }
+      
+      resultsContainer.innerHTML = results.map(user => `
+        <div class="leader-search-item" data-user-id="${user.id}" data-user-name="${user.name}" data-user-email="${user.email}">
+          <div class="name">${user.name || 'Unknown'}</div>
+          <div class="email">${user.email}</div>
+        </div>
+      `).join('');
+      
+      resultsContainer.style.display = 'block';
+      
+      // Add click listeners
+      resultsContainer.querySelectorAll('.leader-search-item').forEach(item => {
+        item.addEventListener('click', () => {
+          addLeader({
+            id: item.dataset.userId,
+            name: item.dataset.userName,
+            email: item.dataset.userEmail
+          });
+          document.getElementById('leaderSearchInput').value = '';
+          resultsContainer.style.display = 'none';
+        });
+      });
+    }
+
+    // Add a leader to selection
+    function addLeader(user) {
+      if (selectedLeaders.some(l => l.id === user.id)) {
+        return; // Already selected
+      }
+      
+      selectedLeaders.push(user);
+      displaySelectedLeaders();
+    }
+
+    // Remove a leader from selection
+    function removeLeader(userId) {
+      selectedLeaders = selectedLeaders.filter(l => l.id !== userId);
+      displaySelectedLeaders();
+    }
+
+    // Display selected leaders
+    function displaySelectedLeaders() {
+      const container = document.getElementById('selectedLeadersContainer');
+      
+      if (selectedLeaders.length === 0) {
+        container.innerHTML = '<span class="text-muted small">No team leaders assigned</span>';
+        return;
+      }
+      
+      container.innerHTML = selectedLeaders.map(leader => `
+        <span class="selected-leader-tag">
+          <i class="bi bi-person-badge"></i> ${leader.name || leader.email}
+          <span class="remove-leader" data-user-id="${leader.id}">&times;</span>
+        </span>
+      `).join('');
+      
+      // Add click listeners for remove buttons
+      container.querySelectorAll('.remove-leader').forEach(btn => {
+        btn.addEventListener('click', () => {
+          removeLeader(btn.dataset.userId);
+        });
+      });
+    }
+
+    // Get leader names from IDs (for display on event cards)
+    function getLeaderNames(leaderIds) {
+      if (!leaderIds || !Array.isArray(leaderIds)) return [];
+      
+      return leaderIds.map(leaderId => {
+        const user = allUsers.find(u => u.id === leaderId);
+        return user ? user.name : null;
+      }).filter(name => name !== null);
+    }
+
+    // Set selected leaders from event data
+    function setSelectedLeaders(leaderIds) {
+      selectedLeaders = [];
+      
+      if (leaderIds && Array.isArray(leaderIds)) {
+        leaderIds.forEach(leaderId => {
+          const user = allUsers.find(u => u.id === leaderId);
+          if (user) {
+            selectedLeaders.push(user);
+          }
+        });
+      }
+      
+      displaySelectedLeaders();
+    }
+
     // Load Events
     async function loadEvents() {
       try {
@@ -850,6 +1110,11 @@ function attachFilterListeners() {
           } catch (err) {
             console.warn('Could not load teams:', err);
           }
+        }
+        
+        // Load all users (needed for displaying leader names)
+        if (allUsers.length === 0) {
+          await loadAllUsers();
         }
         
         // Get all events
@@ -937,6 +1202,20 @@ function attachFilterListeners() {
             }
           }
           
+          // Build team leaders HTML
+          let leadersHtml = '';
+          if (event.assignedLeaders && event.assignedLeaders.length > 0) {
+            const leaderNames = getLeaderNames(event.assignedLeaders);
+            if (leaderNames.length > 0) {
+              leadersHtml = `
+                <div class="event-leaders">
+                  <span class="event-leaders-label"><i class="bi bi-person-badge-fill"></i> Team Leaders:</span>
+                  ${leaderNames.map(name => `<span class="leader-badge">${name}</span>`).join('')}
+                </div>
+              `;
+            }
+          }
+          
           const eventItem = document.createElement('div');
           eventItem.className = 'admin-event-item';
           
@@ -945,6 +1224,7 @@ function attachFilterListeners() {
               <div class="col-md-8">
                 <h4>${event.name}</h4>
                 ${teamBadgesHtml}
+                ${leadersHtml}
                 <div class="event-location">
                   <i class="bi bi-geo-alt"></i> ${event.location || 'Location TBD'}
                 </div>
@@ -1037,6 +1317,16 @@ function attachFilterListeners() {
       // Clear any previously selected teams
       setSelectedTeams([]);
       
+      // Load users if not already loaded
+      if (allUsers.length === 0) {
+        await loadAllUsers();
+      }
+      
+      // Clear selected leaders
+      selectedLeaders = [];
+      displaySelectedLeaders();
+      document.getElementById('leaderSearchInput').value = '';
+      
       // Show modal
       const modal = new bootstrap.Modal(document.getElementById('eventModal'));
       modal.show();
@@ -1069,6 +1359,15 @@ function attachFilterListeners() {
       
       // Set selected teams
       setSelectedTeams(event.requiredTeams || []);
+      
+      // Load users if not already loaded
+      if (allUsers.length === 0) {
+        await loadAllUsers();
+      }
+      
+      // Set selected leaders
+      setSelectedLeaders(event.assignedLeaders || []);
+      document.getElementById('leaderSearchInput').value = '';
       
       // Show modal
       const modal = new bootstrap.Modal(document.getElementById('eventModal'));
@@ -1129,6 +1428,7 @@ function attachFilterListeners() {
           startDate: Timestamp.fromDate(startDate),
           endDate: Timestamp.fromDate(endDate),
           requiredTeams: selectedTeamIds, // Add selected teams
+          assignedLeaders: selectedLeaders.map(l => l.id), // Add assigned leaders
           updatedAt: serverTimestamp()
         };
         
@@ -1962,6 +2262,23 @@ async function sendEmails() {
           item.classList.add('hidden');
         }
       });
+    });
+    
+    // Leader search input handler
+    document.getElementById('leaderSearchInput')?.addEventListener('input', e => {
+      const searchTerm = e.target.value.trim();
+      const results = searchLeaders(searchTerm);
+      displayLeaderSearchResults(results);
+    });
+    
+    // Hide leader search results when clicking outside
+    document.addEventListener('click', e => {
+      const searchContainer = document.querySelector('.leader-search-container');
+      const resultsContainer = document.getElementById('leaderSearchResults');
+      
+      if (searchContainer && resultsContainer && !searchContainer.contains(e.target)) {
+        resultsContainer.style.display = 'none';
+      }
     });
     
 
