@@ -679,7 +679,7 @@
           doc.setTextColor(...shift.textColor);
           doc.text(shift.name, margin + 3, yPos + 5);
           doc.setTextColor(0, 0, 0);
-          yPos += 10;
+          yPos += 12; // Increased from 10 to add space after shift header
           
           // Group positions by category (section)
           const sections = {};
@@ -719,7 +719,7 @@
             doc.setTextColor(80, 80, 80);
             doc.text(sectionName.toUpperCase(), margin + 2, yPos);
             doc.setTextColor(0, 0, 0);
-            yPos += 5;
+            yPos += 6; // Increased from 5 to add space after section header
             
             // Positions in this section
             sections[sectionName].forEach(pos => {
@@ -786,10 +786,10 @@
               yPos += 1; // Small gap between positions
             });
             
-            yPos += 3; // Gap after section
+            yPos += 5; // Increased gap after section (was 3)
           });
           
-          yPos += 5; // Gap after shift
+          yPos += 8; // Increased gap after shift (was 5)
         });
       });
       
