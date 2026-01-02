@@ -549,13 +549,14 @@
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 15;
+      const contentWidth = pageWidth - (margin * 2);
       let yPos = margin;
       
       // Get event name from DOM
       const eventNameText = document.getElementById('eventName')?.textContent || 'Event Rota';
       
       // Helper to check if we need a new page
-      function checkNewPage(neededHeight = 20) {
+      function checkNewPage(neededHeight = 10) {
         if (yPos + neededHeight > pageHeight - margin) {
           doc.addPage();
           yPos = margin;
@@ -564,40 +565,97 @@
         return false;
       }
       
-      // Title
-      doc.setFontSize(18);
+      // Helper to format date from various formats
+      function formatDayDate(day) {
+        // Days are stored with: dayName (e.g. "Wednesday") and date (e.g. "20/08/2025")
+        if (day.dayName && day.date) {
+          return `${day.dayName} ${day.date}`;
+        }
+        
+        // Fallback: try parsing the date string
+        if (day.date) {
+          // Handle DD/MM/YYYY format
+          if (typeof day.date === 'string' && day.date.includes('/')) {
+            const parts = day.date.split('/');
+            if (parts.length === 3) {
+              const dateObj = new Date(parts[2], parts[1] - 1, parts[0]);
+              if (!isNaN(dateObj.getTime())) {
+                return dateObj.toLocaleDateString('en-GB', { 
+                  weekday: 'long', 
+                  day: '2-digit', 
+                  month: '2-digit', 
+                  year: 'numeric' 
+                });
+              }
+            }
+          }
+          
+          // Handle Firestore Timestamp
+          let date;
+          if (day.date.toDate) {
+            date = day.date.toDate();
+          } else if (day.date.seconds) {
+            date = new Date(day.date.seconds * 1000);
+          } else {
+            date = new Date(day.date);
+          }
+          
+          if (date && !isNaN(date.getTime())) {
+            return date.toLocaleDateString('en-GB', { 
+              weekday: 'long', 
+              day: '2-digit', 
+              month: '2-digit', 
+              year: 'numeric' 
+            });
+          }
+        }
+        
+        // Fallback to day label or ID
+        return day.label || day.id || 'Unknown Day';
+      }
+      
+      // Title page / header
+      doc.setFontSize(20);
       doc.setFont('helvetica', 'bold');
       doc.text(eventNameText, pageWidth / 2, yPos, { align: 'center' });
-      yPos += 10;
+      yPos += 8;
       
-      // Subtitle with generation date
-      doc.setFontSize(10);
+      doc.setFontSize(14);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Generated: ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`, pageWidth / 2, yPos, { align: 'center' });
+      doc.text('Crew Rota', pageWidth / 2, yPos, { align: 'center' });
+      yPos += 8;
+      
+      // Generation date
+      doc.setFontSize(9);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Generated: ${new Date().toLocaleDateString('en-GB')} at ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`, pageWidth / 2, yPos, { align: 'center' });
+      doc.setTextColor(0, 0, 0);
       yPos += 15;
       
       // Process each day
       rotaData.days.forEach((day, dayIndex) => {
-        checkNewPage(30);
+        // New page for each day (except first)
+        if (dayIndex > 0) {
+          doc.addPage();
+          yPos = margin;
+        }
         
-        // Day header
-        const dayDate = new Date(day.date);
-        const dayName = dayDate.toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
-        
-        doc.setFillColor(0, 168, 150); // Teal
-        doc.rect(margin, yPos, pageWidth - (margin * 2), 8, 'F');
+        // Day header - teal banner
+        const dayLabel = formatDayDate(day);
+        doc.setFillColor(0, 168, 150);
+        doc.rect(margin, yPos, contentWidth, 10, 'F');
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(12);
+        doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        doc.text(dayName, pageWidth / 2, yPos + 5.5, { align: 'center' });
+        doc.text(dayLabel, pageWidth / 2, yPos + 7, { align: 'center' });
         doc.setTextColor(0, 0, 0);
-        yPos += 12;
+        yPos += 15;
         
         // Process each shift type
         const shiftTypes = [
-          { id: 'early', name: 'Early Shift', color: [255, 236, 210] },
-          { id: 'late', name: 'Late Shift', color: [168, 237, 234] },
-          { id: 'night', name: 'Night Shift', color: [102, 126, 234] }
+          { id: 'early', name: 'Early Shift', color: [255, 236, 210], textColor: [0, 0, 0] },
+          { id: 'late', name: 'Late Shift', color: [168, 237, 234], textColor: [0, 0, 0] },
+          { id: 'night', name: 'Night Shift', color: [102, 126, 234], textColor: [255, 255, 255] }
         ];
         
         shiftTypes.forEach(shift => {
@@ -611,97 +669,141 @@
           
           if (shiftPositions.length === 0) return;
           
-          checkNewPage(25);
+          checkNewPage(20);
           
           // Shift header
           doc.setFillColor(...shift.color);
-          doc.rect(margin, yPos, pageWidth - (margin * 2), 6, 'F');
-          doc.setFontSize(10);
+          doc.rect(margin, yPos, contentWidth, 7, 'F');
+          doc.setFontSize(11);
           doc.setFont('helvetica', 'bold');
-          doc.setTextColor(shift.id === 'night' ? 255 : 0, shift.id === 'night' ? 255 : 0, shift.id === 'night' ? 255 : 0);
-          doc.text(shift.name, margin + 2, yPos + 4);
+          doc.setTextColor(...shift.textColor);
+          doc.text(shift.name, margin + 3, yPos + 5);
           doc.setTextColor(0, 0, 0);
-          yPos += 9;
+          yPos += 10;
           
-          // Group positions by section
+          // Group positions by category (section)
           const sections = {};
           shiftPositions.forEach(pos => {
-            const section = pos.section || 'Other';
+            const section = pos.category || 'General';
             if (!sections[section]) sections[section] = [];
             sections[section].push(pos);
           });
           
+          // Define section order (matching admin category order)
+          const sectionOrder = [
+            'Leadership',
+            'Vehicles', 
+            'Responders',
+            'Static Medical Points',
+            'Stage Medical',
+            'Medcomms Team',
+            'Make Ready Team',
+            'General'
+          ];
+          const sortedSections = Object.keys(sections).sort((a, b) => {
+            const aIndex = sectionOrder.indexOf(a);
+            const bIndex = sectionOrder.indexOf(b);
+            if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+            if (aIndex === -1) return 1;
+            if (bIndex === -1) return -1;
+            return aIndex - bIndex;
+          });
+          
           // Process each section
-          Object.keys(sections).sort().forEach(sectionName => {
-            checkNewPage(15);
+          sortedSections.forEach(sectionName => {
+            checkNewPage(12);
             
             // Section header
-            doc.setFontSize(9);
+            doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
-            doc.text(sectionName, margin + 2, yPos + 3);
+            doc.setTextColor(80, 80, 80);
+            doc.text(sectionName.toUpperCase(), margin + 2, yPos);
+            doc.setTextColor(0, 0, 0);
             yPos += 5;
             
             // Positions in this section
             sections[sectionName].forEach(pos => {
-              checkNewPage(12);
+              checkNewPage(14);
               
               const assignmentKey = `${day.id}_${pos.id}_${shift.id}`;
               const assignment = rotaData.assignments?.[assignmentKey] || {};
               
-              // Get times
-              const defaultTimes = pos.shifts[shift.id];
-              const startTime = assignment.startTime || defaultTimes?.startTime || '';
-              const endTime = assignment.endTime || defaultTimes?.endTime || '';
-              const displayName = assignment.overrideName || pos.name;
+              // Get times from assignment override or position defaults
+              const defaultTimes = pos.shifts?.[shift.id] || {};
+              const startTime = assignment.startTime || defaultTimes.start || '';
+              const endTime = assignment.endTime || defaultTimes.end || '';
+              const timeDisplay = (startTime && endTime) ? `${startTime} - ${endTime}` : '';
               
-              // Position name and times
+              // Position name (with override if set)
+              const displayName = assignment.overrideName || pos.name || 'Unknown Position';
+              
+              // Build position line
               doc.setFontSize(9);
               doc.setFont('helvetica', 'bold');
-              doc.text(`${displayName}`, margin + 4, yPos + 3);
-              doc.setFont('helvetica', 'normal');
-              doc.text(`(${startTime} - ${endTime})`, margin + 4 + doc.getTextWidth(displayName + ' '), yPos + 3);
+              let posText = displayName;
+              if (timeDisplay) {
+                posText += `  (${timeDisplay})`;
+              }
+              doc.text(posText, margin + 4, yPos);
               yPos += 4;
               
               // Crew assignments
               const crewSlots = pos.crewSlots || 1;
-              let crewLine = '';
+              let crewNames = [];
               for (let i = 1; i <= crewSlots; i++) {
                 const crewId = assignment[`crew${i}`];
                 if (crewId && crewLookup[crewId]) {
                   const crew = crewLookup[crewId];
-                  if (crewLine) crewLine += ', ';
-                  crewLine += `${crew.name}`;
-                  if (crew.qualification) crewLine += ` (${crew.qualification})`;
+                  let crewText = crew.name || 'Unknown';
+                  if (crew.qualification) {
+                    crewText += ` (${crew.qualification})`;
+                  }
+                  crewNames.push(crewText);
                 }
               }
               
-              if (!crewLine) crewLine = 'Unassigned';
+              const crewLine = crewNames.length > 0 ? crewNames.join(', ') : 'Unassigned';
               
               doc.setFontSize(8);
               doc.setFont('helvetica', 'normal');
-              doc.text(`   ${crewLine}`, margin + 4, yPos + 3);
-              yPos += 5;
+              doc.setTextColor(60, 60, 60);
+              doc.text('    ' + crewLine, margin + 4, yPos);
+              doc.setTextColor(0, 0, 0);
+              yPos += 4;
               
               // Notes if any
               if (assignment.notes) {
+                checkNewPage(5);
                 doc.setFontSize(7);
                 doc.setFont('helvetica', 'italic');
-                doc.text(`   Note: ${assignment.notes}`, margin + 4, yPos + 2);
+                doc.setTextColor(100, 100, 100);
+                const noteText = `    Note: ${assignment.notes}`;
+                doc.text(noteText, margin + 4, yPos);
+                doc.setTextColor(0, 0, 0);
                 yPos += 4;
               }
+              
+              yPos += 1; // Small gap between positions
             });
             
-            yPos += 2;
+            yPos += 3; // Gap after section
           });
           
-          yPos += 3;
+          yPos += 5; // Gap after shift
         });
-        
-        yPos += 5;
       });
       
+      // Add page numbers
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+      }
+      
       // Save the PDF
-      const fileName = `${(eventNameText || 'rota').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_rota.pdf`;
+      const fileName = `${eventNameText.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_rota.pdf`;
       doc.save(fileName);
     };
 
