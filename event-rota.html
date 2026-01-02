@@ -6,6 +6,7 @@
   <title>Event Rota - FMS Prehospital Portal</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     body { background:#f8f9fa; min-height:100vh; }
     .navbar { 
@@ -457,6 +458,9 @@
           <p class="mb-0" id="eventDates">Loading...</p>
         </div>
         <div id="adminEditBtn" class="d-none">
+          <button class="btn btn-light me-2" id="downloadPdfBtn" onclick="downloadRotaPdf()">
+            <i class="bi bi-file-earmark-pdf"></i> Download PDF
+          </button>
           <a href="#" id="editRotaLink" class="btn btn-light">
             <i class="bi bi-pencil"></i> Edit Rota
           </a>
@@ -537,6 +541,166 @@
       const urlParams = new URLSearchParams(window.location.search);
       return urlParams.get('eventId');
     }
+
+    // Download Rota as PDF
+    window.downloadRotaPdf = function() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 15;
+      let yPos = margin;
+      
+      // Helper to check if we need a new page
+      function checkNewPage(neededHeight = 20) {
+        if (yPos + neededHeight > pageHeight - margin) {
+          doc.addPage();
+          yPos = margin;
+          return true;
+        }
+        return false;
+      }
+      
+      // Title
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text(eventName || 'Event Rota', pageWidth / 2, yPos, { align: 'center' });
+      yPos += 10;
+      
+      // Subtitle with generation date
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Generated: ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`, pageWidth / 2, yPos, { align: 'center' });
+      yPos += 15;
+      
+      // Process each day
+      rotaData.days.forEach((day, dayIndex) => {
+        checkNewPage(30);
+        
+        // Day header
+        const dayDate = new Date(day.date);
+        const dayName = dayDate.toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+        
+        doc.setFillColor(0, 168, 150); // Teal
+        doc.rect(margin, yPos, pageWidth - (margin * 2), 8, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text(dayName, pageWidth / 2, yPos + 5.5, { align: 'center' });
+        doc.setTextColor(0, 0, 0);
+        yPos += 12;
+        
+        // Process each shift type
+        const shiftTypes = [
+          { id: 'early', name: 'Early Shift', color: [255, 236, 210] },
+          { id: 'late', name: 'Late Shift', color: [168, 237, 234] },
+          { id: 'night', name: 'Night Shift', color: [102, 126, 234] }
+        ];
+        
+        shiftTypes.forEach(shift => {
+          // Get positions for this shift
+          const shiftPositions = rotaData.positions.filter(pos => {
+            if (!pos.shifts || !pos.shifts[shift.id]) return false;
+            const disabledKey = `${day.id}_${shift.id}`;
+            const disabledList = rotaData.disabledPositions?.[disabledKey] || [];
+            return !disabledList.includes(pos.id);
+          });
+          
+          if (shiftPositions.length === 0) return;
+          
+          checkNewPage(25);
+          
+          // Shift header
+          doc.setFillColor(...shift.color);
+          doc.rect(margin, yPos, pageWidth - (margin * 2), 6, 'F');
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(shift.id === 'night' ? 255 : 0, shift.id === 'night' ? 255 : 0, shift.id === 'night' ? 255 : 0);
+          doc.text(shift.name, margin + 2, yPos + 4);
+          doc.setTextColor(0, 0, 0);
+          yPos += 9;
+          
+          // Group positions by section
+          const sections = {};
+          shiftPositions.forEach(pos => {
+            const section = pos.section || 'Other';
+            if (!sections[section]) sections[section] = [];
+            sections[section].push(pos);
+          });
+          
+          // Process each section
+          Object.keys(sections).sort().forEach(sectionName => {
+            checkNewPage(15);
+            
+            // Section header
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.text(sectionName, margin + 2, yPos + 3);
+            yPos += 5;
+            
+            // Positions in this section
+            sections[sectionName].forEach(pos => {
+              checkNewPage(12);
+              
+              const assignmentKey = `${day.id}_${pos.id}_${shift.id}`;
+              const assignment = rotaData.assignments?.[assignmentKey] || {};
+              
+              // Get times
+              const defaultTimes = pos.shifts[shift.id];
+              const startTime = assignment.startTime || defaultTimes?.startTime || '';
+              const endTime = assignment.endTime || defaultTimes?.endTime || '';
+              const displayName = assignment.overrideName || pos.name;
+              
+              // Position name and times
+              doc.setFontSize(9);
+              doc.setFont('helvetica', 'bold');
+              doc.text(`${displayName}`, margin + 4, yPos + 3);
+              doc.setFont('helvetica', 'normal');
+              doc.text(`(${startTime} - ${endTime})`, margin + 4 + doc.getTextWidth(displayName + ' '), yPos + 3);
+              yPos += 4;
+              
+              // Crew assignments
+              const crewSlots = pos.crewSlots || 1;
+              let crewLine = '';
+              for (let i = 1; i <= crewSlots; i++) {
+                const crewId = assignment[`crew${i}`];
+                if (crewId && crewLookup[crewId]) {
+                  const crew = crewLookup[crewId];
+                  if (crewLine) crewLine += ', ';
+                  crewLine += `${crew.name}`;
+                  if (crew.qualification) crewLine += ` (${crew.qualification})`;
+                }
+              }
+              
+              if (!crewLine) crewLine = 'Unassigned';
+              
+              doc.setFontSize(8);
+              doc.setFont('helvetica', 'normal');
+              doc.text(`   ${crewLine}`, margin + 4, yPos + 3);
+              yPos += 5;
+              
+              // Notes if any
+              if (assignment.notes) {
+                doc.setFontSize(7);
+                doc.setFont('helvetica', 'italic');
+                doc.text(`   Note: ${assignment.notes}`, margin + 4, yPos + 2);
+                yPos += 4;
+              }
+            });
+            
+            yPos += 2;
+          });
+          
+          yPos += 3;
+        });
+        
+        yPos += 5;
+      });
+      
+      // Save the PDF
+      const fileName = `${(eventName || 'rota').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_rota.pdf`;
+      doc.save(fileName);
+    };
 
     // Initialize
     async function init() {
