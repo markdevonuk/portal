@@ -520,17 +520,9 @@
           <div class="col-lg-7 mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <h4><i class="bi bi-person-badge"></i> Positions</h4>
-              <div class="d-flex gap-2">
-                <button class="btn btn-outline-primary btn-sm" onclick="openLoadTemplateModal()">
-                  <i class="bi bi-download"></i> Load Template
-                </button>
-                <button class="btn btn-outline-primary btn-sm" onclick="openCloneFromEventModal()">
-                  <i class="bi bi-copy"></i> Clone from Event
-                </button>
-                <button class="btn btn-primary btn-sm" onclick="openAddPositionModal()">
-                  <i class="bi bi-plus-lg"></i> Add Position
-                </button>
-              </div>
+              <button class="btn btn-primary btn-sm" onclick="openAddPositionModal()">
+                <i class="bi bi-plus-lg"></i> Add Position
+              </button>
             </div>
             <div id="positionsList">
               <div class="loading-state">
@@ -691,7 +683,7 @@
             
             <hr>
             <h6 class="mb-3">Shift Times</h6>
-            <p class="text-muted small mb-3">Configure which shifts this position works and their times. Leave unchecked if this position doesn't work that shift.</p>
+            <p class="text-muted small mb-3">Configure which shifts this position works and their times.</p>
             
             <!-- Early Shift -->
             <div class="card mb-3">
@@ -699,7 +691,7 @@
                 <div class="form-check mb-2">
                   <input class="form-check-input" type="checkbox" id="earlyShiftEnabled" checked>
                   <label class="form-check-label fw-bold" for="earlyShiftEnabled">
-                    <i class="bi bi-sunrise text-primary"></i> Early Shift
+                    <i class="bi bi-sunrise text-warning"></i> Early Shift
                   </label>
                 </div>
                 <div class="row" id="earlyShiftTimes">
@@ -721,7 +713,7 @@
                 <div class="form-check mb-2">
                   <input class="form-check-input" type="checkbox" id="lateShiftEnabled" checked>
                   <label class="form-check-label fw-bold" for="lateShiftEnabled">
-                    <i class="bi bi-sun text-warning"></i> Late Shift
+                    <i class="bi bi-sun text-primary"></i> Late Shift
                   </label>
                 </div>
                 <div class="row" id="lateShiftTimes">
@@ -778,49 +770,44 @@
         </div>
         <div class="modal-body">
           <p class="text-muted">Copy the configuration from <strong id="cloneSourceDay"></strong> to the selected days:</p>
-          <div class="alert alert-info small">
-            <i class="bi bi-info-circle"></i> This will copy:
-            <ul class="mb-0 mt-1">
-              <li>Custom shift times</li>
-              <li>Custom position names</li>
-              <li>Position notes</li>
-              <li>Enabled/disabled position states</li>
-            </ul>
-            <strong>Crew assignments will NOT be copied.</strong>
-          </div>
-          <div id="cloneDaysList">
-            <!-- Days will be inserted here -->
-          </div>
+          <div id="cloneDaysList"></div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" onclick="confirmCloneDay()">Clone Structure</button>
+          <button type="button" class="btn btn-primary" onclick="confirmCloneDay()">Clone Configuration</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Edit Position Override Modal -->
-  <div class="modal fade" id="editPositionOverrideModal" tabindex="-1" aria-hidden="true">
+  <!-- Position Override Modal -->
+  <div class="modal fade" id="positionOverrideModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Edit Position for This Shift</h5>
+          <h5 class="modal-title">Edit Position for this Shift</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <input type="hidden" id="editOverrideKey">
-          <input type="hidden" id="editOverridePositionId">
+          <input type="hidden" id="overridePositionId">
           <div class="mb-3">
-            <label class="form-label text-muted small">Original Position Name:</label>
-            <div id="originalPositionName" class="fw-bold"></div>
+            <label class="form-label">Original Position Name</label>
+            <input type="text" class="form-control" id="originalPositionName" readonly>
           </div>
           <div class="mb-3">
-            <label for="overridePositionName" class="form-label">Custom Name for This Shift</label>
-            <input type="text" class="form-control" id="overridePositionName" 
+            <label for="overrideName" class="form-label">Override Name <span class="text-muted">(optional)</span></label>
+            <input type="text" class="form-control" id="overrideName" 
                    placeholder="Leave blank to use original name">
-            <div class="form-text">
-              Override the position name for this specific day and shift only.
+            <div class="form-text">Use this to give the position a different name for this specific shift.</div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-6">
+              <label for="overrideStartTime" class="form-label">Start Time</label>
+              <input type="time" class="form-control" id="overrideStartTime">
+            </div>
+            <div class="col-6">
+              <label for="overrideEndTime" class="form-label">End Time</label>
+              <input type="time" class="form-control" id="overrideEndTime">
             </div>
           </div>
           <div class="mb-3">
@@ -835,56 +822,6 @@
           </button>
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
           <button type="button" class="btn btn-primary" onclick="savePositionOverride()">Save Changes</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Load Template Modal -->
-  <div class="modal fade" id="loadTemplateModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Load Template</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <p class="text-muted">Select a template to load positions from. This will replace any existing positions.</p>
-          <div id="loadTemplateList">
-            <div class="loading-state">
-              <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Clone From Event Modal -->
-  <div class="modal fade" id="cloneFromEventModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Clone from Event</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <p class="text-muted">Select an event to clone positions from. This will replace any existing positions.</p>
-          <div id="cloneFromEventList">
-            <div class="loading-state">
-              <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
         </div>
       </div>
     </div>
@@ -913,6 +850,32 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
           <button type="button" class="btn btn-primary" onclick="confirmSaveTemplate()">Save Template</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load Template Warning Modal -->
+  <div class="modal fade" id="loadTemplateWarningModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill"></i> Warning</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-danger mb-3">
+            <strong>THIS WILL DELETE ANY ROTA YOU HAVE CREATED FOR THIS EVENT AND ALL THE SHIFTS AND ASSIGNMENTS ALREADY CREATED.</strong>
+          </div>
+          <p>Are you certain you want to load the template "<strong id="loadTemplateWarningName"></strong>"?</p>
+          <p class="text-muted mb-0">This action cannot be undone.</p>
+          <input type="hidden" id="pendingTemplateId">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" onclick="confirmLoadTemplate()">
+            <i class="bi bi-exclamation-triangle"></i> Yes, Load Template
+          </button>
         </div>
       </div>
     </div>
@@ -1041,23 +1004,32 @@
         if (rotaDoc.exists()) {
           rotaData = rotaDoc.data();
         } else {
-          // Create initial rota document
+          // Initialize empty rota
           rotaData = {
-            status: 'draft',
             days: [],
             positions: [],
             assignments: {},
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
+            disabledPositions: {},
+            status: 'draft'
           };
-          await setDoc(doc(db, 'eventRotas', eventId), rotaData);
         }
 
         updateStatusDisplay();
-        
+
       } catch (error) {
         console.error('Error loading rota:', error);
         showAlert('Error loading rota: ' + error.message, 'danger');
+      }
+    }
+
+    // Save rota data
+    async function saveRotaData() {
+      try {
+        await setDoc(doc(db, 'eventRotas', eventId), rotaData);
+      } catch (error) {
+        console.error('Error saving rota:', error);
+        showAlert('Error saving rota: ' + error.message, 'danger');
+        throw error;
       }
     }
 
@@ -1067,82 +1039,82 @@
         const volunteersQuery = query(
           collection(db, 'eventVolunteers'),
           where('eventId', '==', eventId),
-          where('selected', '==', true)
+          where('status', '==', 'selected')
         );
-        
         const volunteersSnapshot = await getDocs(volunteersQuery);
         
-        if (volunteersSnapshot.empty) {
-          selectedCrewList = [];
-          return;
-        }
-
-        // Get user IDs
-        const userIds = volunteersSnapshot.docs.map(doc => doc.data().userId);
+        selectedCrewList = [];
         
-        // Fetch user and profile data in parallel
-        const userPromises = userIds.map(userId => getDoc(doc(db, 'users', userId)));
-        const profilePromises = userIds.map(userId => getDoc(doc(db, 'profiles', userId)));
-        
-        const [userDocs, profileDocs] = await Promise.all([
-          Promise.all(userPromises),
-          Promise.all(profilePromises)
-        ]);
-
-        selectedCrewList = userIds.map((userId, index) => {
-          const userData = userDocs[index].exists() ? userDocs[index].data() : {};
-          const profileData = profileDocs[index].exists() ? profileDocs[index].data() : {};
-          
-          const firstName = userData.firstName || '';
-          const surname = userData.surname || '';
-          const name = `${firstName} ${surname}`.trim() || userData.email || 'Unknown';
-          
-          let qualification = 'Unknown';
-          if (profileData.medicalQualifications?.qualification) {
-            qualification = profileData.medicalQualifications.qualification;
+        for (const volDoc of volunteersSnapshot.docs) {
+          const volData = volDoc.data();
+          // Get user profile for full details
+          const userDoc = await getDoc(doc(db, 'users', volData.volunteerId));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            selectedCrewList.push({
+              id: volData.volunteerId,
+              name: `${userData.firstName} ${userData.lastName}`,
+              qualification: userData.qualification || 'Unknown'
+            });
           }
-
-          return {
-            id: userId,
-            name: name,
-            qualification: qualification,
-            displayName: `${name} (${qualification})`
-          };
-        });
+        }
 
         // Sort by name
         selectedCrewList.sort((a, b) => a.name.localeCompare(b.name));
 
       } catch (error) {
         console.error('Error loading selected crew:', error);
-        showAlert('Error loading crew list: ' + error.message, 'warning');
       }
+    }
+
+    // Setup event listeners
+    function setupEventListeners() {
+      // Date picker auto-updates day name
+      document.getElementById('dayDate').addEventListener('change', function() {
+        if (this.value) {
+          const date = new Date(this.value + 'T00:00:00');
+          const dayName = date.toLocaleDateString('en-GB', { weekday: 'long' });
+          document.getElementById('dayName').value = dayName;
+        } else {
+          document.getElementById('dayName').value = '';
+        }
+      });
+
+      // Logout
+      document.getElementById('logoutLink').addEventListener('click', async (e) => {
+        e.preventDefault();
+        await signOut(auth);
+        window.location.href = 'index.html';
+      });
+    }
+
+    // Show alert
+    function showAlert(message, type = 'info') {
+      const container = document.getElementById('alertContainer');
+      const alert = document.createElement('div');
+      alert.className = `alert alert-${type} alert-dismissible fade show`;
+      alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      container.appendChild(alert);
+      
+      setTimeout(() => alert.remove(), 5000);
     }
 
     // Update status display
     function updateStatusDisplay() {
-      const statusBadge = document.getElementById('statusBadge');
-      const toggleBtn = document.getElementById('toggleStatusBtn');
+      const badge = document.getElementById('statusBadge');
+      const btn = document.getElementById('toggleStatusBtn');
       
       if (rotaData.status === 'published') {
-        statusBadge.textContent = 'Published';
-        statusBadge.className = 'status-badge status-published';
-        toggleBtn.innerHTML = '<i class="bi bi-pencil"></i> Unpublish';
+        badge.textContent = 'Published';
+        badge.className = 'status-badge status-published';
+        btn.innerHTML = '<i class="bi bi-eye-slash"></i> Unpublish';
       } else {
-        statusBadge.textContent = 'Draft';
-        statusBadge.className = 'status-badge status-draft';
-        toggleBtn.innerHTML = '<i class="bi bi-globe"></i> Publish';
-      }
-    }
-
-    // Save rota data
-    async function saveRotaData() {
-      try {
-        rotaData.updatedAt = serverTimestamp();
-        await updateDoc(doc(db, 'eventRotas', eventId), rotaData);
-      } catch (error) {
-        console.error('Error saving rota:', error);
-        showAlert('Error saving rota: ' + error.message, 'danger');
+        badge.textContent = 'Draft';
+        badge.className = 'status-badge status-draft';
+        btn.innerHTML = '<i class="bi bi-globe"></i> Publish';
       }
     }
 
@@ -1150,13 +1122,13 @@
     window.togglePublishStatus = async function() {
       const newStatus = rotaData.status === 'published' ? 'draft' : 'published';
       
+      // Validation before publishing
       if (newStatus === 'published') {
-        // Validate before publishing
-        if (rotaData.days.length === 0) {
+        if (!rotaData.days || rotaData.days.length === 0) {
           showAlert('Cannot publish: No days have been added.', 'warning');
           return;
         }
-        if (rotaData.positions.length === 0) {
+        if (!rotaData.positions || rotaData.positions.length === 0) {
           showAlert('Cannot publish: No positions have been added.', 'warning');
           return;
         }
@@ -1223,9 +1195,7 @@
 
       // Sort days by date
       const sortedDays = [...rotaData.days].sort((a, b) => {
-        const dateA = parseUKDate(a.date);
-        const dateB = parseUKDate(b.date);
-        return dateA - dateB;
+        return parseUKDate(a.date) - parseUKDate(b.date);
       });
 
       let html = '';
@@ -1236,11 +1206,11 @@
               <span class="day-name">${day.dayName}</span>
               <span class="day-date">${day.date}</span>
             </div>
-            <div class="day-actions">
-              <button class="btn btn-outline-secondary btn-icon btn-sm" onclick="editDay('${day.id}')" title="Edit">
+            <div>
+              <button class="btn btn-outline-secondary btn-sm btn-icon" onclick="editDay('${day.id}')" title="Edit">
                 <i class="bi bi-pencil"></i>
               </button>
-              <button class="btn btn-outline-danger btn-icon btn-sm" onclick="deleteDay('${day.id}')" title="Delete">
+              <button class="btn btn-outline-danger btn-sm btn-icon" onclick="deleteDay('${day.id}')" title="Delete">
                 <i class="bi bi-trash"></i>
               </button>
             </div>
@@ -1251,28 +1221,16 @@
       container.innerHTML = html;
     }
 
+    // Parse UK date format (DD/MM/YYYY) to Date object
     function parseUKDate(dateStr) {
-      // Parse DD/MM/YYYY format
       const parts = dateStr.split('/');
       return new Date(parts[2], parts[1] - 1, parts[0]);
-    }
-
-    function formatToUKDate(date) {
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
-    }
-
-    function getDayName(date) {
-      return date.toLocaleDateString('en-GB', { weekday: 'long' });
     }
 
     window.openAddDayModal = function() {
       document.getElementById('dayForm').reset();
       document.getElementById('dayId').value = '';
       document.getElementById('dayModalTitle').textContent = 'Add Day';
-      document.getElementById('dayName').value = '';
       
       const modal = new bootstrap.Modal(document.getElementById('dayModal'));
       modal.show();
@@ -1285,9 +1243,9 @@
       document.getElementById('dayId').value = dayId;
       document.getElementById('dayModalTitle').textContent = 'Edit Day';
       
-      // Convert UK date to input format
-      const dateParts = day.date.split('/');
-      document.getElementById('dayDate').value = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+      // Convert UK date format back to YYYY-MM-DD for the input
+      const parts = day.date.split('/');
+      document.getElementById('dayDate').value = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
       document.getElementById('dayName').value = day.dayName;
 
       const modal = new bootstrap.Modal(document.getElementById('dayModal'));
@@ -1296,39 +1254,38 @@
 
     window.saveDay = async function() {
       const dayId = document.getElementById('dayId').value;
-      const dateInput = document.getElementById('dayDate').value;
+      const dateValue = document.getElementById('dayDate').value;
+      const dayName = document.getElementById('dayName').value;
 
-      if (!dateInput) {
+      if (!dateValue) {
         showAlert('Please select a date.', 'warning');
         return;
       }
 
-      const date = new Date(dateInput);
-      const ukDate = formatToUKDate(date);
-      const dayName = getDayName(date);
-
-      // Check for duplicate dates
-      const existingDay = rotaData.days.find(d => d.date === ukDate && d.id !== dayId);
-      if (existingDay) {
-        showAlert('This date has already been added.', 'warning');
-        return;
-      }
+      // Convert to UK format
+      const date = new Date(dateValue + 'T00:00:00');
+      const ukDate = date.toLocaleDateString('en-GB');
 
       if (dayId) {
-        // Edit existing day
+        // Edit existing
         const dayIndex = rotaData.days.findIndex(d => d.id === dayId);
-        if (dayIndex !== -1) {
+        if (dayIndex > -1) {
           rotaData.days[dayIndex].date = ukDate;
           rotaData.days[dayIndex].dayName = dayName;
         }
       } else {
-        // Add new day
-        const newDay = {
+        // Check for duplicate date
+        if (rotaData.days.some(d => d.date === ukDate)) {
+          showAlert('This date has already been added.', 'warning');
+          return;
+        }
+
+        // Add new
+        rotaData.days.push({
           id: 'day_' + Date.now(),
           date: ukDate,
           dayName: dayName
-        };
-        rotaData.days.push(newDay);
+        });
       }
 
       await saveRotaData();
@@ -1483,21 +1440,39 @@
       document.getElementById('lateShiftEnabled').checked = lateEnabled;
       document.getElementById('nightShiftEnabled').checked = nightEnabled;
 
-      if (earlyEnabled && pos.shifts.early) {
+      if (pos.shifts?.early) {
         document.getElementById('earlyStart').value = pos.shifts.early.start;
         document.getElementById('earlyEnd').value = pos.shifts.early.end;
       }
-      if (lateEnabled && pos.shifts.late) {
+      if (pos.shifts?.late) {
         document.getElementById('lateStart').value = pos.shifts.late.start;
         document.getElementById('lateEnd').value = pos.shifts.late.end;
       }
-      if (nightEnabled && pos.shifts.night) {
+      if (pos.shifts?.night) {
         document.getElementById('nightStart').value = pos.shifts.night.start;
         document.getElementById('nightEnd').value = pos.shifts.night.end;
       }
 
       const modal = new bootstrap.Modal(document.getElementById('positionModal'));
       modal.show();
+    };
+
+    window.clonePosition = async function(positionId) {
+      const pos = rotaData.positions.find(p => p.id === positionId);
+      if (!pos) return;
+
+      // Create a clone with a new ID
+      const clonedPos = {
+        ...JSON.parse(JSON.stringify(pos)), // Deep clone
+        id: 'pos_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        name: pos.name + ' (Copy)'
+      };
+
+      rotaData.positions.push(clonedPos);
+      await saveRotaData();
+      renderPositionsList();
+
+      showAlert('Position cloned successfully.', 'success');
     };
 
     window.savePosition = async function() {
@@ -1519,38 +1494,32 @@
           start: document.getElementById('earlyStart').value,
           end: document.getElementById('earlyEnd').value
         };
-      } else {
-        shifts.early = null;
       }
-
+      
       if (document.getElementById('lateShiftEnabled').checked) {
         shifts.late = {
           start: document.getElementById('lateStart').value,
           end: document.getElementById('lateEnd').value
         };
-      } else {
-        shifts.late = null;
       }
-
+      
       if (document.getElementById('nightShiftEnabled').checked) {
         shifts.night = {
           start: document.getElementById('nightStart').value,
           end: document.getElementById('nightEnd').value
         };
-      } else {
-        shifts.night = null;
       }
 
-      // Check at least one shift is enabled
-      if (!shifts.early && !shifts.late && !shifts.night) {
-        showAlert('Please enable at least one shift type.', 'warning');
+      // Require at least one shift
+      if (Object.keys(shifts).length === 0) {
+        showAlert('Please enable at least one shift.', 'warning');
         return;
       }
 
       if (positionId) {
-        // Edit existing position
+        // Edit existing
         const posIndex = rotaData.positions.findIndex(p => p.id === positionId);
-        if (posIndex !== -1) {
+        if (posIndex > -1) {
           rotaData.positions[posIndex] = {
             ...rotaData.positions[posIndex],
             name,
@@ -1560,15 +1529,14 @@
           };
         }
       } else {
-        // Add new position
-        const newPosition = {
-          id: 'pos_' + Date.now(),
+        // Add new
+        rotaData.positions.push({
+          id: 'pos_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
           name,
           category,
           crewSlots,
           shifts
-        };
-        rotaData.positions.push(newPosition);
+        });
       }
 
       await saveRotaData();
@@ -1589,36 +1557,13 @@
       rotaData.positions = rotaData.positions.filter(p => p.id !== positionId);
 
       // Remove assignments for this position
-      const keysToRemove = Object.keys(rotaData.assignments).filter(key => key.includes('_' + positionId + '_'));
+      const keysToRemove = Object.keys(rotaData.assignments).filter(key => key.includes('_' + positionId));
       keysToRemove.forEach(key => delete rotaData.assignments[key]);
 
       await saveRotaData();
       renderPositionsList();
 
       showAlert('Position deleted successfully.', 'success');
-    };
-
-    window.clonePosition = async function(positionId) {
-      const sourcePos = rotaData.positions.find(p => p.id === positionId);
-      if (!sourcePos) return;
-
-      // Create a copy with new ID and modified name
-      const newPosition = {
-        id: 'pos_' + Date.now(),
-        name: sourcePos.name + ' (copy)',
-        category: sourcePos.category,
-        crewSlots: sourcePos.crewSlots,
-        shifts: JSON.parse(JSON.stringify(sourcePos.shifts)) // Deep copy
-      };
-
-      rotaData.positions.push(newPosition);
-      await saveRotaData();
-      renderPositionsList();
-
-      showAlert('Position cloned! Click edit to rename it.', 'success');
-      
-      // Automatically open edit modal for the new position
-      setTimeout(() => editPosition(newPosition.id), 300);
     };
 
     // ============================================
@@ -1628,44 +1573,43 @@
     function renderEditorTab() {
       updateEditorDaySelect();
       
-      if (currentEditorDay) {
+      if (rotaData.days && rotaData.days.length > 0 && !currentEditorDay) {
+        // Auto-select first day
+        const sortedDays = [...rotaData.days].sort((a, b) => parseUKDate(a.date) - parseUKDate(b.date));
+        currentEditorDay = sortedDays[0].id;
+        document.getElementById('editorDaySelect').value = currentEditorDay;
+        loadEditorForDay();
+      } else if (currentEditorDay) {
         loadEditorForDay();
       }
     }
 
     function updateEditorDaySelect() {
       const select = document.getElementById('editorDaySelect');
+      const currentValue = select.value;
       
-      if (!rotaData.days || rotaData.days.length === 0) {
-        select.innerHTML = '<option value="">No days available</option>';
-        document.getElementById('cloneDayBtn').disabled = true;
-        return;
+      select.innerHTML = '<option value="">Select a day...</option>';
+      
+      if (rotaData.days && rotaData.days.length > 0) {
+        const sortedDays = [...rotaData.days].sort((a, b) => parseUKDate(a.date) - parseUKDate(b.date));
+        sortedDays.forEach(day => {
+          select.innerHTML += `<option value="${day.id}">${day.dayName} ${day.date}</option>`;
+        });
       }
-
-      // Sort days by date
-      const sortedDays = [...rotaData.days].sort((a, b) => {
-        const dateA = parseUKDate(a.date);
-        const dateB = parseUKDate(b.date);
-        return dateA - dateB;
-      });
-
-      let html = '<option value="">Select a day...</option>';
-      sortedDays.forEach(day => {
-        html += `<option value="${day.id}">${day.dayName} ${day.date}</option>`;
-      });
-
-      select.innerHTML = html;
-
-      // Restore selection if valid
-      if (currentEditorDay && rotaData.days.some(d => d.id === currentEditorDay)) {
-        select.value = currentEditorDay;
+      
+      // Restore selection if still valid
+      if (currentValue && rotaData.days?.some(d => d.id === currentValue)) {
+        select.value = currentValue;
       }
     }
 
     window.loadEditorForDay = function() {
-      const dayId = document.getElementById('editorDaySelect').value;
+      const select = document.getElementById('editorDaySelect');
+      currentEditorDay = select.value;
       
-      if (!dayId) {
+      document.getElementById('cloneDayBtn').disabled = !currentEditorDay;
+      
+      if (!currentEditorDay) {
         document.getElementById('editorContent').innerHTML = `
           <div class="empty-state">
             <i class="bi bi-calendar-x"></i>
@@ -1673,129 +1617,84 @@
             <p>Select a day from the dropdown above to start editing the rota.</p>
           </div>
         `;
-        document.getElementById('cloneDayBtn').disabled = true;
         return;
       }
 
-      currentEditorDay = dayId;
-      document.getElementById('cloneDayBtn').disabled = false;
-      
-      renderEditorContent();
+      renderShiftEditor();
     };
 
     window.navigateDay = function(direction) {
-      const select = document.getElementById('editorDaySelect');
-      const options = Array.from(select.options).filter(o => o.value);
-      const currentIndex = options.findIndex(o => o.value === select.value);
+      if (!rotaData.days || rotaData.days.length === 0) return;
+      
+      const sortedDays = [...rotaData.days].sort((a, b) => parseUKDate(a.date) - parseUKDate(b.date));
+      const currentIndex = sortedDays.findIndex(d => d.id === currentEditorDay);
       
       const newIndex = currentIndex + direction;
-      if (newIndex >= 0 && newIndex < options.length) {
-        select.value = options[newIndex].value;
-        loadEditorForDay();
+      if (newIndex >= 0 && newIndex < sortedDays.length) {
+        currentEditorDay = sortedDays[newIndex].id;
+        document.getElementById('editorDaySelect').value = currentEditorDay;
+        renderShiftEditor();
       }
     };
 
     window.selectShift = function(shift) {
       currentShift = shift;
-      
       document.querySelectorAll('.shift-tab').forEach(tab => {
         tab.classList.toggle('active', tab.dataset.shift === shift);
       });
-
-      renderEditorContent();
+      renderShiftEditor();
     };
 
-    window.filterEditorBySection = function() {
-      renderEditorContent();
-    };
-
-    function renderEditorContent() {
+    function renderShiftEditor() {
       const container = document.getElementById('editorContent');
-      const sectionFilter = document.getElementById('sectionFilter').value;
-
-      if (!currentEditorDay || !rotaData.positions || rotaData.positions.length === 0) {
-        container.innerHTML = `
-          <div class="empty-state">
-            <i class="bi bi-person-x"></i>
-            <h5>No Positions</h5>
-            <p>Add positions in the Setup tab first.</p>
-          </div>
-        `;
-        return;
-      }
-
-      // Filter positions that have this shift type
-      let positions = rotaData.positions.filter(pos => pos.shifts && pos.shifts[currentShift]);
-
-      // Apply section filter
-      if (sectionFilter !== 'all') {
-        positions = positions.filter(pos => pos.category === sectionFilter);
-      }
-
-      if (positions.length === 0) {
+      const filterValue = document.getElementById('sectionFilter').value;
+      
+      if (!currentEditorDay) {
         container.innerHTML = `
           <div class="empty-state">
             <i class="bi bi-calendar-x"></i>
-            <h5>No Positions for ${currentShift.charAt(0).toUpperCase() + currentShift.slice(1)} Shift</h5>
-            <p>No positions are configured for this shift type${sectionFilter !== 'all' ? ' in this section' : ''}.</p>
+            <h5>No Day Selected</h5>
+            <p>Select a day from the dropdown above.</p>
           </div>
         `;
         return;
       }
 
-      // Initialize disabledPositions if not exists
-      if (!rotaData.disabledPositions) {
-        rotaData.disabledPositions = {};
-      }
+      // Filter positions that have this shift enabled
+      let positionsForShift = rotaData.positions.filter(pos => pos.shifts && pos.shifts[currentShift]);
       
-      // Key is now day + shift combined
-      const disabledKey = `${currentEditorDay}_${currentShift}`;
-      if (!rotaData.disabledPositions[disabledKey]) {
-        rotaData.disabledPositions[disabledKey] = [];
+      // Apply category filter
+      if (filterValue !== 'all') {
+        positionsForShift = positionsForShift.filter(pos => pos.category === filterValue);
       }
 
-      const disabledForDayShift = rotaData.disabledPositions[disabledKey];
+      if (positionsForShift.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="bi bi-person-x"></i>
+            <h5>No Positions for this Shift</h5>
+            <p>Add positions with ${currentShift} shift enabled in the Setup tab.</p>
+          </div>
+        `;
+        return;
+      }
 
       // Group by category
       const grouped = {};
       CATEGORY_ORDER.forEach(cat => grouped[cat] = []);
-      positions.forEach(pos => {
+      positionsForShift.forEach(pos => {
         if (grouped[pos.category]) {
           grouped[pos.category].push(pos);
         }
       });
 
-      // Get categories that have positions for this shift
-      const activeCategories = CATEGORY_ORDER.filter(cat => grouped[cat].length > 0);
-
       // Build bulk controls
       let html = `
         <div class="bulk-controls">
-          <span class="bulk-controls-label"><i class="bi bi-toggles"></i> Quick Actions (${currentShift.charAt(0).toUpperCase() + currentShift.slice(1)} shift):</span>
-          <div class="btn-group flex-wrap">
-            <button class="btn btn-outline-success btn-sm" onclick="enableAllPositions()">
-              <i class="bi bi-check-all"></i> Enable All
-            </button>
-            <button class="btn btn-outline-secondary btn-sm" onclick="disableAllPositions()">
-              <i class="bi bi-x-lg"></i> Disable All
-            </button>
-          </div>
-          <div class="btn-group flex-wrap">
-            ${activeCategories.map(cat => `
-              <div class="btn-group">
-                <button class="btn btn-outline-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-                  ${cat}
-                </button>
-                <ul class="dropdown-menu">
-                  <li><a class="dropdown-item" href="#" onclick="enableCategory('${cat}'); return false;">
-                    <i class="bi bi-check text-success"></i> Enable All
-                  </a></li>
-                  <li><a class="dropdown-item" href="#" onclick="disableCategory('${cat}'); return false;">
-                    <i class="bi bi-x text-danger"></i> Disable All
-                  </a></li>
-                </ul>
-              </div>
-            `).join('')}
+          <span class="bulk-controls-label">Bulk Actions:</span>
+          <div class="btn-group">
+            <button class="btn btn-outline-secondary btn-sm" onclick="enableAllPositions()">Enable All</button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="disableAllPositions()">Disable All</button>
           </div>
         </div>
       `;
@@ -1803,341 +1702,279 @@
       CATEGORY_ORDER.forEach(category => {
         if (grouped[category].length === 0) return;
 
-        // Count enabled/disabled in this category
-        const enabledCount = grouped[category].filter(pos => !disabledForDayShift.includes(pos.id)).length;
-        const totalCount = grouped[category].length;
-
         html += `
           <div class="category-section" data-category="${category}">
             <div class="category-header">
               <span>${category}</span>
-              <span class="badge ${enabledCount === totalCount ? 'bg-success' : enabledCount === 0 ? 'bg-secondary' : 'bg-warning text-dark'}">
-                ${enabledCount}/${totalCount} active
-              </span>
+              <div class="category-controls">
+                <button class="btn btn-outline-success btn-sm" onclick="enableCategory('${category}')">Enable All</button>
+                <button class="btn btn-outline-secondary btn-sm" onclick="disableCategory('${category}')">Disable All</button>
+              </div>
             </div>
-            <div class="row">
         `;
 
         grouped[category].forEach(pos => {
-          const isDisabled = disabledForDayShift.includes(pos.id);
-          const defaultShiftTimes = pos.shifts[currentShift];
-          const assignmentKey = `${currentEditorDay}_${pos.id}_${currentShift}`;
-          const assignment = rotaData.assignments[assignmentKey] || { crew1: null, crew2: null };
-          
-          // Use assignment times if set, otherwise use position defaults
-          const startTime = assignment.startTime || defaultShiftTimes.start;
-          const endTime = assignment.endTime || defaultShiftTimes.end;
-
-          if (isDisabled) {
-            // Disabled position - collapsed view
-            html += `
-              <div class="col-md-6 mb-3">
-                <div class="position-card position-disabled ${CATEGORY_CARD_CLASSES[category] || ''}" data-position-id="${pos.id}">
-                  <div class="card-header">
-                    <div class="position-toggle">
-                      <input type="checkbox" id="toggle-${pos.id}" 
-                             onchange="togglePosition('${pos.id}', this.checked)">
-                      <label for="toggle-${pos.id}" class="position-title" style="margin-bottom: 0; cursor: pointer;">
-                        ${pos.name}
-                      </label>
-                    </div>
-                  </div>
-                  <div class="position-disabled-label">
-                    <i class="bi bi-pause-circle"></i> Not active for this shift
-                  </div>
-                </div>
-              </div>
-            `;
-          } else {
-            // Enabled position - full view
-            const displayName = assignment.overrideName || pos.name;
-            const hasOverride = assignment.overrideName || assignment.notes;
-            
-            html += `
-              <div class="col-md-6 mb-3">
-                <div class="position-card ${CATEGORY_CARD_CLASSES[category] || ''}" data-position-id="${pos.id}">
-                  <div class="card-header">
-                    <div class="position-header-row">
-                      <div>
-                        <div class="position-toggle">
-                          <input type="checkbox" id="toggle-${pos.id}" checked
-                                 onchange="togglePosition('${pos.id}', this.checked)">
-                          <label for="toggle-${pos.id}" class="position-title" style="margin-bottom: 0; cursor: pointer;">
-                            ${displayName}
-                          </label>
-                        </div>
-                        ${hasOverride ? `
-                          <div class="position-name-override">
-                            <i class="bi bi-pencil-fill"></i> 
-                            ${assignment.overrideName && assignment.overrideName !== pos.name ? 'Custom name' : ''}
-                            ${assignment.notes ? (assignment.overrideName ? ' • ' : '') + 'Has notes' : ''}
-                          </div>
-                        ` : ''}
-                        <div class="position-time-edit">
-                          <input type="time" class="form-control form-control-sm time-input" 
-                                 value="${startTime}" 
-                                 onchange="updateAssignmentTime('${assignmentKey}', 'startTime', this.value, '${defaultShiftTimes.start}')"
-                                 title="Start time">
-                          <span class="time-separator">-</span>
-                          <input type="time" class="form-control form-control-sm time-input" 
-                                 value="${endTime}" 
-                                 onchange="updateAssignmentTime('${assignmentKey}', 'endTime', this.value, '${defaultShiftTimes.end}')"
-                                 title="End time">
-                        </div>
-                      </div>
-                      <button class="position-edit-btn" onclick="openEditPositionOverride('${assignmentKey}', '${pos.id}')" title="Edit position details">
-                        <i class="bi bi-pencil"></i>
-                      </button>
-                    </div>
-                  </div>
-                  ${assignment.notes ? `
-                    <div class="alert alert-secondary small py-1 px-2 mb-2">
-                      <i class="bi bi-sticky"></i> ${assignment.notes}
-                    </div>
-                  ` : ''}
-                  <div class="crew-selects">
-                    <div class="crew-select-row">
-                      <span class="crew-label">Crew 1:</span>
-                      <select class="form-select crew-select" onchange="updateAssignment('${assignmentKey}', 'crew1', this.value)">
-                        <option value="">-- Select --</option>
-                        ${selectedCrewList.map(crew => `
-                          <option value="${crew.id}" ${assignment.crew1 === crew.id ? 'selected' : ''}>
-                            ${crew.displayName}
-                          </option>
-                        `).join('')}
-                      </select>
-                    </div>
-                    ${pos.crewSlots >= 2 ? `
-                      <div class="crew-select-row">
-                        <span class="crew-label">Crew 2:</span>
-                        <select class="form-select crew-select" onchange="updateAssignment('${assignmentKey}', 'crew2', this.value)">
-                          <option value="">-- Select --</option>
-                          ${selectedCrewList.map(crew => `
-                            <option value="${crew.id}" ${assignment.crew2 === crew.id ? 'selected' : ''}>
-                              ${crew.displayName}
-                            </option>
-                          `).join('')}
-                        </select>
-                      </div>
-                    ` : ''}
-                  </div>
-                </div>
-              </div>
-            `;
-          }
+          html += renderPositionCard(pos);
         });
 
-        html += '</div></div>';
+        html += '</div>';
       });
 
       container.innerHTML = html;
     }
 
-    window.updateAssignment = async function(key, crewSlot, userId) {
-      if (!rotaData.assignments[key]) {
-        rotaData.assignments[key] = { crew1: null, crew2: null };
-      }
+    function renderPositionCard(pos) {
+      const shiftConfig = pos.shifts[currentShift];
+      const assignmentKey = `${currentEditorDay}_${currentShift}_${pos.id}`;
+      const assignment = rotaData.assignments[assignmentKey] || {};
+      
+      // Check if position is disabled for this day/shift
+      const disabledKey = `${currentEditorDay}_${currentShift}`;
+      const isDisabled = rotaData.disabledPositions?.[disabledKey]?.includes(pos.id) || false;
+      
+      const cardClass = CATEGORY_CARD_CLASSES[pos.category] || '';
+      
+      // Get times (use override if exists, otherwise default)
+      const startTime = assignment.startTime || shiftConfig.start;
+      const endTime = assignment.endTime || shiftConfig.end;
+      
+      // Get display name (use override if exists)
+      const displayName = assignment.overrideName || pos.name;
+      const hasOverride = assignment.overrideName || assignment.startTime || assignment.endTime || assignment.notes;
 
-      rotaData.assignments[key][crewSlot] = userId || null;
+      let html = `
+        <div class="position-card ${cardClass} ${isDisabled ? 'position-disabled' : ''}" data-position-id="${pos.id}">
+          <div class="card-header">
+            <div class="position-header-row">
+              <div>
+                <div class="position-toggle">
+                  <input type="checkbox" ${!isDisabled ? 'checked' : ''} 
+                         onchange="togglePositionEnabled('${pos.id}', this.checked)"
+                         title="${isDisabled ? 'Enable this position' : 'Disable this position'}">
+                  <div class="position-title">${displayName}</div>
+                </div>
+                ${assignment.overrideName ? `<div class="position-name-override"><i class="bi bi-info-circle"></i> Original: ${pos.name}</div>` : ''}
+                <div class="position-time">${startTime} - ${endTime}</div>
+              </div>
+              <button class="position-edit-btn" onclick="openPositionOverride('${pos.id}')" title="Edit times/name for this shift">
+                <i class="bi bi-pencil-square"></i>
+              </button>
+            </div>
+          </div>
+      `;
 
-      await saveRotaData();
-    };
-
-    window.updateAssignmentTime = async function(key, timeField, value, defaultValue) {
-      if (!rotaData.assignments[key]) {
-        rotaData.assignments[key] = { crew1: null, crew2: null };
-      }
-
-      // Only store if different from default, otherwise remove to keep data clean
-      if (value && value !== defaultValue) {
-        rotaData.assignments[key][timeField] = value;
+      if (!isDisabled) {
+        html += '<div class="crew-selects">';
+        
+        for (let i = 1; i <= pos.crewSlots; i++) {
+          const crewKey = `crew${i}`;
+          const selectedCrew = assignment[crewKey] || '';
+          
+          html += `
+            <div class="crew-select-row">
+              <span class="crew-label">Crew ${i}:</span>
+              <select class="form-select form-select-sm crew-select" 
+                      onchange="assignCrew('${pos.id}', ${i}, this.value)">
+                <option value="">-- Select Crew --</option>
+                ${selectedCrewList.map(crew => `
+                  <option value="${crew.id}" ${selectedCrew === crew.id ? 'selected' : ''}>
+                    ${crew.name} (${crew.qualification})
+                  </option>
+                `).join('')}
+              </select>
+            </div>
+          `;
+        }
+        
+        html += '</div>';
+        
+        // Show notes if any
+        if (assignment.notes) {
+          html += `<div class="mt-2 text-muted small"><i class="bi bi-sticky"></i> ${assignment.notes}</div>`;
+        }
       } else {
-        delete rotaData.assignments[key][timeField];
+        html += '<div class="position-disabled-label">Position disabled for this shift</div>';
       }
 
+      html += '</div>';
+      return html;
+    }
+
+    window.togglePositionEnabled = async function(positionId, enabled) {
+      const disabledKey = `${currentEditorDay}_${currentShift}`;
+      
+      if (!rotaData.disabledPositions) {
+        rotaData.disabledPositions = {};
+      }
+      
+      if (!rotaData.disabledPositions[disabledKey]) {
+        rotaData.disabledPositions[disabledKey] = [];
+      }
+      
+      if (enabled) {
+        // Remove from disabled list
+        rotaData.disabledPositions[disabledKey] = rotaData.disabledPositions[disabledKey].filter(id => id !== positionId);
+      } else {
+        // Add to disabled list
+        if (!rotaData.disabledPositions[disabledKey].includes(positionId)) {
+          rotaData.disabledPositions[disabledKey].push(positionId);
+        }
+      }
+      
+      await saveRotaData();
+      renderShiftEditor();
+    };
+
+    window.enableAllPositions = async function() {
+      const disabledKey = `${currentEditorDay}_${currentShift}`;
+      if (rotaData.disabledPositions) {
+        rotaData.disabledPositions[disabledKey] = [];
+      }
+      await saveRotaData();
+      renderShiftEditor();
+    };
+
+    window.disableAllPositions = async function() {
+      const disabledKey = `${currentEditorDay}_${currentShift}`;
+      const positionsForShift = rotaData.positions.filter(pos => pos.shifts && pos.shifts[currentShift]);
+      
+      if (!rotaData.disabledPositions) {
+        rotaData.disabledPositions = {};
+      }
+      
+      rotaData.disabledPositions[disabledKey] = positionsForShift.map(p => p.id);
+      await saveRotaData();
+      renderShiftEditor();
+    };
+
+    window.enableCategory = async function(category) {
+      const disabledKey = `${currentEditorDay}_${currentShift}`;
+      const positionsInCategory = rotaData.positions.filter(
+        pos => pos.category === category && pos.shifts && pos.shifts[currentShift]
+      );
+      
+      if (rotaData.disabledPositions && rotaData.disabledPositions[disabledKey]) {
+        const categoryIds = positionsInCategory.map(p => p.id);
+        rotaData.disabledPositions[disabledKey] = rotaData.disabledPositions[disabledKey].filter(
+          id => !categoryIds.includes(id)
+        );
+      }
+      
+      await saveRotaData();
+      renderShiftEditor();
+    };
+
+    window.disableCategory = async function(category) {
+      const disabledKey = `${currentEditorDay}_${currentShift}`;
+      const positionsInCategory = rotaData.positions.filter(
+        pos => pos.category === category && pos.shifts && pos.shifts[currentShift]
+      );
+      
+      if (!rotaData.disabledPositions) {
+        rotaData.disabledPositions = {};
+      }
+      if (!rotaData.disabledPositions[disabledKey]) {
+        rotaData.disabledPositions[disabledKey] = [];
+      }
+      
+      positionsInCategory.forEach(pos => {
+        if (!rotaData.disabledPositions[disabledKey].includes(pos.id)) {
+          rotaData.disabledPositions[disabledKey].push(pos.id);
+        }
+      });
+      
+      await saveRotaData();
+      renderShiftEditor();
+    };
+
+    window.assignCrew = async function(positionId, slotNumber, crewId) {
+      const assignmentKey = `${currentEditorDay}_${currentShift}_${positionId}`;
+      
+      if (!rotaData.assignments[assignmentKey]) {
+        rotaData.assignments[assignmentKey] = {};
+      }
+      
+      rotaData.assignments[assignmentKey][`crew${slotNumber}`] = crewId || null;
+      
       await saveRotaData();
     };
 
-    // Edit position override functions
-    window.openEditPositionOverride = function(assignmentKey, positionId) {
+    window.openPositionOverride = function(positionId) {
       const pos = rotaData.positions.find(p => p.id === positionId);
       if (!pos) return;
-
+      
+      const shiftConfig = pos.shifts[currentShift];
+      const assignmentKey = `${currentEditorDay}_${currentShift}_${positionId}`;
       const assignment = rotaData.assignments[assignmentKey] || {};
-
-      document.getElementById('editOverrideKey').value = assignmentKey;
-      document.getElementById('editOverridePositionId').value = positionId;
-      document.getElementById('originalPositionName').textContent = pos.name;
-      document.getElementById('overridePositionName').value = assignment.overrideName || '';
+      
+      document.getElementById('overridePositionId').value = positionId;
+      document.getElementById('originalPositionName').value = pos.name;
+      document.getElementById('overrideName').value = assignment.overrideName || '';
+      document.getElementById('overrideStartTime').value = assignment.startTime || shiftConfig.start;
+      document.getElementById('overrideEndTime').value = assignment.endTime || shiftConfig.end;
       document.getElementById('overrideNotes').value = assignment.notes || '';
-
-      const modal = new bootstrap.Modal(document.getElementById('editPositionOverrideModal'));
+      
+      const modal = new bootstrap.Modal(document.getElementById('positionOverrideModal'));
       modal.show();
     };
 
     window.savePositionOverride = async function() {
-      const assignmentKey = document.getElementById('editOverrideKey').value;
-      const overrideName = document.getElementById('overridePositionName').value.trim();
-      const notes = document.getElementById('overrideNotes').value.trim();
-
+      const positionId = document.getElementById('overridePositionId').value;
+      const assignmentKey = `${currentEditorDay}_${currentShift}_${positionId}`;
+      
       if (!rotaData.assignments[assignmentKey]) {
-        rotaData.assignments[assignmentKey] = { crew1: null, crew2: null };
+        rotaData.assignments[assignmentKey] = {};
       }
-
-      // Set or clear override name
-      if (overrideName) {
-        rotaData.assignments[assignmentKey].overrideName = overrideName;
-      } else {
-        delete rotaData.assignments[assignmentKey].overrideName;
-      }
-
-      // Set or clear notes
-      if (notes) {
-        rotaData.assignments[assignmentKey].notes = notes;
-      } else {
-        delete rotaData.assignments[assignmentKey].notes;
-      }
-
+      
+      const overrideName = document.getElementById('overrideName').value.trim();
+      const startTime = document.getElementById('overrideStartTime').value;
+      const endTime = document.getElementById('overrideEndTime').value;
+      const notes = document.getElementById('overrideNotes').value.trim();
+      
+      // Get original times to compare
+      const pos = rotaData.positions.find(p => p.id === positionId);
+      const shiftConfig = pos.shifts[currentShift];
+      
+      // Only store if different from original
+      rotaData.assignments[assignmentKey].overrideName = overrideName || null;
+      rotaData.assignments[assignmentKey].startTime = startTime !== shiftConfig.start ? startTime : null;
+      rotaData.assignments[assignmentKey].endTime = endTime !== shiftConfig.end ? endTime : null;
+      rotaData.assignments[assignmentKey].notes = notes || null;
+      
       await saveRotaData();
-      renderEditorContent();
-
-      const modal = bootstrap.Modal.getInstance(document.getElementById('editPositionOverrideModal'));
+      renderShiftEditor();
+      
+      const modal = bootstrap.Modal.getInstance(document.getElementById('positionOverrideModal'));
       modal.hide();
-
-      showAlert('Position details saved.', 'success');
+      
+      showAlert('Position settings saved.', 'success');
     };
 
     window.clearPositionOverride = async function() {
-      const assignmentKey = document.getElementById('editOverrideKey').value;
-
+      const positionId = document.getElementById('overridePositionId').value;
+      const assignmentKey = `${currentEditorDay}_${currentShift}_${positionId}`;
+      
       if (rotaData.assignments[assignmentKey]) {
         delete rotaData.assignments[assignmentKey].overrideName;
+        delete rotaData.assignments[assignmentKey].startTime;
+        delete rotaData.assignments[assignmentKey].endTime;
         delete rotaData.assignments[assignmentKey].notes;
-        
-        await saveRotaData();
-        renderEditorContent();
       }
-
-      const modal = bootstrap.Modal.getInstance(document.getElementById('editPositionOverrideModal'));
+      
+      await saveRotaData();
+      renderShiftEditor();
+      
+      const modal = bootstrap.Modal.getInstance(document.getElementById('positionOverrideModal'));
       modal.hide();
-
-      showAlert('Position reset to original.', 'success');
+      
+      showAlert('Position reset to original settings.', 'success');
     };
 
-    // Position enable/disable functions
-    window.togglePosition = async function(positionId, enabled) {
-      if (!rotaData.disabledPositions) {
-        rotaData.disabledPositions = {};
-      }
-      
-      const disabledKey = `${currentEditorDay}_${currentShift}`;
-      if (!rotaData.disabledPositions[disabledKey]) {
-        rotaData.disabledPositions[disabledKey] = [];
-      }
-
-      const disabledList = rotaData.disabledPositions[disabledKey];
-      
-      if (enabled) {
-        // Remove from disabled list
-        rotaData.disabledPositions[disabledKey] = disabledList.filter(id => id !== positionId);
-      } else {
-        // Add to disabled list
-        if (!disabledList.includes(positionId)) {
-          disabledList.push(positionId);
-        }
-      }
-
-      await saveRotaData();
-      renderEditorContent();
+    window.filterEditorBySection = function() {
+      renderShiftEditor();
     };
 
-    window.enableAllPositions = async function() {
-      if (!rotaData.disabledPositions) {
-        rotaData.disabledPositions = {};
-      }
-      
-      const disabledKey = `${currentEditorDay}_${currentShift}`;
-      rotaData.disabledPositions[disabledKey] = [];
-
-      await saveRotaData();
-      renderEditorContent();
-      showAlert(`All positions enabled for this day's ${currentShift} shift.`, 'success');
-    };
-
-    window.disableAllPositions = async function() {
-      if (!rotaData.disabledPositions) {
-        rotaData.disabledPositions = {};
-      }
-      
-      const disabledKey = `${currentEditorDay}_${currentShift}`;
-      
-      // Get all position IDs that have the current shift type
-      const positionIds = rotaData.positions
-        .filter(pos => pos.shifts && pos.shifts[currentShift])
-        .map(pos => pos.id);
-      
-      rotaData.disabledPositions[disabledKey] = positionIds;
-
-      await saveRotaData();
-      renderEditorContent();
-      showAlert(`All positions disabled for this day's ${currentShift} shift.`, 'success');
-    };
-
-    window.enableCategory = async function(category) {
-      if (!rotaData.disabledPositions) {
-        rotaData.disabledPositions = {};
-      }
-      
-      const disabledKey = `${currentEditorDay}_${currentShift}`;
-      if (!rotaData.disabledPositions[disabledKey]) {
-        rotaData.disabledPositions[disabledKey] = [];
-      }
-
-      // Get position IDs in this category
-      const categoryPositionIds = rotaData.positions
-        .filter(pos => pos.category === category && pos.shifts && pos.shifts[currentShift])
-        .map(pos => pos.id);
-
-      // Remove these from disabled list
-      rotaData.disabledPositions[disabledKey] = rotaData.disabledPositions[disabledKey]
-        .filter(id => !categoryPositionIds.includes(id));
-
-      await saveRotaData();
-      renderEditorContent();
-      showAlert(`All ${category} positions enabled for ${currentShift} shift.`, 'success');
-    };
-
-    window.disableCategory = async function(category) {
-      if (!rotaData.disabledPositions) {
-        rotaData.disabledPositions = {};
-      }
-      
-      const disabledKey = `${currentEditorDay}_${currentShift}`;
-      if (!rotaData.disabledPositions[disabledKey]) {
-        rotaData.disabledPositions[disabledKey] = [];
-      }
-
-      // Get position IDs in this category
-      const categoryPositionIds = rotaData.positions
-        .filter(pos => pos.category === category && pos.shifts && pos.shifts[currentShift])
-        .map(pos => pos.id);
-
-      // Add these to disabled list (avoiding duplicates)
-      categoryPositionIds.forEach(id => {
-        if (!rotaData.disabledPositions[disabledKey].includes(id)) {
-          rotaData.disabledPositions[disabledKey].push(id);
-        }
-      });
-
-      await saveRotaData();
-      renderEditorContent();
-      showAlert(`All ${category} positions disabled for ${currentShift} shift.`, 'success');
-    };
-
-    // ============================================
-    // CLONE DAY
-    // ============================================
-
+    // Clone Day functionality
     window.openCloneDayModal = function() {
       if (!currentEditorDay) {
         showAlert('Please select a day first.', 'warning');
@@ -2312,7 +2149,7 @@
                 <small class="text-muted">${positionCount} positions • Created ${createdDate}</small>
               </div>
               <div>
-                <button class="btn btn-outline-primary btn-sm me-2" onclick="loadTemplate('${templateDoc.id}')">
+                <button class="btn btn-outline-primary btn-sm me-2" onclick="promptLoadTemplate('${templateDoc.id}', '${template.name.replace(/'/g, "\\'")}')">
                   <i class="bi bi-download"></i> Load
                 </button>
                 <button class="btn btn-outline-danger btn-sm" onclick="deleteTemplate('${templateDoc.id}')">
@@ -2375,12 +2212,22 @@
       }
     };
 
-    window.loadTemplate = async function(templateId) {
-      if (rotaData.positions && rotaData.positions.length > 0) {
-        if (!confirm('This will replace all existing positions. Continue?')) {
-          return;
-        }
-      }
+    // Show warning modal before loading template
+    window.promptLoadTemplate = function(templateId, templateName) {
+      document.getElementById('pendingTemplateId').value = templateId;
+      document.getElementById('loadTemplateWarningName').textContent = templateName;
+      
+      const modal = new bootstrap.Modal(document.getElementById('loadTemplateWarningModal'));
+      modal.show();
+    };
+
+    // Actually load the template after confirmation
+    window.confirmLoadTemplate = async function() {
+      const templateId = document.getElementById('pendingTemplateId').value;
+      
+      // Close warning modal
+      const warningModal = bootstrap.Modal.getInstance(document.getElementById('loadTemplateWarningModal'));
+      warningModal.hide();
 
       try {
         const templateDoc = await getDoc(doc(db, 'rotaTemplates', templateId));
@@ -2400,15 +2247,14 @@
 
         // Clear all assignments since position IDs changed
         rotaData.assignments = {};
+        
+        // Clear all disabled positions
+        rotaData.disabledPositions = {};
 
         await saveRotaData();
 
-        showAlert(`Loaded ${rotaData.positions.length} positions from template.`, 'success');
+        showAlert(`Loaded ${rotaData.positions.length} positions from template. All previous assignments have been cleared.`, 'success');
         renderPositionsList();
-
-        // Close modal if open
-        const modal = bootstrap.Modal.getInstance(document.getElementById('loadTemplateModal'));
-        if (modal) modal.hide();
 
       } catch (error) {
         console.error('Error loading template:', error);
@@ -2431,247 +2277,27 @@
       }
     };
 
-    window.openLoadTemplateModal = async function() {
-      const container = document.getElementById('loadTemplateList');
-      container.innerHTML = `
-        <div class="loading-state">
-          <div class="spinner-border text-primary" role="status"></div>
-        </div>
-      `;
-
-      const modal = new bootstrap.Modal(document.getElementById('loadTemplateModal'));
-      modal.show();
-
-      try {
-        const templatesQuery = query(collection(db, 'rotaTemplates'), orderBy('createdAt', 'desc'));
-        const templatesSnapshot = await getDocs(templatesQuery);
-
-        if (templatesSnapshot.empty) {
-          container.innerHTML = `
-            <div class="alert alert-info">
-              <i class="bi bi-info-circle"></i> No templates available. Save a template first.
-            </div>
-          `;
-          return;
-        }
-
-        let html = '<div class="list-group">';
-        templatesSnapshot.forEach(templateDoc => {
-          const template = templateDoc.data();
-          html += `
-            <button type="button" class="list-group-item list-group-item-action" onclick="loadTemplate('${templateDoc.id}')">
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <h6 class="mb-1">${template.name}</h6>
-                  <small class="text-muted">${template.positions?.length || 0} positions</small>
-                </div>
-                <i class="bi bi-chevron-right"></i>
-              </div>
-            </button>
-          `;
-        });
-        html += '</div>';
-
-        container.innerHTML = html;
-
-      } catch (error) {
-        container.innerHTML = `
-          <div class="alert alert-danger">Error loading templates: ${error.message}</div>
-        `;
-      }
-    };
-
-    window.openCloneFromEventModal = async function() {
-      const container = document.getElementById('cloneFromEventList');
-      container.innerHTML = `
-        <div class="loading-state">
-          <div class="spinner-border text-primary" role="status"></div>
-        </div>
-      `;
-
-      const modal = new bootstrap.Modal(document.getElementById('cloneFromEventModal'));
-      modal.show();
-
-      try {
-        // Get all events with rotas
-        const eventsQuery = query(collection(db, 'events'), orderBy('startDate', 'desc'));
-        const eventsSnapshot = await getDocs(eventsQuery);
-
-        const eventsWithRotas = [];
-
-        for (const eventDoc of eventsSnapshot.docs) {
-          if (eventDoc.id === eventId) continue; // Skip current event
-
-          const rotaDoc = await getDoc(doc(db, 'eventRotas', eventDoc.id));
-          if (rotaDoc.exists() && rotaDoc.data().positions?.length > 0) {
-            eventsWithRotas.push({
-              id: eventDoc.id,
-              name: eventDoc.data().name,
-              positionCount: rotaDoc.data().positions.length
-            });
-          }
-        }
-
-        if (eventsWithRotas.length === 0) {
-          container.innerHTML = `
-            <div class="alert alert-info">
-              <i class="bi bi-info-circle"></i> No other events with rotas found.
-            </div>
-          `;
-          return;
-        }
-
-        let html = '<div class="list-group">';
-        eventsWithRotas.forEach(event => {
-          html += `
-            <button type="button" class="list-group-item list-group-item-action" onclick="cloneFromEvent('${event.id}')">
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <h6 class="mb-1">${event.name}</h6>
-                  <small class="text-muted">${event.positionCount} positions</small>
-                </div>
-                <i class="bi bi-chevron-right"></i>
-              </div>
-            </button>
-          `;
-        });
-        html += '</div>';
-
-        container.innerHTML = html;
-
-      } catch (error) {
-        container.innerHTML = `
-          <div class="alert alert-danger">Error loading events: ${error.message}</div>
-        `;
-      }
-    };
-
-    window.cloneFromEvent = async function(sourceEventId) {
-      if (rotaData.positions && rotaData.positions.length > 0) {
-        if (!confirm('This will replace all existing positions. Continue?')) {
-          return;
-        }
-      }
-
-      try {
-        const sourceRotaDoc = await getDoc(doc(db, 'eventRotas', sourceEventId));
-        
-        if (!sourceRotaDoc.exists()) {
-          showAlert('Source rota not found.', 'danger');
-          return;
-        }
-
-        const sourceRota = sourceRotaDoc.data();
-        
-        // Copy positions with new IDs
-        rotaData.positions = sourceRota.positions.map(pos => ({
-          ...pos,
-          id: 'pos_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
-        }));
-
-        // Clear assignments
-        rotaData.assignments = {};
-
-        await saveRotaData();
-
-        showAlert(`Cloned ${rotaData.positions.length} positions from event.`, 'success');
-        renderPositionsList();
-
-        const modal = bootstrap.Modal.getInstance(document.getElementById('cloneFromEventModal'));
-        if (modal) modal.hide();
-
-      } catch (error) {
-        console.error('Error cloning from event:', error);
-        showAlert('Error cloning: ' + error.message, 'danger');
-      }
-    };
-
     // ============================================
-    // UTILITIES
+    // AUTH
     // ============================================
 
-    function showAlert(message, type = 'info') {
-      const container = document.getElementById('alertContainer');
-      const alert = document.createElement('div');
-      alert.className = `alert alert-${type} alert-dismissible fade show`;
-      alert.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      `;
-      
-      container.appendChild(alert);
-      
-      setTimeout(() => {
-        alert.classList.remove('show');
-        setTimeout(() => alert.remove(), 150);
-      }, 5000);
-    }
-
-    function setupEventListeners() {
-      // Day date input - auto-fill day name
-      document.getElementById('dayDate').addEventListener('change', function() {
-        if (this.value) {
-          const date = new Date(this.value);
-          document.getElementById('dayName').value = getDayName(date);
-        }
-      });
-
-      // Shift checkbox toggles
-      ['early', 'late', 'night'].forEach(shift => {
-        const checkbox = document.getElementById(`${shift}ShiftEnabled`);
-        const timesDiv = document.getElementById(`${shift}ShiftTimes`);
-        
-        checkbox?.addEventListener('change', function() {
-          timesDiv.style.opacity = this.checked ? '1' : '0.5';
-          timesDiv.querySelectorAll('input').forEach(input => {
-            input.disabled = !this.checked;
-          });
-        });
-      });
-
-      // Logout
-      document.getElementById('logoutLink').addEventListener('click', async (e) => {
-        e.preventDefault();
-        try {
-          await signOut(auth);
-          window.location.href = 'index.html';
-        } catch (error) {
-          showAlert('Logout failed: ' + error.message, 'danger');
-        }
-      });
-    }
-
-    // Check admin status
-    async function checkAdminStatus() {
-      try {
-        if (!currentUser) return false;
-        
-        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-        
-        if (!userDoc.exists()) return false;
-        
-        isAdmin = userDoc.data().isAdmin === true;
-        
-        if (!isAdmin) {
-          window.location.href = 'dashboard.html';
-        }
-        
-        return isAdmin;
-      } catch (error) {
-        console.error('Error checking admin status:', error);
-        return false;
-      }
-    }
-
-    // Auth state listener
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         currentUser = user;
-        const isUserAdmin = await checkAdminStatus();
         
-        if (isUserAdmin) {
-          await init();
+        // Check if admin
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          isAdmin = userDoc.data().isAdmin === true;
         }
+
+        if (!isAdmin) {
+          showAlert('Access denied. Admin privileges required.', 'danger');
+          setTimeout(() => window.location.href = 'dashboard.html', 2000);
+          return;
+        }
+
+        init();
       } else {
         window.location.href = 'index.html';
       }
