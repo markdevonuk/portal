@@ -1039,31 +1039,55 @@
         const volunteersQuery = query(
           collection(db, 'eventVolunteers'),
           where('eventId', '==', eventId),
-          where('status', '==', 'selected')
+          where('selected', '==', true)
         );
         const volunteersSnapshot = await getDocs(volunteersQuery);
         
-        selectedCrewList = [];
-        
-        for (const volDoc of volunteersSnapshot.docs) {
-          const volData = volDoc.data();
-          // Get user profile for full details
-          const userDoc = await getDoc(doc(db, 'users', volData.volunteerId));
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            selectedCrewList.push({
-              id: volData.volunteerId,
-              name: `${userData.firstName} ${userData.lastName}`,
-              qualification: userData.qualification || 'Unknown'
-            });
-          }
+        if (volunteersSnapshot.empty) {
+          selectedCrewList = [];
+          console.log('No selected volunteers found for this event');
+          return;
         }
+
+        // Get user IDs
+        const userIds = volunteersSnapshot.docs.map(doc => doc.data().userId);
+        
+        // Fetch user and profile data in parallel
+        const userPromises = userIds.map(userId => getDoc(doc(db, 'users', userId)));
+        const profilePromises = userIds.map(userId => getDoc(doc(db, 'profiles', userId)));
+        
+        const [userDocs, profileDocs] = await Promise.all([
+          Promise.all(userPromises),
+          Promise.all(profilePromises)
+        ]);
+
+        selectedCrewList = userIds.map((userId, index) => {
+          const userData = userDocs[index].exists() ? userDocs[index].data() : {};
+          const profileData = profileDocs[index].exists() ? profileDocs[index].data() : {};
+          
+          // Get name from user document or profile
+          const firstName = userData.firstName || profileData.firstName || '';
+          const lastName = userData.lastName || profileData.lastName || '';
+          const name = `${firstName} ${lastName}`.trim() || userData.email || 'Unknown';
+          
+          // Get qualification from profile
+          const qualification = profileData.qualification || profileData.grade || 'Unknown';
+          
+          return {
+            id: userId,
+            name: name,
+            qualification: qualification
+          };
+        });
 
         // Sort by name
         selectedCrewList.sort((a, b) => a.name.localeCompare(b.name));
+        
+        console.log(`Loaded ${selectedCrewList.length} selected crew members`);
 
       } catch (error) {
         console.error('Error loading selected crew:', error);
+        selectedCrewList = [];
       }
     }
 
