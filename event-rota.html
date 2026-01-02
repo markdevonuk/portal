@@ -279,18 +279,24 @@
       padding: 0.4rem 0;
       border-bottom: 1px solid rgba(0,0,0,0.05);
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 0.5rem;
     }
     .position-card .crew-list li:last-child {
       border-bottom: none;
     }
+    .position-card .crew-list .crew-info {
+      display: flex;
+      flex-direction: column;
+    }
     .position-card .crew-list .crew-name {
       font-weight: 500;
+      line-height: 1.3;
     }
     .position-card .crew-list .crew-qual {
       color: #6c757d;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
+      line-height: 1.3;
     }
     .position-card .crew-list .no-crew {
       color: #adb5bd;
@@ -1318,14 +1324,16 @@
       return html;
     }
 
-    // Render a crew member
+    // Render a crew member - name on top, qualification below
     function renderCrewMember(crew, slotNum, totalSlots, isCurrentUser) {
       if (crew) {
         return `
           <li>
             <i class="bi bi-person-fill ${isCurrentUser ? 'text-primary' : ''}"></i>
-            <span class="crew-name ${isCurrentUser ? 'text-primary' : ''}">${crew.name}</span>
-            ${crew.qualification ? `<span class="crew-qual">(${crew.qualification})</span>` : ''}
+            <div class="crew-info">
+              <span class="crew-name ${isCurrentUser ? 'text-primary' : ''}">${crew.name}</span>
+              ${crew.qualification ? `<span class="crew-qual">${crew.qualification}</span>` : ''}
+            </div>
           </li>
         `;
       } else if (totalSlots >= slotNum) {
