@@ -1080,6 +1080,40 @@ function attachFilterListeners() {
       }).filter(name => name !== null);
     }
 
+    // Calculate total crew slots needed from rota data
+    function calculateRequiredVolunteers(rotaData) {
+      if (!rotaData || !rotaData.days || !rotaData.positions) {
+        return null; // No rota exists
+      }
+      
+      if (rotaData.days.length === 0 || rotaData.positions.length === 0) {
+        return null; // Rota not set up yet
+      }
+      
+      let totalSlots = 0;
+      
+      rotaData.days.forEach(day => {
+        rotaData.positions.forEach(pos => {
+          ['early', 'late', 'night'].forEach(shiftType => {
+            // Check if position has this shift configured
+            if (!pos.shifts || !pos.shifts[shiftType]) return;
+            
+            // Check if position is disabled for this day/shift
+            const disabledKey = `${day.id}_${shiftType}`;
+            const disabledList = rotaData.disabledPositions?.[disabledKey] || [];
+            
+            if (!disabledList.includes(pos.id)) {
+              // Position is active - add crew slots
+              totalSlots += (pos.crewSlots || 1);
+            }
+          });
+        });
+      });
+      
+      // Each volunteer does 2 shifts on average
+      return Math.ceil(totalSlots / 2);
+    }
+
     // Set selected leaders from event data
     function setSelectedLeaders(leaderIds) {
       selectedLeaders = [];
@@ -1155,12 +1189,22 @@ function attachFilterListeners() {
           return getDocs(volunteersQuery);
         });
         
-        // Step 3: Execute ALL volunteer queries in parallel (this is the key improvement!)
-        const volunteerSnapshots = await Promise.all(volunteerPromises);
+        // Step 2b: Create all rota queries at once
+        const rotaPromises = eventDocsData.map(event => 
+          getDoc(doc(db, 'eventRotas', event.id))
+        );
+        
+        // Step 3: Execute ALL queries in parallel (volunteers AND rotas)
+        const [volunteerSnapshots, rotaSnapshots] = await Promise.all([
+          Promise.all(volunteerPromises),
+          Promise.all(rotaPromises)
+        ]);
         
         // Step 4: Process results (all data already loaded)
         eventDocsData.forEach((eventInfo, index) => {
           const volunteersSnapshot = volunteerSnapshots[index];
+          const rotaSnapshot = rotaSnapshots[index];
+          
           const totalVolunteers = volunteersSnapshot.size;
           
           // Count selected volunteers
@@ -1171,11 +1215,18 @@ function attachFilterListeners() {
             }
           });
           
+          // Calculate required volunteers from rota
+          let requiredVolunteers = null;
+          if (rotaSnapshot.exists()) {
+            requiredVolunteers = calculateRequiredVolunteers(rotaSnapshot.data());
+          }
+          
           const event = {
             id: eventInfo.id,
             ...eventInfo.data,
             volunteerCount: totalVolunteers,
-            selectedCount: selectedVolunteers
+            selectedCount: selectedVolunteers,
+            requiredVolunteers: requiredVolunteers
           };
           
           events.push(event);
@@ -1216,6 +1267,15 @@ function attachFilterListeners() {
             }
           }
           
+          // Build required volunteers text
+          let requiredText = '';
+          if (event.requiredVolunteers !== null) {
+            const percentage = event.requiredVolunteers > 0 
+              ? Math.round((event.volunteerCount / event.requiredVolunteers) * 100) 
+              : 0;
+            requiredText = ` (${event.requiredVolunteers} required, ${percentage}%)`;
+          }
+          
           const eventItem = document.createElement('div');
           eventItem.className = 'admin-event-item';
           
@@ -1233,7 +1293,7 @@ function attachFilterListeners() {
                 </div>
               <div class="mt-2 event-badges">
   <span class="volunteer-badge">
-    <i class="bi bi-people-fill"></i> ${event.volunteerCount} Volunteers
+    <i class="bi bi-people-fill"></i> ${event.volunteerCount} Volunteers${requiredText}
   </span>
   <span class="selected-badge">
     <i class="bi bi-check-circle-fill"></i> ${event.selectedCount} Selected
@@ -1246,7 +1306,7 @@ function attachFilterListeners() {
                     <i class="bi bi-people"></i> Manage Volunteers
                   </button>
                   <button class="btn btn-outline-primary admin-action-btn manage-rota-btn" data-event-id="${event.id}">
-  <i class="bi bi-calendar3"></i> Manage Rota (NOT READY YET)
+  <i class="bi bi-calendar3"></i> Manage Rota
 </button>
                   <button class="btn btn-outline-primary admin-action-btn message-volunteers-btn" data-event-id="${event.id}" ${event.volunteerCount === 0 ? 'disabled' : ''}>
                     <i class="bi bi-envelope"></i> Message Volunteers
