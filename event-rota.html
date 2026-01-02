@@ -551,6 +551,9 @@
       const margin = 15;
       let yPos = margin;
       
+      // Get event name from DOM
+      const eventNameText = document.getElementById('eventName')?.textContent || 'Event Rota';
+      
       // Helper to check if we need a new page
       function checkNewPage(neededHeight = 20) {
         if (yPos + neededHeight > pageHeight - margin) {
@@ -564,7 +567,7 @@
       // Title
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
-      doc.text(eventName || 'Event Rota', pageWidth / 2, yPos, { align: 'center' });
+      doc.text(eventNameText, pageWidth / 2, yPos, { align: 'center' });
       yPos += 10;
       
       // Subtitle with generation date
@@ -698,7 +701,7 @@
       });
       
       // Save the PDF
-      const fileName = `${(eventName || 'rota').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_rota.pdf`;
+      const fileName = `${(eventNameText || 'rota').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_rota.pdf`;
       doc.save(fileName);
     };
 
