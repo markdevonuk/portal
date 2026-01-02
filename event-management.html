@@ -1217,8 +1217,16 @@ function attachFilterListeners() {
           
           // Calculate required volunteers from rota
           let requiredVolunteers = null;
+          let rotaExists = false;
+          let rotaStatus = null;
           if (rotaSnapshot.exists()) {
-            requiredVolunteers = calculateRequiredVolunteers(rotaSnapshot.data());
+            const rotaData = rotaSnapshot.data();
+            requiredVolunteers = calculateRequiredVolunteers(rotaData);
+            // Check if rota has content (days and positions)
+            if (rotaData.days && rotaData.days.length > 0 && rotaData.positions && rotaData.positions.length > 0) {
+              rotaExists = true;
+              rotaStatus = rotaData.status || 'draft';
+            }
           }
           
           const event = {
@@ -1226,7 +1234,9 @@ function attachFilterListeners() {
             ...eventInfo.data,
             volunteerCount: totalVolunteers,
             selectedCount: selectedVolunteers,
-            requiredVolunteers: requiredVolunteers
+            requiredVolunteers: requiredVolunteers,
+            rotaExists: rotaExists,
+            rotaStatus: rotaStatus
           };
           
           events.push(event);
@@ -1276,6 +1286,17 @@ function attachFilterListeners() {
             requiredText = ` (${event.requiredVolunteers} required, ${percentage}%)`;
           }
           
+          // Build View Rota button if rota exists
+          let viewRotaButton = '';
+          if (event.rotaExists) {
+            const statusLabel = event.rotaStatus === 'published' ? 'Published' : 'Draft';
+            viewRotaButton = `
+              <button class="btn btn-outline-secondary admin-action-btn view-rota-btn" data-event-id="${event.id}">
+                <i class="bi bi-eye"></i> View Rota (${statusLabel})
+              </button>
+            `;
+          }
+          
           const eventItem = document.createElement('div');
           eventItem.className = 'admin-event-item';
           
@@ -1308,6 +1329,7 @@ function attachFilterListeners() {
                   <button class="btn btn-outline-primary admin-action-btn manage-rota-btn" data-event-id="${event.id}">
   <i class="bi bi-calendar3"></i> Manage Rota
 </button>
+                  ${viewRotaButton}
                   <button class="btn btn-outline-primary admin-action-btn message-volunteers-btn" data-event-id="${event.id}" ${event.volunteerCount === 0 ? 'disabled' : ''}>
                     <i class="bi bi-envelope"></i> Message Volunteers
                   </button>
@@ -1337,6 +1359,12 @@ function attachFilterListeners() {
     window.location.href = `admin-event-rota.html?eventId=${button.dataset.eventId}`;
   });
 });
+
+        document.querySelectorAll('.view-rota-btn').forEach(button => {
+          button.addEventListener('click', () => {
+            window.location.href = `event-rota.html?eventId=${button.dataset.eventId}`;
+          });
+        });
         
         document.querySelectorAll('.message-volunteers-btn').forEach(button => {
           button.addEventListener('click', () => {
