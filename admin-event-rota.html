@@ -872,8 +872,8 @@
           <div class="alert alert-danger mb-3">
             <strong>THIS WILL DELETE ANY ROTA YOU HAVE CREATED FOR THIS EVENT AND ALL THE SHIFTS AND ASSIGNMENTS ALREADY CREATED.</strong>
           </div>
-          <p>ARE YOU CERTAIN YOU WANT TO DO THIS?</p>
-          <p class="text-muted mb-0">Loading template: <strong id="loadTemplateWarningName"></strong></p>
+          <p>Are you certain you want to load this template?</p>
+          <p class="text-muted mb-0">This action cannot be undone.</p>
           <input type="hidden" id="pendingTemplateId">
         </div>
         <div class="modal-footer">
@@ -1029,7 +1029,7 @@
       }
     }
 
-    // Load selected crew for this event - EXACT ORIGINAL FUNCTION
+    // Load selected crew for this event
     async function loadSelectedCrew() {
       try {
         const volunteersQuery = query(
@@ -2173,4 +2173,329 @@
         sourceDisabledByShift[shift] = rotaData.disabledPositions?.[key] || [];
       });
 
-      let
+      let clonedItems = 0;
+
+      // Clone to each selected day
+      selectedDays.forEach(targetDayId => {
+        // Clone assignment overrides (times, names, notes)
+        sourceAssignments.forEach(([sourceKey, sourceValue]) => {
+          const targetKey = sourceKey.replace(sourcePrefix, targetDayId + '_');
+          
+          if (!rotaData.assignments[targetKey]) {
+            rotaData.assignments[targetKey] = { crew1: null, crew2: null };
+          }
+          
+          // Clone time overrides
+          if (sourceValue.startTime) {
+            rotaData.assignments[targetKey].startTime = sourceValue.startTime;
+          }
+          if (sourceValue.endTime) {
+            rotaData.assignments[targetKey].endTime = sourceValue.endTime;
+          }
+          // Clone name override
+          if (sourceValue.overrideName) {
+            rotaData.assignments[targetKey].overrideName = sourceValue.overrideName;
+          }
+          // Clone notes
+          if (sourceValue.notes) {
+            rotaData.assignments[targetKey].notes = sourceValue.notes;
+          }
+          
+          clonedItems++;
+        });
+
+        // Clone disabled positions for each shift type
+        if (!rotaData.disabledPositions) {
+          rotaData.disabledPositions = {};
+        }
+        
+        shiftTypes.forEach(shift => {
+          const targetKey = `${targetDayId}_${shift}`;
+          const sourceDisabled = sourceDisabledByShift[shift];
+          
+          if (sourceDisabled.length > 0) {
+            rotaData.disabledPositions[targetKey] = [...sourceDisabled];
+          } else {
+            rotaData.disabledPositions[targetKey] = [];
+          }
+        });
+      });
+
+      await saveRotaData();
+      
+      const totalDisabledPositions = shiftTypes.reduce((sum, shift) => sum + sourceDisabledByShift[shift].length, 0);
+      
+      const messages = [];
+      if (sourceAssignments.length > 0) {
+        messages.push(`${sourceAssignments.length} position configurations`);
+      }
+      if (totalDisabledPositions > 0) {
+        messages.push(`enabled/disabled states`);
+      }
+      
+      if (messages.length > 0) {
+        showAlert(`Cloned ${messages.join(' and ')} to ${selectedDays.length} day(s).`, 'success');
+      } else {
+        showAlert(`Day configuration copied to ${selectedDays.length} day(s). (All positions enabled with defaults.)`, 'info');
+      }
+
+      const modal = bootstrap.Modal.getInstance(document.getElementById('cloneDayModal'));
+      modal.hide();
+    };
+
+    // ============================================
+    // TEMPLATES
+    // ============================================
+
+    async function loadTemplates() {
+      const container = document.getElementById('templatesList');
+      
+      try {
+        const templatesQuery = query(collection(db, 'rotaTemplates'), orderBy('createdAt', 'desc'));
+        const templatesSnapshot = await getDocs(templatesQuery);
+
+        if (templatesSnapshot.empty) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <i class="bi bi-files"></i>
+              <h5>No Templates</h5>
+              <p>Save your current rota as a template to reuse it in future events.</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<div class="list-group">';
+        templatesSnapshot.forEach(templateDoc => {
+          const template = templateDoc.data();
+          const positionCount = template.positions?.length || 0;
+          const createdDate = template.createdAt?.toDate?.() 
+            ? template.createdAt.toDate().toLocaleDateString('en-GB')
+            : 'Unknown';
+
+          html += `
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="mb-1">${template.name}</h6>
+                <small class="text-muted">${positionCount} positions • Created ${createdDate}</small>
+              </div>
+              <div>
+                <button class="btn btn-outline-primary btn-sm me-2" onclick="showLoadTemplateWarning('${templateDoc.id}')">
+                  <i class="bi bi-download"></i> Load
+                </button>
+                <button class="btn btn-outline-danger btn-sm" onclick="deleteTemplate('${templateDoc.id}')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        });
+        html += '</div>';
+
+        container.innerHTML = html;
+
+      } catch (error) {
+        console.error('Error loading templates:', error);
+        container.innerHTML = `
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle"></i> Error loading templates: ${error.message}
+          </div>
+        `;
+      }
+    }
+
+    window.saveAsTemplate = function() {
+      if (!rotaData.positions || rotaData.positions.length === 0) {
+        showAlert('No positions to save. Add positions first.', 'warning');
+        return;
+      }
+
+      document.getElementById('templateName').value = '';
+      const modal = new bootstrap.Modal(document.getElementById('saveTemplateModal'));
+      modal.show();
+    };
+
+    window.confirmSaveTemplate = async function() {
+      const name = document.getElementById('templateName').value.trim();
+      
+      if (!name) {
+        showAlert('Please enter a template name.', 'warning');
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, 'rotaTemplates'), {
+          name: name,
+          positions: rotaData.positions,
+          createdBy: currentUser.uid,
+          createdAt: serverTimestamp()
+        });
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('saveTemplateModal'));
+        modal.hide();
+
+        showAlert('Template saved successfully!', 'success');
+        loadTemplates();
+
+      } catch (error) {
+        console.error('Error saving template:', error);
+        showAlert('Error saving template: ' + error.message, 'danger');
+      }
+    };
+
+    // ADDED: Show warning before loading template
+    window.showLoadTemplateWarning = function(templateId) {
+      document.getElementById('pendingTemplateId').value = templateId;
+      const modal = new bootstrap.Modal(document.getElementById('loadTemplateWarningModal'));
+      modal.show();
+    };
+
+    // ADDED: Confirm and actually load the template
+    window.confirmLoadTemplate = async function() {
+      const templateId = document.getElementById('pendingTemplateId').value;
+      
+      // Close warning modal
+      const warningModal = bootstrap.Modal.getInstance(document.getElementById('loadTemplateWarningModal'));
+      warningModal.hide();
+
+      try {
+        const templateDoc = await getDoc(doc(db, 'rotaTemplates', templateId));
+        
+        if (!templateDoc.exists()) {
+          showAlert('Template not found.', 'danger');
+          return;
+        }
+
+        const template = templateDoc.data();
+        
+        // Copy positions with new IDs
+        rotaData.positions = template.positions.map(pos => ({
+          ...pos,
+          id: 'pos_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+        }));
+
+        // Clear all assignments since position IDs changed
+        rotaData.assignments = {};
+        
+        // Clear all disabled positions
+        rotaData.disabledPositions = {};
+
+        await saveRotaData();
+
+        showAlert(`Loaded ${rotaData.positions.length} positions from template.`, 'success');
+        renderPositionsList();
+
+      } catch (error) {
+        console.error('Error loading template:', error);
+        showAlert('Error loading template: ' + error.message, 'danger');
+      }
+    };
+
+    window.deleteTemplate = async function(templateId) {
+      if (!confirm('Are you sure you want to delete this template?')) {
+        return;
+      }
+
+      try {
+        await deleteDoc(doc(db, 'rotaTemplates', templateId));
+        showAlert('Template deleted.', 'success');
+        loadTemplates();
+      } catch (error) {
+        console.error('Error deleting template:', error);
+        showAlert('Error deleting template: ' + error.message, 'danger');
+      }
+    };
+
+    // ============================================
+    // UTILITIES
+    // ============================================
+
+    function showAlert(message, type = 'info') {
+      const container = document.getElementById('alertContainer');
+      const alert = document.createElement('div');
+      alert.className = `alert alert-${type} alert-dismissible fade show`;
+      alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      `;
+      
+      container.appendChild(alert);
+      
+      setTimeout(() => {
+        alert.classList.remove('show');
+        setTimeout(() => alert.remove(), 150);
+      }, 5000);
+    }
+
+    function setupEventListeners() {
+      // Day date input - auto-fill day name
+      document.getElementById('dayDate').addEventListener('change', function() {
+        if (this.value) {
+          const date = new Date(this.value);
+          document.getElementById('dayName').value = getDayName(date);
+        }
+      });
+
+      // Shift checkbox toggles
+      ['early', 'late', 'night'].forEach(shift => {
+        const checkbox = document.getElementById(`${shift}ShiftEnabled`);
+        const timesDiv = document.getElementById(`${shift}ShiftTimes`);
+        
+        checkbox?.addEventListener('change', function() {
+          timesDiv.style.opacity = this.checked ? '1' : '0.5';
+          timesDiv.querySelectorAll('input').forEach(input => {
+            input.disabled = !this.checked;
+          });
+        });
+      });
+
+      // Logout
+      document.getElementById('logoutLink').addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+          await signOut(auth);
+          window.location.href = 'index.html';
+        } catch (error) {
+          showAlert('Logout failed: ' + error.message, 'danger');
+        }
+      });
+    }
+
+    // Check admin status
+    async function checkAdminStatus() {
+      try {
+        if (!currentUser) return false;
+        
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        
+        if (!userDoc.exists()) return false;
+        
+        isAdmin = userDoc.data().isAdmin === true;
+        
+        if (!isAdmin) {
+          window.location.href = 'dashboard.html';
+        }
+        
+        return isAdmin;
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        return false;
+      }
+    }
+
+    // Auth state listener
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        const isUserAdmin = await checkAdminStatus();
+        
+        if (isUserAdmin) {
+          await init();
+        }
+      } else {
+        window.location.href = 'index.html';
+      }
+    });
+  </script>
+</body>
+</html>
