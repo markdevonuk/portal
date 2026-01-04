@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2FA Diagnostic Tool</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { 
+      background: #f8f9fa; 
+      padding: 20px; 
+    }
+    .card { 
+      max-width: 600px; 
+      margin: 0 auto; 
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    .card-header { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      color: white;
+      border-radius: 15px 15px 0 0 !important;
+    }
+    .code-display {
+      font-size: 2.5rem;
+      font-family: monospace;
+      font-weight: bold;
+      letter-spacing: 5px;
+      color: #00a896;
+    }
+    .time-bar {
+      height: 8px;
+      background: #e9ecef;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+    .time-bar-fill {
+      height: 100%;
+      background: #00a896;
+      transition: width 1s linear;
+    }
+    .qr-container {
+      text-align: center;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 10px;
+    }
+    .qr-container img {
+      border: 3px solid #00a896;
+      border-radius: 10px;
+      padding: 10px;
+      background: white;
+    }
+    .secret-key {
+      font-family: monospace;
+      font-size: 1.2rem;
+      background: #fff;
+      padding: 10px;
+      border: 2px dashed #00a896;
+      border-radius: 8px;
+      word-break: break-all;
+    }
+    .status-good { color: #28a745; }
+    .status-bad { color: #dc3545; }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .info-row:last-child { border-bottom: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header py-3">
+      <h4 class="mb-0 text-center">🔧 2FA Diagnostic Tool</h4>
+    </div>
+    <div class="card-body">
+      
+      <div class="alert alert-info">
+        <strong>Instructions:</strong> Scan the QR code below with your authenticator app, then compare the code your app shows with the "Expected Code" displayed here. They should match!
+      </div>
+
+      <!-- QR Code Section -->
+      <div class="qr-container mb-4">
+        <p class="mb-2"><strong>1. Scan this QR code:</strong></p>
+        <img id="qrCode" alt="Test QR Code" style="max-width: 200px;">
+        <p class="mt-3 mb-1"><small>Or enter this key manually:</small></p>
+        <div class="secret-key" id="secretKey"></div>
+      </div>
+
+      <!-- Expected Code Display -->
+      <div class="text-center mb-4">
+        <p class="mb-1"><strong>2. Expected Code (should match your app):</strong></p>
+        <div class="code-display" id="expectedCode">------</div>
+        <div class="time-bar">
+          <div class="time-bar-fill" id="timeBar"></div>
+        </div>
+        <small class="text-muted">Code refreshes every 30 seconds</small>
+      </div>
+
+      <!-- Test Input -->
+      <div class="mb-4">
+        <p class="mb-2"><strong>3. Enter the code from your app to test:</strong></p>
+        <div class="input-group">
+          <input type="text" class="form-control form-control-lg text-center" 
+                 id="testCode" maxlength="6" placeholder="000000" 
+                 style="font-family: monospace; font-size: 1.5rem; letter-spacing: 3px;">
+          <button class="btn btn-primary" id="testBtn">Test</button>
+        </div>
+        <div id="testResult" class="mt-2"></div>
+      </div>
+
+      <!-- Diagnostic Info -->
+      <div class="card bg-light">
+        <div class="card-body">
+          <h6 class="card-title">📊 Diagnostic Information</h6>
+          <div class="info-row">
+            <span>Your Browser Time:</span>
+            <span id="browserTime" class="font-monospace">--</span>
+          </div>
+          <div class="info-row">
+            <span>Unix Timestamp:</span>
+            <span id="unixTime" class="font-monospace">--</span>
+          </div>
+          <div class="info-row">
+            <span>Time Step (counter):</span>
+            <span id="timeStep" class="font-monospace">--</span>
+          </div>
+          <div class="info-row">
+            <span>Seconds until next code:</span>
+            <span id="secondsLeft" class="font-monospace">--</span>
+          </div>
+          <div class="info-row">
+            <span>Test Secret:</span>
+            <span id="testSecret" class="font-monospace">--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Debug Log -->
+      <div class="mt-4">
+        <h6>🔍 Debug Log</h6>
+        <pre id="debugLog" style="background: #1e1e1e; color: #0f0; padding: 15px; border-radius: 8px; font-size: 0.8rem; max-height: 200px; overflow-y: auto;"></pre>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Use a fixed test secret for consistency
+    const TEST_SECRET = 'JBSWY3DPEHPK3PXP'; // Standard test secret
+    
+    let debugLog = [];
+    
+    function log(message) {
+      const timestamp = new Date().toLocaleTimeString();
+      debugLog.unshift(`[${timestamp}] ${message}`);
+      if (debugLog.length > 50) debugLog.pop();
+      document.getElementById('debugLog').textContent = debugLog.join('\n');
+      console.log(message);
+    }
+
+    // Generate QR code URL
+    function generate2FAQRCode(secret) {
+      const appName = 'FMS Test';
+      const email = 'test@example.com';
+      const otpauthUrl = `otpauth://totp/${encodeURIComponent(appName)}:${encodeURIComponent(email)}?secret=${secret}&issuer=${encodeURIComponent(appName)}`;
+      log(`OTPAuth URL: ${otpauthUrl}`);
+      return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(otpauthUrl)}`;
+    }
+
+    // Base32 decode (RFC 4648)
+    function base32Decode(base32) {
+      const base32Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+      base32 = base32.toUpperCase().replace(/=+$/, '');
+      
+      let bits = '';
+      for (let i = 0; i < base32.length; i++) {
+        const val = base32Chars.indexOf(base32.charAt(i));
+        if (val === -1) throw new Error('Invalid base32 character: ' + base32.charAt(i));
+        bits += val.toString(2).padStart(5, '0');
+      }
+      
+      const bytes = [];
+      for (let i = 0; i + 8 <= bits.length; i += 8) {
+        bytes.push(parseInt(bits.substr(i, 8), 2));
+      }
+      
+      log(`Base32 decoded: ${base32} -> ${bytes.length} bytes: [${bytes.join(', ')}]`);
+      return new Uint8Array(bytes);
+    }
+
+    // Convert number to 8-byte array (big-endian) - FIXED VERSION
+    function intToBytes(num) {
+      const bytes = new Uint8Array(8);
+      // Use BigInt for proper 64-bit handling
+      let bigNum = BigInt(num);
+      for (let i = 7; i >= 0; i--) {
+        bytes[i] = Number(bigNum & BigInt(0xff));
+        bigNum = bigNum >> BigInt(8);
+      }
+      log(`Counter ${num} -> bytes: [${Array.from(bytes).join(', ')}]`);
+      return bytes;
+    }
+
+    // Generate TOTP code
+    async function generateTOTP(secret, timeStep) {
+      try {
+        const timeBytes = intToBytes(timeStep);
+        const key = base32Decode(secret);
+        
+        const cryptoKey = await crypto.subtle.importKey(
+          'raw',
+          key,
+          { name: 'HMAC', hash: 'SHA-1' },
+          false,
+          ['sign']
+        );
+        
+        const signature = await crypto.subtle.sign('HMAC', cryptoKey, timeBytes);
+        const hmac = new Uint8Array(signature);
+        
+        const offset = hmac[hmac.length - 1] & 0x0f;
+        const binary = 
+          ((hmac[offset] & 0x7f) << 24) |
+          ((hmac[offset + 1] & 0xff) << 16) |
+          ((hmac[offset + 2] & 0xff) << 8) |
+          (hmac[offset + 3] & 0xff);
+        
+        const otp = (binary % 1000000).toString().padStart(6, '0');
+        
+        log(`TimeStep ${timeStep}: HMAC offset=${offset}, binary=${binary}, OTP=${otp}`);
+        return otp;
+      } catch (error) {
+        log(`ERROR: ${error.message}`);
+        throw error;
+      }
+    }
+
+    // Verify TOTP with window
+    async function verifyTOTP(secret, token) {
+      const epoch = Math.floor(Date.now() / 1000);
+      const currentTimeStep = Math.floor(epoch / 30);
+      
+      log(`Verifying token: ${token}`);
+      
+      for (let i = -1; i <= 1; i++) {
+        const testStep = currentTimeStep + i;
+        const expectedCode = await generateTOTP(secret, testStep);
+        log(`Window ${i}: expected=${expectedCode}, got=${token}, match=${expectedCode === token}`);
+        if (expectedCode === token) {
+          return { valid: true, offset: i };
+        }
+      }
+      return { valid: false, offset: null };
+    }
+
+    // Update display
+    async function updateDisplay() {
+      const now = new Date();
+      const epoch = Math.floor(now.getTime() / 1000);
+      const timeStep = Math.floor(epoch / 30);
+      const secondsInStep = epoch % 30;
+      const secondsLeft = 30 - secondsInStep;
+      
+      document.getElementById('browserTime').textContent = now.toLocaleTimeString();
+      document.getElementById('unixTime').textContent = epoch;
+      document.getElementById('timeStep').textContent = timeStep;
+      document.getElementById('secondsLeft').textContent = secondsLeft + 's';
+      document.getElementById('testSecret').textContent = TEST_SECRET;
+      
+      // Update time bar
+      const percentage = ((30 - secondsLeft) / 30) * 100;
+      document.getElementById('timeBar').style.width = percentage + '%';
+      
+      // Generate and display expected code
+      try {
+        const expectedCode = await generateTOTP(TEST_SECRET, timeStep);
+        document.getElementById('expectedCode').textContent = expectedCode;
+      } catch (error) {
+        document.getElementById('expectedCode').textContent = 'ERROR';
+        log(`Display error: ${error.message}`);
+      }
+    }
+
+    // Test button handler
+    document.getElementById('testBtn').addEventListener('click', async () => {
+      const inputCode = document.getElementById('testCode').value.trim();
+      const resultDiv = document.getElementById('testResult');
+      
+      if (inputCode.length !== 6 || !/^\d{6}$/.test(inputCode)) {
+        resultDiv.innerHTML = '<div class="alert alert-warning">Please enter a 6-digit code</div>';
+        return;
+      }
+      
+      log(`Testing user input: ${inputCode}`);
+      const result = await verifyTOTP(TEST_SECRET, inputCode);
+      
+      if (result.valid) {
+        resultDiv.innerHTML = `<div class="alert alert-success">✅ <strong>SUCCESS!</strong> Code is valid (time offset: ${result.offset})</div>`;
+        log(`SUCCESS - Code valid with offset ${result.offset}`);
+      } else {
+        const epoch = Math.floor(Date.now() / 1000);
+        const timeStep = Math.floor(epoch / 30);
+        const expectedCode = await generateTOTP(TEST_SECRET, timeStep);
+        resultDiv.innerHTML = `<div class="alert alert-danger">❌ <strong>FAILED!</strong> Code does not match.<br>Expected: <strong>${expectedCode}</strong><br>You entered: <strong>${inputCode}</strong></div>`;
+        log(`FAILED - Expected ${expectedCode}, got ${inputCode}`);
+      }
+    });
+
+    // Also test on Enter key
+    document.getElementById('testCode').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('testBtn').click();
+      }
+    });
+
+    // Initialize
+    document.getElementById('qrCode').src = generate2FAQRCode(TEST_SECRET);
+    document.getElementById('secretKey').textContent = TEST_SECRET;
+    
+    log('Diagnostic tool initialized');
+    log(`Using test secret: ${TEST_SECRET}`);
+    
+    // Update every second
+    updateDisplay();
+    setInterval(updateDisplay, 1000);
+  </script>
+</body>
+</html>
