@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Member Hours - FMS Prehospital Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background: #f8f9fa; min-height: 100vh; }
+    .navbar { 
+      background: linear-gradient(135deg, #00a896 0%, #028090 100%); 
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+    }
+    .nav-link { 
+      color: rgba(255,255,255,.85) !important;
+      font-weight: 500;
+    }
+    .nav-link:hover { 
+      color: #fff !important;
+    }
+    .page-header { 
+      background: linear-gradient(135deg, #00a896 0%, #028090 100%); 
+      color: #fff; 
+      border-radius: 15px; 
+      padding: 40px; 
+      margin: 30px 0 20px 0; 
+      box-shadow: 0 10px 30px rgba(0,168,150,.3);
+    }
+    .admin-card {
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,.08);
+      padding: 30px;
+      margin: 20px 0;
+    }
+    .hidden { display: none !important; }
+    
+    /* Year selector styling */
+    .year-selector {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .year-selector select {
+      width: auto;
+      min-width: 120px;
+    }
+    
+    /* Stats summary */
+    .stats-summary {
+      display: flex;
+      gap: 30px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+    }
+    .stat-box {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 10px;
+      padding: 15px 25px;
+      text-align: center;
+    }
+    .stat-box h3 {
+      margin: 0;
+      color: #00a896;
+      font-size: 1.8rem;
+    }
+    .stat-box p {
+      margin: 5px 0 0 0;
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+    
+    /* Table styling */
+    .hours-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .hours-table th {
+      background: linear-gradient(135deg, #00a896 0%, #028090 100%);
+      color: white;
+      padding: 15px;
+      text-align: left;
+      font-weight: 600;
+    }
+    .hours-table th:first-child {
+      border-radius: 10px 0 0 0;
+    }
+    .hours-table th:last-child {
+      border-radius: 0 10px 0 0;
+      text-align: right;
+    }
+    .hours-table th.text-center {
+      text-align: center;
+    }
+    .hours-table td {
+      padding: 15px;
+      border-bottom: 1px solid #e9ecef;
+      vertical-align: middle;
+    }
+    .hours-table tbody tr:hover {
+      background-color: #f8f9fa;
+    }
+    .hours-table tbody tr.accordion-parent {
+      cursor: pointer;
+    }
+    .hours-table tbody tr.accordion-parent:hover {
+      background-color: #e8f7f5;
+    }
+    
+    /* Accordion row styling */
+    .accordion-toggle {
+      color: #00a896;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .accordion-toggle i {
+      transition: transform 0.3s ease;
+    }
+    .accordion-toggle.expanded i {
+      transform: rotate(90deg);
+    }
+    
+    /* Detail row styling */
+    .detail-row {
+      display: none;
+      background-color: #f8f9fa;
+    }
+    .detail-row.show {
+      display: table-row;
+    }
+    .detail-content {
+      padding: 20px 15px 20px 50px;
+    }
+    .event-breakdown {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .event-breakdown h6 {
+      margin-bottom: 15px;
+      color: #495057;
+      font-weight: 600;
+    }
+    .event-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .event-item:last-child {
+      border-bottom: none;
+    }
+    .event-name {
+      font-weight: 500;
+    }
+    .event-hours {
+      color: #00a896;
+      font-weight: 600;
+    }
+    .total-row {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 2px solid #00a896;
+      display: flex;
+      justify-content: space-between;
+      font-weight: 700;
+    }
+    .total-row .event-hours {
+      font-size: 1.1rem;
+    }
+    
+    /* Events count badge */
+    .events-badge {
+      background: #e8f7f5;
+      color: #00a896;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    
+    /* Hours display */
+    .hours-display {
+      font-weight: 700;
+      color: #00a896;
+      font-size: 1.1rem;
+    }
+    
+    /* Search box */
+    .search-box {
+      margin-bottom: 20px;
+    }
+    .search-box .form-control {
+      border-radius: 25px;
+      padding-left: 45px;
+    }
+    .search-box .search-icon {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #6c757d;
+    }
+    
+    /* Sort buttons */
+    .sort-btn {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.8);
+      cursor: pointer;
+      padding: 0;
+      margin-left: 5px;
+    }
+    .sort-btn:hover {
+      color: white;
+    }
+    .sort-btn.active {
+      color: #ffd700;
+    }
+    
+    /* Loading state */
+    .loading-state {
+      text-align: center;
+      padding: 60px 20px;
+    }
+    
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #6c757d;
+    }
+    .empty-state i {
+      font-size: 4rem;
+      margin-bottom: 20px;
+      opacity: 0.5;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .stats-summary {
+        flex-direction: column;
+        gap: 15px;
+      }
+      .stat-box {
+        width: 100%;
+      }
+      .hours-table th, .hours-table td {
+        padding: 10px;
+        font-size: 0.9rem;
+      }
+      .detail-content {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="dashboard.html"><i class="bi bi-shield-lock"></i> FMS Prehospital Portal</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="admin.html">
+              <i class="bi bi-arrow-left"></i> Admin Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="dashboard.html">
+              <i class="bi bi-house-fill"></i> Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="events.html">
+              <i class="bi bi-calendar-event"></i> Events
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="logoutLink">
+              <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1 class="mb-2"><i class="bi bi-clock-history"></i> Member Hours</h1>
+      <p class="mb-0">Track volunteer hours by year</p>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alertContainer"></div>
+
+    <!-- Unauthorized Message -->
+    <div id="unauthorizedMsg" class="admin-card hidden">
+      <div class="empty-state">
+        <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+        <h3>Unauthorized Access</h3>
+        <p>You do not have permission to access this page.</p>
+        <a href="dashboard.html" class="btn btn-primary mt-3">
+          <i class="bi bi-arrow-left"></i> Return to Dashboard
+        </a>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent" class="hidden">
+      <div class="admin-card">
+        <!-- Year Selector -->
+        <div class="year-selector">
+          <label for="yearSelect" class="form-label mb-0 fw-bold">
+            <i class="bi bi-calendar3"></i> Select Year:
+          </label>
+          <select class="form-select" id="yearSelect">
+            <option value="2026" selected>2026</option>
+            <option value="2027">2027</option>
+          </select>
+          <button class="btn btn-outline-primary btn-sm" id="refreshBtn">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
+        </div>
+
+        <!-- Stats Summary -->
+        <div class="stats-summary" id="statsSummary">
+          <div class="stat-box">
+            <h3 id="totalMembers">-</h3>
+            <p>Members with Hours</p>
+          </div>
+          <div class="stat-box">
+            <h3 id="totalHours">-</h3>
+            <p>Total Hours</p>
+          </div>
+          <div class="stat-box">
+            <h3 id="totalEvents">-</h3>
+            <p>Events with Rotas</p>
+          </div>
+        </div>
+
+        <!-- Search -->
+        <div class="search-box position-relative">
+          <i class="bi bi-search search-icon"></i>
+          <input type="text" class="form-control" id="searchInput" placeholder="Search by name...">
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-state">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-3 text-muted">Loading member hours...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state hidden">
+          <i class="bi bi-calendar-x"></i>
+          <h4>No Data Found</h4>
+          <p>No members have been assigned to shifts for events in the selected year.</p>
+        </div>
+
+        <!-- Hours Table -->
+        <div id="tableContainer" class="hidden">
+          <div class="table-responsive">
+            <table class="hours-table">
+              <thead>
+                <tr>
+                  <th>
+                    Name
+                    <button class="sort-btn" data-sort="name" title="Sort by name">
+                      <i class="bi bi-arrow-down-up"></i>
+                    </button>
+                  </th>
+                  <th class="text-center">Events</th>
+                  <th style="text-align: right;">
+                    Hours
+                    <button class="sort-btn" data-sort="hours" title="Sort by hours">
+                      <i class="bi bi-arrow-down-up"></i>
+                    </button>
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="hoursTableBody">
+                <!-- Rows will be inserted here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { 
+      getFirestore, 
+      collection, 
+      doc, 
+      getDoc,
+      getDocs,
+      query,
+      where
+    } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { firebaseConfig } from './firebase-config.js';
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // DOM Elements
+    const mainContent = document.getElementById('mainContent');
+    const unauthorizedMsg = document.getElementById('unauthorizedMsg');
+    const loadingState = document.getElementById('loadingState');
+    const emptyState = document.getElementById('emptyState');
+    const tableContainer = document.getElementById('tableContainer');
+    const hoursTableBody = document.getElementById('hoursTableBody');
+    const yearSelect = document.getElementById('yearSelect');
+    const searchInput = document.getElementById('searchInput');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const logoutLink = document.getElementById('logoutLink');
+
+    // State
+    let allMemberData = []; // Store all member hours data
+    let currentSort = { field: 'name', direction: 'asc' };
+
+    // Logout handler
+    logoutLink.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        await signOut(auth);
+        window.location.href = 'index.html';
+      } catch (error) {
+        showAlert('Logout failed: ' + error.message, 'danger');
+      }
+    });
+
+    // Show alert helper
+    function showAlert(message, type) {
+      const html = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>`;
+      document.getElementById('alertContainer').innerHTML = html;
+      
+      if (type === 'success') {
+        setTimeout(() => {
+          const alert = document.querySelector('.alert');
+          if (alert) {
+            alert.classList.remove('show');
+            setTimeout(() => alert.remove(), 150);
+          }
+        }, 5000);
+      }
+    }
+
+    // Calculate hours between two time strings (HH:MM format)
+    function calculateHours(startTime, endTime) {
+      if (!startTime || !endTime) return 0;
+      
+      const [startHour, startMin] = startTime.split(':').map(Number);
+      const [endHour, endMin] = endTime.split(':').map(Number);
+      
+      let startMinutes = startHour * 60 + startMin;
+      let endMinutes = endHour * 60 + endMin;
+      
+      // Handle overnight shifts (end time is less than start time)
+      if (endMinutes < startMinutes) {
+        endMinutes += 24 * 60;
+      }
+      
+      const diffMinutes = endMinutes - startMinutes;
+      return diffMinutes / 60;
+    }
+
+    // Format hours display (e.g., 42.5 or 42)
+    function formatHours(hours) {
+      if (hours === Math.floor(hours)) {
+        return hours.toString();
+      }
+      return hours.toFixed(1);
+    }
+
+    // Check if event falls within selected year
+    function isEventInYear(event, year) {
+      if (!event.startDate) return false;
+      
+      const startDate = event.startDate.toDate ? event.startDate.toDate() : new Date(event.startDate);
+      return startDate.getFullYear() === parseInt(year);
+    }
+
+    // Load all data for selected year
+    async function loadMemberHours() {
+      const selectedYear = yearSelect.value;
+      
+      // Show loading
+      loadingState.classList.remove('hidden');
+      emptyState.classList.add('hidden');
+      tableContainer.classList.add('hidden');
+
+      try {
+        // 1. Load all events
+        const eventsSnapshot = await getDocs(collection(db, 'events'));
+        const events = {};
+        eventsSnapshot.forEach(doc => {
+          const data = doc.data();
+          if (isEventInYear(data, selectedYear)) {
+            events[doc.id] = { id: doc.id, ...data };
+          }
+        });
+
+        // If no events in this year, show empty state
+        if (Object.keys(events).length === 0) {
+          loadingState.classList.add('hidden');
+          emptyState.classList.remove('hidden');
+          updateStats(0, 0, 0);
+          return;
+        }
+
+        // 2. Load all rotas for events in this year
+        const rotasSnapshot = await getDocs(collection(db, 'eventRotas'));
+        const rotas = {};
+        rotasSnapshot.forEach(doc => {
+          if (events[doc.id]) {
+            rotas[doc.id] = { id: doc.id, ...doc.data() };
+          }
+        });
+
+        // 3. Load all users
+        const usersSnapshot = await getDocs(collection(db, 'users'));
+        const users = {};
+        usersSnapshot.forEach(doc => {
+          users[doc.id] = doc.data();
+        });
+
+        // 4. Load all profiles to get qualifications
+        const profilesSnapshot = await getDocs(collection(db, 'profiles'));
+        const profiles = {};
+        profilesSnapshot.forEach(doc => {
+          profiles[doc.id] = doc.data();
+        });
+
+        // 5. Process rota assignments to calculate hours per member
+        const memberHours = {}; // { odInfouid: { name, totalHours, events: { eventId: { name, hours } } } }
+
+        Object.keys(rotas).forEach(eventId => {
+          const rota = rotas[eventId];
+          const event = events[eventId];
+          const assignments = rota.assignments || {};
+          const positions = rota.positions || [];
+
+          // Create position lookup for shift times
+          const positionLookup = {};
+          positions.forEach(pos => {
+            positionLookup[pos.id] = pos;
+          });
+
+          // Process each assignment
+          Object.keys(assignments).forEach(assignmentKey => {
+            const assignment = assignments[assignmentKey];
+            // assignmentKey format: dayId_positionId_shiftType
+            const parts = assignmentKey.split('_');
+            if (parts.length < 3) return;
+            
+            const positionId = parts[1];
+            const shiftType = parts[2];
+            const position = positionLookup[positionId];
+
+            if (!position) return;
+
+            // Get times (from assignment override or position defaults)
+            const defaultTimes = position.shifts?.[shiftType] || {};
+            const startTime = assignment.startTime || defaultTimes.start;
+            const endTime = assignment.endTime || defaultTimes.end;
+
+            if (!startTime || !endTime) return;
+
+            const hours = calculateHours(startTime, endTime);
+
+            // Process each crew slot
+            ['crew1', 'crew2'].forEach(crewKey => {
+              const crewId = assignment[crewKey];
+              if (!crewId) return;
+
+              const user = users[crewId];
+              if (!user) return;
+
+              const memberName = `${user.firstName || ''} ${user.surname || ''}`.trim() || 'Unknown';
+
+              // Initialize member if not exists
+              if (!memberHours[crewId]) {
+                memberHours[crewId] = {
+                  id: crewId,
+                  name: memberName,
+                  totalHours: 0,
+                  events: {}
+                };
+              }
+
+              // Initialize event for this member if not exists
+              if (!memberHours[crewId].events[eventId]) {
+                memberHours[crewId].events[eventId] = {
+                  name: event.name,
+                  hours: 0
+                };
+              }
+
+              // Add hours
+              memberHours[crewId].events[eventId].hours += hours;
+              memberHours[crewId].totalHours += hours;
+            });
+          });
+        });
+
+        // Convert to array and sort
+        allMemberData = Object.values(memberHours);
+        
+        // Hide loading
+        loadingState.classList.add('hidden');
+
+        if (allMemberData.length === 0) {
+          emptyState.classList.remove('hidden');
+          updateStats(0, 0, Object.keys(rotas).length);
+          return;
+        }
+
+        // Update stats
+        const totalHours = allMemberData.reduce((sum, m) => sum + m.totalHours, 0);
+        updateStats(allMemberData.length, totalHours, Object.keys(rotas).length);
+
+        // Sort and render
+        sortData();
+        renderTable();
+        tableContainer.classList.remove('hidden');
+
+      } catch (error) {
+        console.error('Error loading member hours:', error);
+        loadingState.classList.add('hidden');
+        showAlert('Error loading data: ' + error.message, 'danger');
+      }
+    }
+
+    // Update stats display
+    function updateStats(members, hours, events) {
+      document.getElementById('totalMembers').textContent = members;
+      document.getElementById('totalHours').textContent = formatHours(hours);
+      document.getElementById('totalEvents').textContent = events;
+    }
+
+    // Sort data
+    function sortData() {
+      allMemberData.sort((a, b) => {
+        let comparison = 0;
+        
+        if (currentSort.field === 'name') {
+          comparison = a.name.localeCompare(b.name);
+        } else if (currentSort.field === 'hours') {
+          comparison = a.totalHours - b.totalHours;
+        }
+        
+        return currentSort.direction === 'asc' ? comparison : -comparison;
+      });
+    }
+
+    // Render table
+    function renderTable() {
+      const searchTerm = searchInput.value.toLowerCase().trim();
+      
+      // Filter data
+      const filteredData = searchTerm 
+        ? allMemberData.filter(m => m.name.toLowerCase().includes(searchTerm))
+        : allMemberData;
+
+      if (filteredData.length === 0) {
+        hoursTableBody.innerHTML = `
+          <tr>
+            <td colspan="3" class="text-center text-muted py-4">
+              <i class="bi bi-search"></i> No members found matching "${searchTerm}"
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      let html = '';
+
+      filteredData.forEach((member, index) => {
+        const eventCount = Object.keys(member.events).length;
+        const rowId = `member-${index}`;
+
+        // Main row
+        html += `
+          <tr class="accordion-parent" data-target="${rowId}">
+            <td>
+              <div class="accordion-toggle" id="toggle-${rowId}">
+                <i class="bi bi-chevron-right"></i>
+                ${escapeHtml(member.name)}
+              </div>
+            </td>
+            <td class="text-center">
+              <span class="events-badge">${eventCount} event${eventCount !== 1 ? 's' : ''}</span>
+            </td>
+            <td style="text-align: right;">
+              <span class="hours-display">${formatHours(member.totalHours)}</span>
+            </td>
+          </tr>
+        `;
+
+        // Detail row (hidden by default)
+        html += `
+          <tr class="detail-row" id="${rowId}">
+            <td colspan="3">
+              <div class="detail-content">
+                <div class="event-breakdown">
+                  <h6><i class="bi bi-calendar-event"></i> ${escapeHtml(member.name)} - Event Breakdown</h6>
+        `;
+
+        // Sort events by hours (highest first)
+        const sortedEvents = Object.entries(member.events)
+          .sort((a, b) => b[1].hours - a[1].hours);
+
+        sortedEvents.forEach(([eventId, eventData]) => {
+          html += `
+            <div class="event-item">
+              <span class="event-name">${escapeHtml(eventData.name)}</span>
+              <span class="event-hours">${formatHours(eventData.hours)} hours</span>
+            </div>
+          `;
+        });
+
+        html += `
+                  <div class="total-row">
+                    <span>Total</span>
+                    <span class="event-hours">${formatHours(member.totalHours)} hours</span>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+
+      hoursTableBody.innerHTML = html;
+
+      // Add click handlers for accordion
+      document.querySelectorAll('.accordion-parent').forEach(row => {
+        row.addEventListener('click', () => {
+          const targetId = row.dataset.target;
+          const detailRow = document.getElementById(targetId);
+          const toggle = document.getElementById(`toggle-${targetId}`);
+          
+          // Close other open rows
+          document.querySelectorAll('.detail-row.show').forEach(openRow => {
+            if (openRow.id !== targetId) {
+              openRow.classList.remove('show');
+              const openToggle = document.getElementById(`toggle-${openRow.id}`);
+              if (openToggle) openToggle.classList.remove('expanded');
+            }
+          });
+
+          // Toggle this row
+          detailRow.classList.toggle('show');
+          toggle.classList.toggle('expanded');
+        });
+      });
+    }
+
+    // Escape HTML helper
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Event listeners
+    yearSelect.addEventListener('change', loadMemberHours);
+    
+    refreshBtn.addEventListener('click', loadMemberHours);
+
+    searchInput.addEventListener('input', () => {
+      renderTable();
+    });
+
+    // Sort button handlers
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const field = btn.dataset.sort;
+        
+        // Toggle direction if same field, otherwise default to asc
+        if (currentSort.field === field) {
+          currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+          currentSort.field = field;
+          currentSort.direction = field === 'hours' ? 'desc' : 'asc';
+        }
+
+        // Update button states
+        document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        sortData();
+        renderTable();
+      });
+    });
+
+    // Auth state handler
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        
+        if (userDoc.exists() && userDoc.data().isAdmin === true) {
+          mainContent.classList.remove('hidden');
+          unauthorizedMsg.classList.add('hidden');
+          loadMemberHours();
+        } else {
+          mainContent.classList.add('hidden');
+          unauthorizedMsg.classList.remove('hidden');
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        mainContent.classList.add('hidden');
+        unauthorizedMsg.classList.remove('hidden');
+      }
+    });
+  </script>
+</body>
+</html>
