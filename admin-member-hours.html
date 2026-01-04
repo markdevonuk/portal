@@ -523,22 +523,37 @@
           }
         });
 
-        // If no events in this year, show empty state
-        if (Object.keys(events).length === 0) {
+        // 2. Load all rotas for events in this year (only those with actual content)
+        const rotasSnapshot = await getDocs(collection(db, 'eventRotas'));
+        const rotas = {};
+        let rotasWithContent = 0;
+        
+        rotasSnapshot.forEach(doc => {
+          // Only include rotas for events that exist in this year
+          if (events[doc.id]) {
+            const rotaData = doc.data();
+            // Only count rotas that have positions AND days configured
+            const hasContent = rotaData.positions && rotaData.positions.length > 0 && 
+                              rotaData.days && rotaData.days.length > 0;
+            if (hasContent) {
+              rotas[doc.id] = { id: doc.id, ...rotaData };
+              rotasWithContent++;
+            }
+          }
+        });
+
+        // If no rotas with content in this year, show empty state
+        if (rotasWithContent === 0) {
           loadingState.classList.add('hidden');
           emptyState.classList.remove('hidden');
           updateStats(0, 0, 0);
+          console.log('No rotas with content found for year:', selectedYear);
           return;
         }
 
-        // 2. Load all rotas for events in this year
-        const rotasSnapshot = await getDocs(collection(db, 'eventRotas'));
-        const rotas = {};
-        rotasSnapshot.forEach(doc => {
-          if (events[doc.id]) {
-            rotas[doc.id] = { id: doc.id, ...doc.data() };
-          }
-        });
+        console.log('Found', rotasWithContent, 'rotas with content for year', selectedYear);
+        console.log('Events in year:', Object.keys(events).length);
+        console.log('Rotas:', Object.keys(rotas));
 
         // 3. Load all users
         const usersSnapshot = await getDocs(collection(db, 'users'));
@@ -563,22 +578,66 @@
           const assignments = rota.assignments || {};
           const positions = rota.positions || [];
 
+          console.log('Processing event:', event.name, 'with', Object.keys(assignments).length, 'assignments and', positions.length, 'positions');
+
           // Create position lookup for shift times
           const positionLookup = {};
           positions.forEach(pos => {
             positionLookup[pos.id] = pos;
           });
+          
+          // Log position IDs for debugging
+          if (positions.length > 0) {
+            console.log('Position IDs:', positions.map(p => p.id).slice(0, 5));
+          }
 
           // Process each assignment
+          let assignmentCount = 0;
           Object.keys(assignments).forEach(assignmentKey => {
             const assignment = assignments[assignmentKey];
-            // assignmentKey format: dayId_positionId_shiftType
-            const parts = assignmentKey.split('_');
-            if (parts.length < 3) return;
             
-            const positionId = parts[1];
-            const shiftType = parts[2];
-            const position = positionLookup[positionId];
+            // Log first few assignment keys to understand the format
+            if (assignmentCount < 3) {
+              console.log('Sample assignment key:', assignmentKey, 'value:', assignment);
+            }
+            assignmentCount++;
+            
+            // assignmentKey format: dayId_positionId_shiftType
+            // But positionId can contain underscores (e.g., pos_1234567890)
+            // So we need to parse carefully - shiftType is always last (early/late/night)
+            
+            // Find position by checking which position ID is in the key
+            let matchedPosition = null;
+            let shiftType = null;
+            
+            for (const pos of positions) {
+              if (assignmentKey.includes('_' + pos.id + '_')) {
+                matchedPosition = pos;
+                // Extract shift type (everything after the last underscore)
+                const lastUnderscoreIndex = assignmentKey.lastIndexOf('_');
+                shiftType = assignmentKey.substring(lastUnderscoreIndex + 1);
+                break;
+              }
+            }
+            
+            if (!matchedPosition || !shiftType) {
+              // Try alternative: check if key ends with position ID + shift
+              for (const pos of positions) {
+                for (const shift of ['early', 'late', 'night']) {
+                  if (assignmentKey.endsWith('_' + pos.id + '_' + shift)) {
+                    matchedPosition = pos;
+                    shiftType = shift;
+                    break;
+                  }
+                }
+                if (matchedPosition) break;
+              }
+            }
+            
+            if (!matchedPosition || !shiftType) return;
+            if (!['early', 'late', 'night'].includes(shiftType)) return;
+            
+            const position = matchedPosition;
 
             if (!position) return;
 
@@ -622,6 +681,7 @@
               // Add hours
               memberHours[crewId].events[eventId].hours += hours;
               memberHours[crewId].totalHours += hours;
+              console.log('Added', hours, 'hours for', memberName, 'at event', event.name);
             });
           });
         });
@@ -629,18 +689,23 @@
         // Convert to array and sort
         allMemberData = Object.values(memberHours);
         
+        console.log('Total members with hours:', allMemberData.length);
+        if (allMemberData.length > 0) {
+          console.log('First member:', allMemberData[0]);
+        }
+        
         // Hide loading
         loadingState.classList.add('hidden');
 
         if (allMemberData.length === 0) {
           emptyState.classList.remove('hidden');
-          updateStats(0, 0, Object.keys(rotas).length);
+          updateStats(0, 0, rotasWithContent);
           return;
         }
 
         // Update stats
         const totalHours = allMemberData.reduce((sum, m) => sum + m.totalHours, 0);
-        updateStats(allMemberData.length, totalHours, Object.keys(rotas).length);
+        updateStats(allMemberData.length, totalHours, rotasWithContent);
 
         // Sort and render
         sortData();
