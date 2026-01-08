@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2FA Status Report - FMS Prehospital Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      min-height: 100vh; 
+      padding: 20px; 
+    }
+    .main-card { 
+      background:#fff; 
+      border-radius:20px; 
+      box-shadow:0 20px 60px rgba(0,0,0,.3); 
+      overflow:hidden; 
+      max-width:800px; 
+      margin:0 auto; 
+    }
+    .card-header { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      color:#fff; 
+      padding:30px; 
+      text-align:center; 
+    }
+    .card-body { padding:30px; }
+    .btn-primary { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      border:none; 
+      padding:12px 24px; 
+      font-weight:600; 
+    }
+    .btn-primary:hover { 
+      transform:translateY(-2px); 
+      box-shadow:0 5px 15px rgba(0,168,150,.4); 
+    }
+    .btn-outline-primary {
+      color: #00a896;
+      border-color: #00a896;
+    }
+    .btn-outline-primary:hover {
+      background: #00a896;
+      border-color: #00a896;
+      color: white;
+    }
+    .alert { border-radius:10px; }
+    .hidden { display: none; }
+    .stats-box {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #00a896;
+    }
+    .stat-label {
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+    .email-list {
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid #dee2e6;
+      border-radius: 10px;
+      padding: 15px;
+      background: #f8f9fa;
+    }
+    .email-item {
+      padding: 8px 12px;
+      border-bottom: 1px solid #e9ecef;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .email-item:last-child {
+      border-bottom: none;
+    }
+    .email-item i {
+      color: #dc3545;
+    }
+    .spinner-container {
+      text-align: center;
+      padding: 40px;
+    }
+    .spinner-border {
+      width: 3rem;
+      height: 3rem;
+      color: #00a896;
+    }
+    .back-link {
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 15px;
+    }
+    .back-link:hover {
+      color: white;
+    }
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="admin.html" class="back-link">
+      <i class="bi bi-arrow-left"></i> Back to Admin Dashboard
+    </a>
+    
+    <div class="main-card">
+      <div class="card-header">
+        <h2 class="mb-0"><i class="bi bi-shield-exclamation"></i> 2FA Status Report</h2>
+        <p class="mb-0 mt-2">Users Without Two-Factor Authentication</p>
+      </div>
+
+      <div class="card-body">
+        <div id="alertContainer"></div>
+
+        <!-- Unauthorized Message -->
+        <div id="unauthorizedMsg" class="hidden text-center py-4">
+          <i class="bi bi-shield-x" style="font-size: 4rem; color: #dc3545;"></i>
+          <h4 class="mt-3">Access Denied</h4>
+          <p class="text-muted">You don't have permission to view this page.</p>
+          <a href="dashboard.html" class="btn btn-primary mt-2">
+            <i class="bi bi-arrow-left"></i> Return to Dashboard
+          </a>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="spinner-container">
+          <div class="spinner-border" role="status"></div>
+          <p class="mt-3 text-muted">Loading 2FA status data...</p>
+        </div>
+
+        <!-- Main Content -->
+        <div id="mainContent" class="hidden">
+          <!-- Stats -->
+          <div class="row">
+            <div class="col-md-4">
+              <div class="stats-box text-center">
+                <div class="stat-number" id="totalUsers">0</div>
+                <div class="stat-label">Total Users</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="stats-box text-center">
+                <div class="stat-number text-success" id="with2FA">0</div>
+                <div class="stat-label">With 2FA Enabled</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="stats-box text-center">
+                <div class="stat-number text-danger" id="without2FA">0</div>
+                <div class="stat-label">Without 2FA</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="action-buttons">
+            <button id="copyEmailsBtn" class="btn btn-primary">
+              <i class="bi bi-clipboard"></i> Copy All Emails
+            </button>
+            <button id="downloadCsvBtn" class="btn btn-outline-primary">
+              <i class="bi bi-download"></i> Download CSV
+            </button>
+            <button id="refreshBtn" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+          </div>
+
+          <!-- Email List -->
+          <h5 class="mb-3">
+            <i class="bi bi-envelope-exclamation text-danger"></i> 
+            Users Without 2FA (<span id="emailCount">0</span>)
+          </h5>
+          <div class="email-list" id="emailList">
+            <p class="text-muted text-center mb-0">No users found without 2FA</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { getFirestore, collection, getDocs, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { firebaseConfig } from './firebase-config.js';
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // DOM Elements
+    const loadingState = document.getElementById('loadingState');
+    const mainContent = document.getElementById('mainContent');
+    const unauthorizedMsg = document.getElementById('unauthorizedMsg');
+    const alertContainer = document.getElementById('alertContainer');
+    const emailList = document.getElementById('emailList');
+    const copyEmailsBtn = document.getElementById('copyEmailsBtn');
+    const downloadCsvBtn = document.getElementById('downloadCsvBtn');
+    const refreshBtn = document.getElementById('refreshBtn');
+
+    // Store emails for export
+    let usersWithout2FA = [];
+
+    function showAlert(message, type = 'info') {
+      alertContainer.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      `;
+    }
+
+    async function load2FAData() {
+      try {
+        loadingState.classList.remove('hidden');
+        mainContent.classList.add('hidden');
+
+        // Get all users from Firestore
+        const usersSnapshot = await getDocs(collection(db, 'users'));
+        
+        let totalUsers = 0;
+        let with2FA = 0;
+        usersWithout2FA = [];
+
+        usersSnapshot.forEach((doc) => {
+          const userData = doc.data();
+          totalUsers++;
+          
+          // Check if user has 2FA enabled
+          // has2FA must be exactly true AND secret2FA must exist
+          if (userData.has2FA === true && userData.secret2FA) {
+            with2FA++;
+          } else {
+            // User doesn't have 2FA properly set up
+            usersWithout2FA.push({
+              id: doc.id,
+              email: userData.email || 'No email',
+              firstName: userData.firstName || '',
+              surname: userData.surname || ''
+            });
+          }
+        });
+
+        const without2FA = totalUsers - with2FA;
+
+        // Update stats
+        document.getElementById('totalUsers').textContent = totalUsers;
+        document.getElementById('with2FA').textContent = with2FA;
+        document.getElementById('without2FA').textContent = without2FA;
+        document.getElementById('emailCount').textContent = usersWithout2FA.length;
+
+        // Display email list
+        if (usersWithout2FA.length === 0) {
+          emailList.innerHTML = `
+            <div class="text-center text-success py-4">
+              <i class="bi bi-check-circle-fill" style="font-size: 2rem;"></i>
+              <p class="mb-0 mt-2">All users have 2FA enabled!</p>
+            </div>
+          `;
+        } else {
+          // Sort by email
+          usersWithout2FA.sort((a, b) => a.email.localeCompare(b.email));
+          
+          emailList.innerHTML = usersWithout2FA.map(user => `
+            <div class="email-item">
+              <i class="bi bi-shield-x"></i>
+              <span>${user.email}</span>
+              ${user.firstName || user.surname ? `<small class="text-muted">(${user.firstName} ${user.surname})</small>` : ''}
+            </div>
+          `).join('');
+        }
+
+        loadingState.classList.add('hidden');
+        mainContent.classList.remove('hidden');
+
+      } catch (error) {
+        console.error('Error loading 2FA data:', error);
+        showAlert('Error loading data: ' + error.message, 'danger');
+        loadingState.classList.add('hidden');
+      }
+    }
+
+    // Copy emails to clipboard
+    copyEmailsBtn.addEventListener('click', async () => {
+      if (usersWithout2FA.length === 0) {
+        showAlert('No emails to copy!', 'warning');
+        return;
+      }
+
+      const emails = usersWithout2FA.map(u => u.email).join('\n');
+      
+      try {
+        await navigator.clipboard.writeText(emails);
+        showAlert(`${usersWithout2FA.length} email(s) copied to clipboard!`, 'success');
+        
+        // Visual feedback on button
+        const originalText = copyEmailsBtn.innerHTML;
+        copyEmailsBtn.innerHTML = '<i class="bi bi-check"></i> Copied!';
+        copyEmailsBtn.classList.add('btn-success');
+        copyEmailsBtn.classList.remove('btn-primary');
+        
+        setTimeout(() => {
+          copyEmailsBtn.innerHTML = originalText;
+          copyEmailsBtn.classList.remove('btn-success');
+          copyEmailsBtn.classList.add('btn-primary');
+        }, 2000);
+        
+      } catch (error) {
+        showAlert('Failed to copy to clipboard: ' + error.message, 'danger');
+      }
+    });
+
+    // Download as CSV
+    downloadCsvBtn.addEventListener('click', () => {
+      if (usersWithout2FA.length === 0) {
+        showAlert('No data to download!', 'warning');
+        return;
+      }
+
+      // Create CSV content
+      const headers = ['Email', 'First Name', 'Surname'];
+      const rows = usersWithout2FA.map(u => [
+        u.email,
+        u.firstName,
+        u.surname
+      ]);
+
+      let csvContent = headers.join(',') + '\n';
+      rows.forEach(row => {
+        csvContent += row.map(field => `"${field || ''}"`).join(',') + '\n';
+      });
+
+      // Create download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `users-without-2fa-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showAlert('CSV file downloaded!', 'success');
+    });
+
+    // Refresh button
+    refreshBtn.addEventListener('click', () => {
+      load2FAData();
+    });
+
+    // Check authentication and admin status
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      try {
+        // Check if user is admin
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        
+        if (!userDoc.exists() || userDoc.data().isAdmin !== true) {
+          loadingState.classList.add('hidden');
+          unauthorizedMsg.classList.remove('hidden');
+          return;
+        }
+
+        // User is admin, load the data
+        await load2FAData();
+
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        loadingState.classList.add('hidden');
+        showAlert('Error checking permissions: ' + error.message, 'danger');
+      }
+    });
+  </script>
+</body>
+</html>
