@@ -681,22 +681,21 @@
       charCount.textContent = newsflashEditor.value.length;
     }
 
-    // Format text helpers
-    window.formatText = function(type) {
-      const start = newsflashEditor.selectionStart;
-      const end = newsflashEditor.selectionEnd;
-      const selectedText = newsflashEditor.value.substring(start, end);
-      let newText = '';
-      if (type === 'bold') {
-        newText = `**${selectedText}**`;
-      } else if (type === 'italic') {
-        newText = `*${selectedText}*`;
-      }
-      newsflashEditor.value = newsflashEditor.value.substring(0, start) + newText + newsflashEditor.value.substring(end);
-      newsflashEditor.focus();
-      updatePreview();
-      updateCharCount();
-    };
+ window.formatText = function(type) {
+  const start = newsflashEditor.selectionStart;
+  const end = newsflashEditor.selectionEnd;
+  const selectedText = newsflashEditor.value.substring(start, end);
+  let newText = '';
+  if (type === 'bold') {
+    newText = `<strong>${selectedText}</strong>`;
+  } else if (type === 'italic') {
+    newText = `<em>${selectedText}</em>`;
+  }
+  newsflashEditor.value = newsflashEditor.value.substring(0, start) + newText + newsflashEditor.value.substring(end);
+  newsflashEditor.focus();
+  updatePreview();
+  updateCharCount();
+};
 
     window.insertBreak = function() {
       const pos = newsflashEditor.selectionStart;
