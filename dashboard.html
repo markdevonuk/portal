@@ -115,6 +115,19 @@
       line-height: 1.6;
       margin-bottom: 0;
     }
+    
+    .newsflash-card .newsflash-content {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.newsflash-card .newsflash-content p {
+  margin-bottom: 0.5rem;
+}
+
+.newsflash-card .newsflash-content p:last-child {
+  margin-bottom: 0;
+}
   </style>
 </head>
 <body>
@@ -178,12 +191,12 @@
       <div class="row mt-4 g-3">
         <div class="col-lg-6">
           <!-- Newsflash Card -->
-          <div class="newsflash-card">
-            <h3><i class="bi bi-megaphone-fill"></i> Newsflash</h3>
-            <p>Happy New Year</p><p>...................</p><p>2026 events are available for you to select (once your profile is approved). Get in early to secure the best chance of places as 2026 will be super busy despite Glastonbury taking a year off.</p><br><br>
-            <p>Guidance for Nurses and Doctors (without prehospital certification)<br><br>Due to the FMS idemnity insurance requirements, to work outside of a static medical point you MUST have a prehospital certification such as FREC/PHTLS. If you do not have this certification we cannot give you shifts on ambulances, first responding etc. Please note that this is not a decision by the Team Leaders but by the insurance comoany providing indemity cover.</p>
-          </div>
-        </div>
+<div class="newsflash-card">
+  <h3><i class="bi bi-megaphone-fill"></i> Newsflash</h3>
+  <div id="newsflashContent" class="newsflash-content">
+    <p><i class="bi bi-hourglass-split"></i> Loading...</p>
+  </div>
+</div>
         <div class="col-lg-6">
           <!-- Events Card Container (shown only for approved profiles) -->
           <div id="eventsCardContainer"></div>
@@ -213,6 +226,31 @@
         window.fmsLoader.hide();
       }
     }
+    
+    // Load newsflash content from Firestore
+async function loadNewsflash() {
+  const newsflashContent = document.getElementById('newsflashContent');
+  try {
+    const newsflashDoc = await getDoc(doc(db, 'settings', 'newsflash'));
+    
+    if (newsflashDoc.exists()) {
+      const data = newsflashDoc.data();
+      if (data.contentHtml) {
+        newsflashContent.innerHTML = data.contentHtml;
+      } else if (data.content) {
+        const paragraphs = data.content.split('\n\n').map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
+        newsflashContent.innerHTML = paragraphs;
+      } else {
+        newsflashContent.innerHTML = '<p>No announcements at this time.</p>';
+      }
+    } else {
+      newsflashContent.innerHTML = '<p>No announcements at this time.</p>';
+    }
+  } catch (error) {
+    console.error('Error loading newsflash:', error);
+    newsflashContent.innerHTML = '<p>Unable to load announcements.</p>';
+  }
+}
 
     // Update profile card based on status
     async function updateProfileStatus() {
@@ -403,6 +441,9 @@
           if (welcomeNameEl) welcomeNameEl.textContent = firstName;
           if (userEmailEl) userEmailEl.textContent = user.email;
         }
+        
+        // Load newsflash content
+        await loadNewsflash();
 
         // Update profile status card
         await updateProfileStatus();
