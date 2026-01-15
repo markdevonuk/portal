@@ -3,41 +3,42 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard - FMS Prehospital Portal</title>
+  <title>FMS Prehospital Portal - Dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="loader.css" rel="stylesheet">
+  <link href="css/styles.css" rel="stylesheet">
+  <!-- Include the loader script -->
+  <script src="loader.js"></script>
   <style>
-    body { background: #f8f9fa; min-height: 100vh; }
-    .navbar { 
-      background: linear-gradient(135deg, #00a896 0%, #028090 100%); 
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
-    }
-    .nav-link { 
-      color: rgba(255,255,255,.85) !important;
-      font-weight: 500;
-    }
-    .nav-link:hover { 
-      color: #fff !important;
+    /* PAGE-SPECIFIC STYLES FOR DASHBOARD */
+    .dashboard-card { 
+      background:#fff; 
+      border-radius:15px; 
+      box-shadow:0 5px 20px rgba(0,0,0,.08); 
+      padding:30px; 
+      margin:20px 0; 
     }
 
-    .welcome-card {
-      background: linear-gradient(135deg, #00a896 0%, #028090 100%);
-      color: #fff;
-      border-radius: 15px;
-      padding: 30px;
-      box-shadow: 0 10px 30px rgba(0,168,150,.3);
+    .welcome-card { 
+      background:linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      color:#fff; 
+      border-radius:15px; 
+      padding:25px; 
+      margin:0; 
+      box-shadow:0 10px 30px rgba(0,168,150,.3);
       height: 100%;
       display: flex;
       flex-direction: column;
       justify-content: center;
     }
 
-    /* Profile status cards */
+    /* Profile Status Card styles */
     .profile-card {
-      border-radius: 15px;
-      padding: 25px;
-      box-shadow: 0 5px 20px rgba(0,0,0,.08);
+      border-radius:15px;
+      padding:25px;
+      margin:0;
+      box-shadow:0 10px 25px rgba(0,0,0,.12);
+      transition: transform .3s;
       height: 100%;
       display: flex;
       flex-direction: column;
@@ -45,23 +46,23 @@
     }
 
     .profile-card.empty {
-      background: #fff3cd;
-      border: 2px solid #ffc107;
+      background: linear-gradient(135deg,#ff5252 0%,#d32f2f 100%);
+      color: #fff;
     }
 
     .profile-card.pending {
-      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-      border: 2px solid #2196f3;
+      background: linear-gradient(135deg,#ffb74d 0%,#f57c00 100%);
+      color: #fff;
     }
 
     .profile-card.approved {
-      background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-      border: 2px solid #4caf50;
+      background: linear-gradient(135deg,#66bb6a 0%,#388e3c 100%);
+      color: #fff;
     }
 
     .profile-card.rejected {
-      background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
-      border: 2px solid #f44336;
+      background: linear-gradient(135deg,#ef5350 0%,#c62828 100%);
+      color: #fff;
     }
 
     .profile-icon {
@@ -109,37 +110,10 @@
       margin-bottom: 15px;
     }
 
-    .newsflash-card .newsflash-content {
+    .newsflash-card p {
       font-size: 1rem;
       line-height: 1.6;
-    }
-
-    .newsflash-card .newsflash-content p {
-      margin-bottom: 0.5rem;
-    }
-
-    .newsflash-card .newsflash-content p:last-child {
       margin-bottom: 0;
-    }
-
-    .hidden { display: none; }
-
-    /* Page content transition */
-    .page-content {
-      opacity: 0;
-      transition: opacity 0.3s ease-in-out;
-    }
-    .page-content.loaded {
-      opacity: 1;
-    }
-
-    /* Events card styles */
-    .events-card {
-      background: #fff;
-      border-radius: 15px;
-      padding: 25px;
-      box-shadow: 0 5px 20px rgba(0,0,0,.08);
-      height: 100%;
     }
   </style>
 </head>
@@ -203,12 +177,11 @@
       <!-- Row for Newsflash and Events cards side by side on larger screens -->
       <div class="row mt-4 g-3">
         <div class="col-lg-6">
-          <!-- Newsflash Card - Content loaded from Firestore -->
+          <!-- Newsflash Card -->
           <div class="newsflash-card">
             <h3><i class="bi bi-megaphone-fill"></i> Newsflash</h3>
-            <div id="newsflashContent" class="newsflash-content">
-              <p><i class="bi bi-hourglass-split"></i> Loading...</p>
-            </div>
+            <p>Happy New Year</p><p>...................</p><p>2026 events are available for you to select (once your profile is approved). Get in early to secure the best chance of places as 2026 will be super busy despite Glastonbury taking a year off.</p><br><br>
+            <p>Guidance for Nurses and Doctors (without prehospital certification)<br><br>Due to the FMS idemnity insurance requirements, to work outside of a static medical point you MUST have a prehospital certification such as FREC/PHTLS. If you do not have this certification we cannot give you shifts on ambulances, first responding etc. Please note that this is not a decision by the Team Leaders but by the insurance comoany providing indemity cover.</p>
           </div>
         </div>
         <div class="col-lg-6">
@@ -241,34 +214,6 @@
       }
     }
 
-    // Load newsflash content from Firestore
-    async function loadNewsflash() {
-      const newsflashContent = document.getElementById('newsflashContent');
-      try {
-        const newsflashDoc = await getDoc(doc(db, 'settings', 'newsflash'));
-        
-        if (newsflashDoc.exists()) {
-          const data = newsflashDoc.data();
-          // Use the HTML content if available, otherwise use plain text
-          if (data.contentHtml) {
-            newsflashContent.innerHTML = data.contentHtml;
-          } else if (data.content) {
-            // Convert plain text to paragraphs
-            const paragraphs = data.content.split('\n\n').map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
-            newsflashContent.innerHTML = paragraphs;
-          } else {
-            newsflashContent.innerHTML = '<p>No announcements at this time.</p>';
-          }
-        } else {
-          // No newsflash document exists yet - show default message
-          newsflashContent.innerHTML = '<p>No announcements at this time.</p>';
-        }
-      } catch (error) {
-        console.error('Error loading newsflash:', error);
-        newsflashContent.innerHTML = '<p>Unable to load announcements.</p>';
-      }
-    }
-
     // Update profile card based on status
     async function updateProfileStatus() {
       try {
@@ -294,87 +239,146 @@
           profileCard.innerHTML = `
             <i class="bi bi-exclamation-triangle-fill profile-icon"></i>
             <h2 class="profile-status">Profile Not Submitted</h2>
-            <p class="profile-message">You've started your profile but haven't submitted it for review yet.</p>
+            <p class="profile-message">You've started your profile but haven't submitted it for review yet. You cannot attend any FMS events until this is resolved.</p>
             <div class="profile-action">
               <a href="profile.html" class="btn btn-profile btn-warning">
-                <i class="bi bi-send"></i> Complete & Submit Profile
+                <i class="bi bi-pencil-square"></i> Complete & Submit My Profile
               </a>
             </div>
           `;
-        } else if (!profile.adminUse || profile.adminUse.status === 'pending') {
-          // Profile submitted, pending review
+        } else if (profile.adminUse && profile.adminUse.status === 'pending') {
+          // Profile submitted and pending
           profileCard.className = 'profile-card pending';
           profileCard.innerHTML = `
-            <i class="bi bi-hourglass-split profile-icon text-primary"></i>
-            <h2 class="profile-status text-primary">Profile Under Review</h2>
-            <p class="profile-message">Your profile has been submitted and is being reviewed by our team.</p>
+            <i class="bi bi-hourglass-split profile-icon"></i>
+            <h2 class="profile-status">Profile Under Review</h2>
+            <p class="profile-message">Your profile has been submitted and is waiting for Team Leader approval.</p>
             <div class="profile-action">
-              <a href="profile.html" class="btn btn-profile btn-outline-primary">
-                <i class="bi bi-eye"></i> View My Profile
+              <a href="profile.html" class="btn btn-profile btn-primary">
+                <i class="bi bi-eye"></i> View Profile
               </a>
             </div>
           `;
-        } else if (profile.adminUse.status === 'approved') {
+        } else if (profile.adminUse && profile.adminUse.status === 'approved') {
           // Profile approved
           profileCard.className = 'profile-card approved';
           profileCard.innerHTML = `
-            <i class="bi bi-check-circle-fill profile-icon text-success"></i>
-            <h2 class="profile-status text-success">Profile Approved</h2>
-            <p class="profile-message">Your profile has been approved. You can now volunteer for events!</p>
+            <i class="bi bi-check-circle-fill profile-icon"></i>
+            <h2 class="profile-status">Profile Approved</h2>
+            <p class="profile-message">Congratulations! Your profile has been reviewed and approved.</p>
             <div class="profile-action">
-              <a href="events.html" class="btn btn-profile btn-success">
-                <i class="bi bi-calendar-event"></i> View Available Events
+              <a href="profile.html" class="btn btn-profile btn-success">
+                <i class="bi bi-person-check"></i> View My Profile
               </a>
             </div>
           `;
-        } else if (profile.adminUse.status === 'rejected') {
+        } else if (profile.adminUse && profile.adminUse.status === 'rejected') {
           // Profile rejected
-          const rejectionReason = profile.adminUse.rejectionReason || 'No reason provided';
           profileCard.className = 'profile-card rejected';
+          // Get only the most recent note (notes are stored newest first, separated by \n\n)
+          let latestNote = '';
+          if (profile.adminUse.notes) {
+            latestNote = profile.adminUse.notes.split('\n\n')[0];
+          }
+          const notes = latestNote ? `: "${latestNote}"` : '';
           profileCard.innerHTML = `
-            <i class="bi bi-x-circle-fill profile-icon text-danger"></i>
-            <h2 class="profile-status text-danger">Profile Needs Changes</h2>
-            <p class="profile-message">Please update your profile: ${rejectionReason}</p>
+            <i class="bi bi-x-circle-fill profile-icon"></i>
+            <h2 class="profile-status">Profile Needs Updates</h2>
+            <p class="profile-message">Your profile has been reviewed and needs changes${notes}</p>
             <div class="profile-action">
               <a href="profile.html" class="btn btn-profile btn-danger">
-                <i class="bi bi-pencil"></i> Update My Profile
+                <i class="bi bi-pencil-square"></i> Update My Profile
+              </a>
+            </div>
+          `;
+        } else {
+          // Fallback for unexpected states
+          profileCard.className = 'profile-card empty';
+          profileCard.innerHTML = `
+            <i class="bi bi-question-circle-fill profile-icon"></i>
+            <h2 class="profile-status">Profile Status Unknown</h2>
+            <p class="profile-message">There seems to be an issue with your profile status. Please contact support.</p>
+            <div class="profile-action">
+              <a href="profile.html" class="btn btn-profile btn-warning">
+                <i class="bi bi-eye"></i> View Profile
               </a>
             </div>
           `;
         }
       } catch (error) {
         console.error('Error updating profile status:', error);
+        // Show error state if something went wrong
+        const profileCard = document.getElementById('profileStatusCard');
+        profileCard.className = 'profile-card empty';
+        profileCard.innerHTML = `
+          <i class="bi bi-exclamation-circle-fill profile-icon"></i>
+          <h2 class="profile-status">Could Not Load Profile</h2>
+          <p class="profile-message">There was a problem loading your profile information.</p>
+          <div class="profile-action">
+            <a href="profile.html" class="btn btn-profile btn-warning">
+              <i class="bi bi-arrow-clockwise"></i> Try Again
+            </a>
+          </div>
+        `;
       }
     }
 
-    // Auth state listener
+    // Check authentication status
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
+        // Not logged in, redirect to login
         window.location.href = 'index.html';
         return;
       }
 
+      console.log('Authenticated user:', user.uid, user.email);
+
+      // Get user data from Firestore
       try {
-        // Get user document
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         
+       
+        
         if (userDoc.exists()) {
-          const userData = userDoc.data();
+  const userData = userDoc.data();
+  
+  // Enforce 2FA - redirect if not set up
+  if (userData.has2FA !== true || !userData.secret2FA) {
+    window.location.href = 'setup-2fa.html';
+    return;
+  }
           
-          // Display user info
+          // Display user name from Firestore
+          const firstName = userData.firstName || 'User';
           const welcomeNameEl = document.getElementById('welcomeName');
           const userEmailEl = document.getElementById('userEmail');
           
-          if (welcomeNameEl) welcomeNameEl.textContent = userData.firstName || 'User';
-          if (userEmailEl) userEmailEl.textContent = user.email;
+          if (welcomeNameEl) welcomeNameEl.textContent = firstName;
+          if (userEmailEl) userEmailEl.textContent = userData.email || user.email;
           
-          // Show admin nav if user is admin
+          // Check 2FA status
+          console.log('2FA status:', userData.has2FA, 'Secret exists:', !userData.secret2FA);
+          const twoFAStatusEl = document.getElementById('2faStatus');
+          if (twoFAStatusEl && userData.has2FA === true && userData.secret2FA) {
+            twoFAStatusEl.innerHTML = 
+              '<span class="text-success"><i class="bi bi-check-circle-fill"></i> Enabled</span>';
+          }
+          
+          // Check admin status
+          console.log('Admin status:', userData.isAdmin, 'Type:', typeof userData.isAdmin);
+          const adminNavEl = document.getElementById('adminNavItem');
           if (userData.isAdmin === true) {
-            document.getElementById('adminNavItem').classList.remove('hidden');
+            console.log('✓ Showing admin nav item');
+            if (adminNavEl) adminNavEl.classList.remove('hidden');
+          } else {
+            console.log('✗ Not admin');
           }
         } else {
-          // Create user document if it doesn't exist
-          const nameParts = (user.displayName || 'User').split(' ');
+          console.warn('No Firestore document found for user:', user.uid);
+          
+          // User document doesn't exist - create it now
+          const displayName = user.displayName || 'User';
+          const nameParts = displayName.split(' ');
           const firstName = nameParts[0] || 'User';
           const surname = nameParts.slice(1).join(' ') || '';
           
@@ -400,9 +404,6 @@
           if (userEmailEl) userEmailEl.textContent = user.email;
         }
 
-        // Load newsflash content
-        await loadNewsflash();
-
         // Update profile status card
         await updateProfileStatus();
         
@@ -420,30 +421,54 @@
               collection, 
               query, 
               where, 
-              getDocs, 
-              db
+              getDocs,
+              getDoc,
+              doc
             };
-            await renderEventsCard(eventsCardContainer, firebaseFunctions);
+            renderEventsCard(eventsCardContainer, auth, db, firebaseFunctions);
           }
         }
         
-        // Show page content
+        // Now that everything is loaded, show the page content
         showPageContent();
         
       } catch (error) {
-        console.error('Error loading dashboard:', error);
-        showPageContent();
+        console.error('Error fetching user data:', error);
+        
+        // Fallback to Firebase Auth data
+        const displayName = user.displayName || 'User';
+        const firstName = displayName.split(' ')[0];
+        
+        const welcomeNameEl = document.getElementById('welcomeName');
+        const userEmailEl = document.getElementById('userEmail');
+        
+        if (welcomeNameEl) welcomeNameEl.textContent = firstName;
+        if (userEmailEl) userEmailEl.textContent = user.email;
+        
+        // Even on error, show the page content after a short delay
+        setTimeout(showPageContent, 500);
       }
     }); 
 
     // Logout handler
     document.getElementById('logoutLink').addEventListener('click', async (e) => {
       e.preventDefault();
+      
+      // Show the loader when logging out
+      if (window.fmsLoader && window.fmsLoader.show) {
+        window.fmsLoader.show();
+      }
+      
       try {
         await signOut(auth);
         window.location.href = 'index.html';
       } catch (error) {
         alert('Logout failed: ' + error.message);
+        
+        // Hide the loader on error
+        if (window.fmsLoader && window.fmsLoader.hide) {
+          window.fmsLoader.hide();
+        }
       }
     });
   </script>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Dashboard - FMS Prehospital Portal</title>
+  <title>Admin Dashboard - FMS Prehospital Portal </title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
   <style>
@@ -50,24 +50,6 @@
       margin-bottom: 20px;
     }
     
-    /* Newsflash card special styling */
-    .newsflash-admin-card {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: #fff;
-    }
-    .newsflash-admin-card .admin-icon {
-      color: #fff;
-    }
-    .newsflash-admin-card h3,
-    .newsflash-admin-card p,
-    .newsflash-admin-card small {
-      color: #fff !important;
-    }
-    .newsflash-admin-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-    }
-    
     /* Danger card styling */
     .danger-card {
       background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%);
@@ -111,72 +93,59 @@
     .stat-clickable h3 {
       text-decoration: underline;
       text-decoration-style: dotted;
-      text-underline-offset: 3px;
+      text-underline-offset: 4px;
     }
     
-    /* Super Admin pill and locked state */
-    .super-admin-pill {
-      display: inline-block;
-      background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
-      color: #fff;
-      font-size: 0.7rem;
-      padding: 4px 10px;
-      border-radius: 20px;
-      margin-bottom: 10px;
+    /* Modal table styling */
+    .member-table {
+      font-size: 0.9rem;
     }
-    
-    .super-admin-only.locked {
-      opacity: 0.6;
-      pointer-events: none;
-      position: relative;
-    }
-    
-    .super-admin-only.locked::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(255,255,255,0.3);
-      border-radius: 15px;
-    }
-
-    /* Newsflash editor styles */
-    .newsflash-preview {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: #fff;
-      border-radius: 10px;
-      padding: 20px;
-      margin-top: 15px;
-      min-height: 100px;
-    }
-    .newsflash-preview h5 {
-      margin-bottom: 10px;
-    }
-    .editor-toolbar {
+    .member-table th {
       background: #f8f9fa;
-      border: 1px solid #dee2e6;
-      border-bottom: none;
-      border-radius: 8px 8px 0 0;
-      padding: 8px;
+      position: sticky;
+      top: 0;
     }
-    .editor-toolbar .btn {
-      padding: 4px 8px;
-      font-size: 0.85rem;
+    .event-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      margin: 2px;
     }
-    #newsflashEditor {
-      border-radius: 0 0 8px 8px;
-      min-height: 200px;
+    .event-badge.selected {
+      background: #d1e7dd;
+      color: #155724;
     }
-    .char-count {
-      font-size: 0.8rem;
-      color: #6c757d;
+    .event-badge.volunteered {
+      background: #fff3cd;
+      color: #856404;
     }
-    .last-updated {
-      font-size: 0.85rem;
+    .no-events {
       color: #6c757d;
       font-style: italic;
+    }
+    
+    /* Super Admin locked card styling */
+    .admin-card-link.locked {
+      pointer-events: none;
+      cursor: not-allowed;
+    }
+    .super-admin-pill {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: #dc3545;
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-top: 8px;
+      margin-bottom: 5px;
+    }
+    .admin-card-link.locked .super-admin-pill {
+      display: inline-flex;
     }
   </style>
 </head>
@@ -187,11 +156,16 @@
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
       </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
+     <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto">
           <li class="nav-item">
             <a class="nav-link" href="dashboard.html">
               <i class="bi bi-house-fill"></i> Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="events.html">
+              <i class="bi bi-calendar-event"></i> Events
             </a>
           </li>
           <li class="nav-item">
@@ -203,9 +177,7 @@
       </div>
     </div>
   </nav>
-
   <div class="container">
-    <!-- Unauthorized Message -->
     <div id="unauthorizedMsg" class="hidden">
       <div class="unauthorized">
         <i class="bi bi-exclamation-triangle-fill" style="font-size: 4rem; color: #ffc107;"></i>
@@ -298,6 +270,23 @@
           </a>
         </div>
       </div>
+      
+      <!-- Row: Member Hours -->
+<div class="row">
+  <div class="col-md-6 mb-4">
+    <a href="admin-member-hours.html" class="admin-card-link">
+      <div class="admin-card text-center">
+        <i class="bi bi-clock-history admin-icon"></i>
+        <h3>Member Hours</h3>
+        <p class="text-muted mb-0">Track volunteer hours by year</p>
+        <small class="text-muted">View hours assigned to members from event rotas</small>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-6 mb-4">
+    <!-- Empty space or you can add another card here later -->
+  </div>
+</div>
 
       <!-- Row 4: Allowed Emails and Admin Users -->
       <div class="row">
@@ -327,52 +316,29 @@
       </div>
 
       <!-- Row 5: Downloads and Email Members -->
-      <div class="row">
-        <div class="col-md-6 mb-4">
-          <a href="admin-downloads.html" class="admin-card-link">
-            <div class="admin-card text-center">
-              <i class="bi bi-cloud-download admin-icon"></i>
-              <h3>Downloads</h3>
-              <p class="text-muted mb-0">Export portal data</p>
-              <small class="text-muted">Generate reports and data exports</small>
-            </div>
-          </a>
-        </div>
-        <div class="col-md-6 mb-4">
-          <a href="admin-email-members.html" class="admin-card-link super-admin-only">
-            <div class="admin-card text-center">
-              <i class="bi bi-envelope-paper admin-icon"></i>
-              <h3>Email All Members</h3>
-              <span class="super-admin-pill"><i class="bi bi-lock-fill"></i> Super Admin Only</span>
-              <p class="text-muted mb-0">Send bulk emails to members</p>
-              <small class="text-muted">Contact all approved members at once</small>
-            </div>
-          </a>
-        </div>
+<div class="row">
+  <div class="col-md-6 mb-4">
+    <a href="admin-downloads.html" class="admin-card-link">
+      <div class="admin-card text-center">
+        <i class="bi bi-cloud-download admin-icon"></i>
+        <h3>Downloads</h3>
+        <p class="text-muted mb-0">Export portal data</p>
+        <small class="text-muted">Generate reports and data exports</small>
       </div>
-
-      <!-- Row 6: Newsflash Management -->
-      <div class="row">
-        <div class="col-md-6 mb-4">
-          <div class="admin-card text-center newsflash-admin-card" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#newsflashModal">
-            <i class="bi bi-megaphone-fill admin-icon"></i>
-            <h3>Manage Newsflash</h3>
-            <p class="mb-0">Edit dashboard announcement</p>
-            <small>Update the newsflash message shown to all members</small>
-          </div>
-        </div>
-        <div class="col-md-6 mb-4">
-          <a href="admin-delete-profile.html" class="admin-card-link super-admin-only">
-            <div class="danger-card text-center">
-              <i class="bi bi-trash3-fill danger-icon"></i>
-              <h3>Delete Profile</h3>
-              <span class="super-admin-pill" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);"><i class="bi bi-exclamation-triangle-fill"></i> Danger Zone</span>
-              <p class="text-muted mb-0">Permanently delete a member</p>
-              <small class="text-muted">Remove all user data (irreversible)</small>
-            </div>
-          </a>
-        </div>
+    </a>
+  </div>
+  <div class="col-md-6 mb-4">
+    <a href="admin-email-members.html" class="admin-card-link super-admin-only">
+      <div class="admin-card text-center">
+        <i class="bi bi-envelope-paper admin-icon"></i>
+        <h3>Email All Members</h3>
+        <span class="super-admin-pill"><i class="bi bi-lock-fill"></i> Super Admin Only</span>
+        <p class="text-muted mb-0">Send bulk emails to members</p>
+        <small class="text-muted">Contact all approved members at once</small>
       </div>
+    </a>
+  </div>
+</div>
 
       <!-- Quick Stats -->
       <div class="row">
@@ -409,129 +375,90 @@
               </div>
             </div>
             <div id="qualificationStatsContainer" class="row text-center" style="display: none;">
-              <!-- Stats will be dynamically populated -->
+              <!-- Stats will be dynamically inserted here -->
+            </div>
+            <div id="noQualificationStats" class="text-center text-muted py-3" style="display: none;">
+              <i class="bi bi-info-circle"></i> No approved members found
             </div>
           </div>
         </div>
       </div>
 
-     </div>
-    </div>
-  </div>
-
-  <!-- Newsflash Editor Modal -->
-  <div class="modal fade" id="newsflashModal" tabindex="-1" aria-labelledby="newsflashModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff;">
-          <h5 class="modal-title" id="newsflashModalLabel">
-            <i class="bi bi-megaphone-fill"></i> Edit Dashboard Newsflash
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div id="newsflashAlertContainer"></div>
-          
-          <p class="text-muted mb-3">
-            <i class="bi bi-info-circle"></i> This message appears on every member's dashboard. Use it for important announcements, updates, or reminders.
-          </p>
-
-          <!-- Editor Toolbar -->
-          <div class="editor-toolbar">
-            <div class="btn-group me-2">
-              <button type="button" class="btn btn-outline-secondary" onclick="formatText('bold')" title="Bold">
-                <i class="bi bi-type-bold"></i>
-              </button>
-              <button type="button" class="btn btn-outline-secondary" onclick="formatText('italic')" title="Italic">
-                <i class="bi bi-type-italic"></i>
-              </button>
+      <!-- DANGER ZONE - Delete Profile -->
+      <div class="row">
+        <div class="col-md-12 mb-4">
+          <a href="admin-delete-profile.html" class="admin-card-link super-admin-only">
+            <div class="danger-card text-center">
+              <i class="bi bi-exclamation-octagon-fill danger-icon"></i>
+              <h3>⚠️ Delete Member Profile</h3>
+              <span class="super-admin-pill"><i class="bi bi-lock-fill"></i> Super Admin Only</span>
+              <p class="text-muted mb-0">DANGER: Permanently remove members</p>
+              <small class="text-muted">Delete user accounts, profiles, and all associated data</small>
+              <div class="mt-3">
+                <span class="badge bg-danger">IRREVERSIBLE ACTION</span>
+              </div>
             </div>
-            <div class="btn-group me-2">
-              <button type="button" class="btn btn-outline-secondary" onclick="insertBreak()" title="Line Break">
-                <i class="bi bi-text-wrap"></i> Break
-              </button>
-              <button type="button" class="btn btn-outline-secondary" onclick="insertParagraph()" title="New Paragraph">
-                <i class="bi bi-text-paragraph"></i> Para
-              </button>
-            </div>
-            <button type="button" class="btn btn-outline-secondary" onclick="clearFormatting()" title="Clear Formatting">
-              <i class="bi bi-eraser"></i>
-            </button>
-          </div>
-
-          <!-- Content Editor -->
-          <textarea class="form-control" id="newsflashEditor" rows="8" placeholder="Enter your newsflash message here..."></textarea>
-          
-          <div class="d-flex justify-content-between align-items-center mt-2">
-            <span class="char-count"><span id="charCount">0</span> characters</span>
-            <span class="last-updated" id="lastUpdated"></span>
-          </div>
-
-          <!-- Preview -->
-          <h6 class="mt-4 mb-2"><i class="bi bi-eye"></i> Preview</h6>
-          <div class="newsflash-preview">
-            <h5><i class="bi bi-megaphone-fill"></i> Newsflash</h5>
-            <div id="newsflashPreview">
-              <p><em>Start typing to see preview...</em></p>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-            <i class="bi bi-x-lg"></i> Cancel
-          </button>
-          <button type="button" class="btn btn-primary" id="saveNewsflashBtn">
-            <i class="bi bi-check-lg"></i> Save Changes
-          </button>
+          </a>
         </div>
       </div>
+
     </div>
   </div>
+  </div>
 
-  <!-- Members Modal (for qualification stats) -->
-  <div class="modal fade" id="membersModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+  <!-- Qualification Members Modal -->
+  <div class="modal fade" id="qualificationModal" tabindex="-1" aria-labelledby="qualificationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="membersModalTitle">Members</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <h5 class="modal-title" id="qualificationModalLabel">
+            <i class="bi bi-people-fill"></i> Members - <span id="modalQualificationName"></span>
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <div id="modalLoading" class="text-center py-4">
             <div class="spinner-border text-primary" role="status">
               <span class="visually-hidden">Loading...</span>
             </div>
-            <p class="mt-2 text-muted">Loading members...</p>
-          </div>
-          <div id="modalNoMembers" class="text-center py-4 text-muted" style="display: none;">
-            <i class="bi bi-person-x" style="font-size: 3rem;"></i>
-            <p class="mt-2">No members found</p>
+            <p class="mt-2 text-muted">Loading member details...</p>
           </div>
           <div id="modalContent" style="display: none;">
-            <p class="text-muted mb-3" id="modalMemberCount">0 members found</p>
             <div class="table-responsive">
-              <table class="table table-hover">
+              <table class="table table-hover member-table">
                 <thead>
                   <tr>
                     <th>Name</th>
+                    <th>Grade</th>
                     <th>Email</th>
-                    <th>Actions</th>
+                    <th>Telephone</th>
+                    <th>Events</th>
                   </tr>
                 </thead>
-                <tbody id="membersTableBody"></tbody>
+                <tbody id="modalTableBody">
+                  <!-- Member rows will be inserted here -->
+                </tbody>
               </table>
             </div>
           </div>
+          <div id="modalNoMembers" class="text-center text-muted py-4" style="display: none;">
+            <i class="bi bi-info-circle"></i> No members found with this qualification
+          </div>
+        </div>
+        <div class="modal-footer">
+          <span id="modalMemberCount" class="me-auto text-muted"></span>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
     import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-    import { getFirestore, doc, getDoc, setDoc, collection, getDocs, query, where, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { getFirestore, doc, getDoc, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
     import { firebaseConfig } from './firebase-config.js';
 
     const app = initializeApp(firebaseConfig);
@@ -541,322 +468,203 @@
     const logoutLink = document.getElementById('logoutLink');
     const adminContent = document.getElementById('adminContent');
     const unauthorizedMsg = document.getElementById('unauthorizedMsg');
+    
+    // Modal elements
+    const qualificationModal = new bootstrap.Modal(document.getElementById('qualificationModal'));
+    const modalQualificationName = document.getElementById('modalQualificationName');
+    const modalLoading = document.getElementById('modalLoading');
+    const modalContent = document.getElementById('modalContent');
+    const modalNoMembers = document.getElementById('modalNoMembers');
+    const modalTableBody = document.getElementById('modalTableBody');
+    const modalMemberCount = document.getElementById('modalMemberCount');
+    
+    // Store data for modal lookups
+    let allApprovedProfiles = [];
+    let allUsers = {};
+    let allEvents = {};
+    let allVolunteers = [];
 
-    // Newsflash editor elements
-    const newsflashEditor = document.getElementById('newsflashEditor');
-    const newsflashPreview = document.getElementById('newsflashPreview');
-    const charCount = document.getElementById('charCount');
-    const lastUpdated = document.getElementById('lastUpdated');
-    const saveNewsflashBtn = document.getElementById('saveNewsflashBtn');
-    const newsflashAlertContainer = document.getElementById('newsflashAlertContainer');
-
-    // Load newsflash content when modal opens
-    document.getElementById('newsflashModal').addEventListener('show.bs.modal', loadNewsflashContent);
-
-    // Load existing newsflash content
-    async function loadNewsflashContent() {
-      try {
-        const newsflashDoc = await getDoc(doc(db, 'settings', 'newsflash'));
-        
-        if (newsflashDoc.exists()) {
-          const data = newsflashDoc.data();
-          newsflashEditor.value = data.content || '';
-          updatePreview();
-          updateCharCount();
-          
-          if (data.updatedAt) {
-            const date = data.updatedAt.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt);
-            lastUpdated.textContent = `Last updated: ${date.toLocaleDateString('en-GB')} at ${date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
-            if (data.updatedBy) {
-              lastUpdated.textContent += ` by ${data.updatedBy}`;
-            }
-          } else {
-            lastUpdated.textContent = '';
-          }
-        } else {
-          newsflashEditor.value = '';
-          lastUpdated.textContent = 'No newsflash set yet';
-        }
-      } catch (error) {
-        console.error('Error loading newsflash:', error);
-        showNewsflashAlert('Error loading newsflash content', 'danger');
-      }
-    }
-
-    // Update preview as user types
-    newsflashEditor.addEventListener('input', () => {
-      updatePreview();
-      updateCharCount();
-    });
-
-    function updatePreview() {
-      const content = newsflashEditor.value;
-      if (!content.trim()) {
-        newsflashPreview.innerHTML = '<p><em>Start typing to see preview...</em></p>';
-        return;
-      }
-      
-      // Convert text to HTML paragraphs
-      const html = content
-        .split('\n\n')
-        .map(para => `<p>${para.replace(/\n/g, '<br>')}</p>`)
-        .join('');
-      
-      newsflashPreview.innerHTML = html;
-    }
-
-    function updateCharCount() {
-      charCount.textContent = newsflashEditor.value.length;
-    }
-
-    // Format text helpers (these insert text at cursor position)
-    window.formatText = function(type) {
-      const start = newsflashEditor.selectionStart;
-      const end = newsflashEditor.selectionEnd;
-      const selectedText = newsflashEditor.value.substring(start, end);
-      
-      let newText = '';
-      if (type === 'bold') {
-        newText = `**${selectedText}**`;
-      } else if (type === 'italic') {
-        newText = `*${selectedText}*`;
-      }
-      
-      newsflashEditor.value = newsflashEditor.value.substring(0, start) + newText + newsflashEditor.value.substring(end);
-      newsflashEditor.focus();
-      updatePreview();
-      updateCharCount();
-    };
-
-    window.insertBreak = function() {
-      const pos = newsflashEditor.selectionStart;
-      newsflashEditor.value = newsflashEditor.value.substring(0, pos) + '\n' + newsflashEditor.value.substring(pos);
-      newsflashEditor.focus();
-      newsflashEditor.selectionStart = newsflashEditor.selectionEnd = pos + 1;
-      updatePreview();
-      updateCharCount();
-    };
-
-    window.insertParagraph = function() {
-      const pos = newsflashEditor.selectionStart;
-      newsflashEditor.value = newsflashEditor.value.substring(0, pos) + '\n\n' + newsflashEditor.value.substring(pos);
-      newsflashEditor.focus();
-      newsflashEditor.selectionStart = newsflashEditor.selectionEnd = pos + 2;
-      updatePreview();
-      updateCharCount();
-    };
-
-    window.clearFormatting = function() {
-      // Remove markdown-style formatting
-      newsflashEditor.value = newsflashEditor.value
-        .replace(/\*\*(.*?)\*\*/g, '$1')
-        .replace(/\*(.*?)\*/g, '$1');
-      updatePreview();
-      updateCharCount();
-    };
-
-    // Save newsflash
-    saveNewsflashBtn.addEventListener('click', async () => {
-      const content = newsflashEditor.value.trim();
-      
-      saveNewsflashBtn.disabled = true;
-      saveNewsflashBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
-      
-      try {
-        // Get current user info for audit trail
-        const user = auth.currentUser;
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        const userName = userDoc.exists() ? `${userDoc.data().firstName} ${userDoc.data().surname}` : user.email;
-        
-        // Convert content to HTML for display
-        const contentHtml = content
-          .split('\n\n')
-          .map(para => `<p>${para.replace(/\n/g, '<br>')}</p>`)
-          .join('');
-        
-        // Save to Firestore
-        await setDoc(doc(db, 'settings', 'newsflash'), {
-          content: content,
-          contentHtml: contentHtml,
-          updatedAt: serverTimestamp(),
-          updatedBy: userName,
-          updatedByUid: user.uid
-        });
-        
-        showNewsflashAlert('Newsflash updated successfully!', 'success');
-        
-        // Update last updated text
-        lastUpdated.textContent = `Last updated: Just now by ${userName}`;
-        
-        // Close modal after short delay
-        setTimeout(() => {
-          const modal = bootstrap.Modal.getInstance(document.getElementById('newsflashModal'));
-          modal.hide();
-        }, 1500);
-        
-      } catch (error) {
-        console.error('Error saving newsflash:', error);
-        showNewsflashAlert('Error saving newsflash: ' + error.message, 'danger');
-      } finally {
-        saveNewsflashBtn.disabled = false;
-        saveNewsflashBtn.innerHTML = '<i class="bi bi-check-lg"></i> Save Changes';
-      }
-    });
-
-    function showNewsflashAlert(message, type) {
-      newsflashAlertContainer.innerHTML = `
-        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-          ${message}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-      `;
-      
-      if (type === 'success') {
-        setTimeout(() => {
-          const alert = newsflashAlertContainer.querySelector('.alert');
-          if (alert) alert.remove();
-        }, 3000);
-      }
-    }
-
-    // Quick stats loader
+    // Load quick stats
     async function loadQuickStats() {
       try {
-        // Get profiles count
-        const profilesSnapshot = await getDocs(collection(db, 'profiles'));
-        document.getElementById('totalUsers').textContent = profilesSnapshot.size;
-        
-        // Get admin users count
+        // Get total users
         const usersSnapshot = await getDocs(collection(db, 'users'));
-        let adminCount = 0;
-        usersSnapshot.forEach(doc => {
-          if (doc.data().isAdmin === true) adminCount++;
-        });
-        document.getElementById('totalAdmins').textContent = adminCount;
-        
+        document.getElementById('totalUsers').textContent = usersSnapshot.size;
+
+        // Get admin users
+        const adminQuery = query(collection(db, 'users'), where('isAdmin', '==', true));
+        const adminSnapshot = await getDocs(adminQuery);
+        document.getElementById('totalAdmins').textContent = adminSnapshot.size;
+
         // Get allowed emails count
         const allowedEmailsSnapshot = await getDocs(collection(db, 'allowedEmails'));
         document.getElementById('allowedEmailsCount').textContent = allowedEmailsSnapshot.size;
-        
       } catch (error) {
-        console.error('Error loading stats:', error);
+        console.error('Error loading quick stats:', error);
       }
     }
 
-    // Qualification stats loader
+    // Load qualification stats for approved members
     async function loadQualificationStats() {
       const container = document.getElementById('qualificationStatsContainer');
       const loading = document.getElementById('qualificationStatsLoading');
+      const noStats = document.getElementById('noQualificationStats');
       
       try {
-        // Query only approved profiles
-        const profilesQuery = query(
-          collection(db, 'profiles'),
-          where('adminUse.status', '==', 'approved')
-        );
-        const snapshot = await getDocs(profilesQuery);
+        // Get all profiles
+        const profilesSnapshot = await getDocs(collection(db, 'profiles'));
         
-        // Count by qualification
-        const qualCounts = {};
-        snapshot.forEach(doc => {
-          const qual = doc.data().medicalQualifications?.qualification || 'Unknown';
-          qualCounts[qual] = (qualCounts[qual] || 0) + 1;
+        // Get all users for later use
+        const usersSnapshot = await getDocs(collection(db, 'users'));
+        usersSnapshot.forEach(doc => {
+          allUsers[doc.id] = doc.data();
         });
         
-        // Sort qualifications alphabetically
-        const sortedQuals = Object.keys(qualCounts).sort();
+        // Get all events for later use
+        const eventsSnapshot = await getDocs(collection(db, 'events'));
+        eventsSnapshot.forEach(doc => {
+          allEvents[doc.id] = { id: doc.id, ...doc.data() };
+        });
         
-        // Build HTML
+        // Get all volunteer records for later use
+        const volunteersSnapshot = await getDocs(collection(db, 'eventVolunteers'));
+        volunteersSnapshot.forEach(doc => {
+          allVolunteers.push({ id: doc.id, ...doc.data() });
+        });
+        
+        // Count qualifications for approved members only
+        const qualificationCounts = {};
+        
+        profilesSnapshot.forEach(doc => {
+          const profile = doc.data();
+          // Only count approved profiles
+          if (profile.adminUse?.status === 'approved') {
+            const qualification = profile.medicalQualifications?.qualification || 'Unknown';
+            qualificationCounts[qualification] = (qualificationCounts[qualification] || 0) + 1;
+            
+            // Store profile for modal lookup
+            allApprovedProfiles.push({
+              userId: doc.id,
+              ...profile
+            });
+          }
+        });
+        
+        // Sort alphabetically by qualification name
+        const sortedQualifications = Object.entries(qualificationCounts)
+          .sort((a, b) => a[0].localeCompare(b[0]));
+        
+        // Hide loading
+        loading.style.display = 'none';
+        
+        if (sortedQualifications.length === 0) {
+          noStats.style.display = 'block';
+          return;
+        }
+        
+        // Generate HTML for each qualification
         let html = '';
-        sortedQuals.forEach(qual => {
+        sortedQualifications.forEach(([qualification, count]) => {
           html += `
-            <div class="col-6 col-md-3 mb-3 stat-clickable" onclick="showMembersByQualification('${qual.replace(/'/g, "\\'")}')">
-              <h3 class="text-primary">${qualCounts[qual]}</h3>
-              <p class="text-muted mb-0 small">${qual}</p>
+            <div class="col-md-3 col-sm-4 col-6 mb-3">
+              <div class="stat-clickable" data-qualification="${qualification}" onclick="window.openQualificationModal('${qualification.replace(/'/g, "\\'")}')">
+                <h3 class="text-primary">${count}</h3>
+                <p class="text-muted mb-0 small">${qualification}</p>
+              </div>
             </div>
           `;
         });
         
-        if (!html) {
-          html = '<div class="col-12"><p class="text-muted">No approved profiles yet</p></div>';
-        }
-        
         container.innerHTML = html;
-        loading.style.display = 'none';
         container.style.display = 'flex';
+        container.style.flexWrap = 'wrap';
         
       } catch (error) {
         console.error('Error loading qualification stats:', error);
-        loading.innerHTML = '<p class="text-danger">Error loading stats</p>';
+        loading.style.display = 'none';
+        noStats.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Error loading stats';
+        noStats.style.display = 'block';
       }
     }
 
-    // Show members by qualification modal
-    window.showMembersByQualification = async function(qualification) {
-      const modal = new bootstrap.Modal(document.getElementById('membersModal'));
-      const modalTitle = document.getElementById('membersModalTitle');
-      const modalLoading = document.getElementById('modalLoading');
-      const modalNoMembers = document.getElementById('modalNoMembers');
-      const modalContent = document.getElementById('modalContent');
-      const modalMemberCount = document.getElementById('modalMemberCount');
-      const tableBody = document.getElementById('membersTableBody');
+    // Open modal with members of a specific qualification
+    window.openQualificationModal = async function(qualification) {
+      // Show modal
+      qualificationModal.show();
       
-      modalTitle.textContent = `Members: ${qualification}`;
+      // Reset modal state
+      modalQualificationName.textContent = qualification;
       modalLoading.style.display = 'block';
-      modalNoMembers.style.display = 'none';
       modalContent.style.display = 'none';
-      
-      modal.show();
+      modalNoMembers.style.display = 'none';
+      modalTableBody.innerHTML = '';
+      modalMemberCount.textContent = '';
       
       try {
-        // Query approved profiles with this qualification
-        const profilesQuery = query(
-          collection(db, 'profiles'),
-          where('adminUse.status', '==', 'approved'),
-          where('medicalQualifications.qualification', '==', qualification)
+        // Filter profiles by qualification
+        const matchingProfiles = allApprovedProfiles.filter(p => 
+          (p.medicalQualifications?.qualification || 'Unknown') === qualification
         );
-        const snapshot = await getDocs(profilesQuery);
         
-        if (snapshot.empty) {
+        if (matchingProfiles.length === 0) {
           modalLoading.style.display = 'none';
           modalNoMembers.style.display = 'block';
           return;
         }
         
-        // Get user details for each profile
-        const members = [];
-        for (const profileDoc of snapshot.docs) {
-          const userId = profileDoc.id;
-          const userDoc = await getDoc(doc(db, 'users', userId));
-          if (userDoc.exists()) {
-            members.push({
-              id: userId,
-              ...userDoc.data(),
-              profile: profileDoc.data()
-            });
-          }
-        }
-        
-        // Sort by name
-        members.sort((a, b) => {
-          const nameA = `${a.firstName} ${a.surname}`.toLowerCase();
-          const nameB = `${b.firstName} ${b.surname}`.toLowerCase();
-          return nameA.localeCompare(nameB);
+        // Build member data with events
+        const members = matchingProfiles.map(profile => {
+          const user = allUsers[profile.userId] || {};
+          const firstName = profile.personalDetails?.firstName || user.firstName || '';
+          const surname = profile.personalDetails?.surname || user.surname || '';
+          const fullName = `${firstName} ${surname}`.trim() || 'Unknown';
+          
+          // Get events for this user
+          const userVolunteers = allVolunteers.filter(v => v.userId === profile.userId);
+          const events = userVolunteers.map(v => {
+            const event = allEvents[v.eventId];
+            return event ? {
+              name: event.name || 'Unknown Event',
+              selected: v.selected === true
+            } : null;
+          }).filter(e => e !== null);
+          
+          return {
+            fullName,
+            grade: profile.medicalQualifications?.qualification || 'N/A',
+            email: user.email || profile.personalDetails?.email || 'N/A',
+            telephone: user.mobile || profile.personalDetails?.phone || 'N/A',
+            events
+          };
         });
         
-        // Build table
-        tableBody.innerHTML = members.map(m => `
-          <tr>
-            <td>${m.firstName} ${m.surname}</td>
-            <td>${m.email}</td>
-            <td>
-              <a href="admin-edit-profile.html?id=${m.id}" class="btn btn-sm btn-outline-primary">
-                <i class="bi bi-pencil"></i> View
-              </a>
-            </td>
-          </tr>
-        `).join('');
+        // Sort by name
+        members.sort((a, b) => a.fullName.localeCompare(b.fullName));
         
+        // Build table HTML
+        let tableHtml = '';
+        members.forEach(member => {
+          let eventsHtml = '<span class="no-events">No events</span>';
+          if (member.events.length > 0) {
+            eventsHtml = member.events.map(e => {
+              const badgeClass = e.selected ? 'selected' : 'volunteered';
+              const icon = e.selected ? 'check-circle-fill' : 'hourglass-split';
+              return `<span class="event-badge ${badgeClass}"><i class="bi bi-${icon}"></i> ${e.name}</span>`;
+            }).join('');
+          }
+          
+          tableHtml += `
+            <tr>
+              <td><strong>${member.fullName}</strong></td>
+              <td>${member.grade}</td>
+              <td><a href="mailto:${member.email}">${member.email}</a></td>
+              <td>${member.telephone}</td>
+              <td>${eventsHtml}</td>
+            </tr>
+          `;
+        });
+        
+        modalTableBody.innerHTML = tableHtml;
         modalMemberCount.textContent = `${members.length} member${members.length !== 1 ? 's' : ''} found`;
         
         // Show content
@@ -909,7 +717,7 @@
             superAdminCards.forEach(card => {
               card.classList.add('locked');
             });
-          } 
+          }
         } else {
           adminContent.classList.add('hidden');
           unauthorizedMsg.classList.remove('hidden');
