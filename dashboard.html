@@ -127,6 +127,142 @@
 .newsflash-card .newsflash-content p:last-child {
   margin-bottom: 0;
 }
+
+/* Countdown Card Styles */
+.countdown-card {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: #fff;
+  border-radius: 15px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(15, 52, 96, 0.4);
+  text-align: center;
+}
+
+.countdown-header h3 {
+  margin-bottom: 5px;
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.countdown-event-name {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.countdown-event-dates {
+  font-size: 1rem;
+  opacity: 0.8;
+  margin-bottom: 20px;
+}
+
+.countdown-display {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.flip-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.flip-card {
+  position: relative;
+  width: 70px;
+  height: 80px;
+  perspective: 300px;
+}
+
+.flip-card-inner {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, #2d2d44 0%, #1a1a2e 50%, #2d2d44 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.flip-card-inner::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(0,0,0,0.4);
+}
+
+.flip-card-inner span {
+  font-size: 2.5rem;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  color: #00d9ff;
+  text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+}
+
+.flip-label {
+  margin-top: 8px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.7;
+}
+
+.flip-separator {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #00d9ff;
+  margin-bottom: 25px;
+}
+
+.event-in-progress {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #00ff88;
+  padding: 20px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Flip animation */
+.flip-card.flipping .flip-card-inner {
+  animation: flipDown 0.6s ease-in-out;
+}
+
+@keyframes flipDown {
+  0% { transform: rotateX(0deg); }
+  50% { transform: rotateX(-90deg); }
+  100% { transform: rotateX(0deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .flip-card {
+    width: 55px;
+    height: 65px;
+  }
+  .flip-card-inner span {
+    font-size: 1.8rem;
+  }
+  .flip-separator {
+    font-size: 1.8rem;
+  }
+  .countdown-event-name {
+    font-size: 1.4rem;
+  }
+}
   </style>
 </head>
 <body>
@@ -185,6 +321,59 @@
           </div>
         </div>
       </div>
+      
+      <!-- Row for Event Countdown -->
+<div class="row mt-4 g-3" id="countdownRow" style="display: none;">
+  <div class="col-12">
+    <div class="countdown-card">
+      <div class="countdown-header">
+        <h3><i class="bi bi-calendar-event"></i> Next Event</h3>
+        <div class="countdown-event-name" id="countdownEventName">Loading...</div>
+        <div class="countdown-event-dates" id="countdownEventDates"></div>
+      </div>
+      <div class="countdown-display" id="countdownDisplay">
+        <div class="flip-unit">
+          <div class="flip-card" id="days">
+            <div class="flip-card-inner">
+              <span>00</span>
+            </div>
+          </div>
+          <div class="flip-label">Days</div>
+        </div>
+        <div class="flip-separator">:</div>
+        <div class="flip-unit">
+          <div class="flip-card" id="hours">
+            <div class="flip-card-inner">
+              <span>00</span>
+            </div>
+          </div>
+          <div class="flip-label">Hours</div>
+        </div>
+        <div class="flip-separator">:</div>
+        <div class="flip-unit">
+          <div class="flip-card" id="minutes">
+            <div class="flip-card-inner">
+              <span>00</span>
+            </div>
+          </div>
+          <div class="flip-label">Minutes</div>
+        </div>
+        <div class="flip-separator">:</div>
+        <div class="flip-unit">
+          <div class="flip-card" id="seconds">
+            <div class="flip-card-inner">
+              <span>00</span>
+            </div>
+          </div>
+          <div class="flip-label">Seconds</div>
+        </div>
+      </div>
+      <div class="event-in-progress" id="eventInProgress" style="display: none;">
+        <i class="bi bi-activity"></i> Event In Progress
+      </div>
+    </div>
+  </div>
+</div>
 
       <!-- Row for Newsflash and Events cards side by side on larger screens -->
       <div class="row mt-4 g-3" align-items-start">
@@ -249,6 +438,123 @@ async function loadNewsflash() {
   } catch (error) {
     console.error('Error loading newsflash:', error);
     newsflashContent.innerHTML = '<p>Unable to load announcements.</p>';
+  }
+}
+
+// Countdown Timer
+let countdownInterval = null;
+let nextEvent = null;
+
+async function loadNextEvent() {
+  try {
+    const now = new Date();
+    const eventsSnapshot = await getDocs(collection(db, 'events'));
+    
+    let upcomingEvents = [];
+    eventsSnapshot.forEach(doc => {
+      const event = { id: doc.id, ...doc.data() };
+      // Parse the end date to check if event is still running or upcoming
+      let endDate = null;
+      if (event.endDate) {
+        if (event.endDate.toDate) {
+          endDate = event.endDate.toDate();
+        } else {
+          endDate = new Date(event.endDate);
+        }
+      }
+      
+      // Include if event hasn't ended yet
+      if (endDate && endDate > now) {
+        upcomingEvents.push(event);
+      }
+    });
+    
+    // Sort by start date
+    upcomingEvents.sort((a, b) => {
+      let dateA = a.startDate?.toDate ? a.startDate.toDate() : new Date(a.startDate);
+      let dateB = b.startDate?.toDate ? b.startDate.toDate() : new Date(b.startDate);
+      return dateA - dateB;
+    });
+    
+    if (upcomingEvents.length > 0) {
+      nextEvent = upcomingEvents[0];
+      displayCountdown();
+      document.getElementById('countdownRow').style.display = 'block';
+    }
+  } catch (error) {
+    console.error('Error loading next event:', error);
+  }
+}
+
+function displayCountdown() {
+  if (!nextEvent) return;
+  
+  // Set event name
+  document.getElementById('countdownEventName').textContent = nextEvent.name || 'Upcoming Event';
+  
+  // Format dates
+  let startDate = nextEvent.startDate?.toDate ? nextEvent.startDate.toDate() : new Date(nextEvent.startDate);
+  let endDate = nextEvent.endDate?.toDate ? nextEvent.endDate.toDate() : new Date(nextEvent.endDate);
+  
+  const options = { day: 'numeric', month: 'short', year: 'numeric' };
+  const startStr = startDate.toLocaleDateString('en-GB', options);
+  const endStr = endDate.toLocaleDateString('en-GB', options);
+  document.getElementById('countdownEventDates').textContent = `${startStr} - ${endStr}`;
+  
+  // Start the countdown
+  if (countdownInterval) clearInterval(countdownInterval);
+  countdownInterval = setInterval(updateCountdown, 1000);
+  updateCountdown();
+}
+
+function updateCountdown() {
+  if (!nextEvent) return;
+  
+  const now = new Date();
+  let startDate = nextEvent.startDate?.toDate ? nextEvent.startDate.toDate() : new Date(nextEvent.startDate);
+  let endDate = nextEvent.endDate?.toDate ? nextEvent.endDate.toDate() : new Date(nextEvent.endDate);
+  
+  // Check if event is in progress
+  if (now >= startDate && now <= endDate) {
+    document.getElementById('countdownDisplay').style.display = 'none';
+    document.getElementById('eventInProgress').style.display = 'block';
+    clearInterval(countdownInterval);
+    return;
+  }
+  
+  // Check if event has ended
+  if (now > endDate) {
+    document.getElementById('countdownRow').style.display = 'none';
+    clearInterval(countdownInterval);
+    return;
+  }
+  
+  // Calculate time remaining
+  const diff = startDate - now;
+  
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+  
+  // Update display with flip animation
+  updateFlipCard('days', days);
+  updateFlipCard('hours', hours);
+  updateFlipCard('minutes', minutes);
+  updateFlipCard('seconds', seconds);
+}
+
+function updateFlipCard(id, value) {
+  const card = document.getElementById(id);
+  const span = card.querySelector('span');
+  const newValue = value.toString().padStart(2, '0');
+  
+  if (span.textContent !== newValue) {
+    card.classList.add('flipping');
+    setTimeout(() => {
+      span.textContent = newValue;
+      card.classList.remove('flipping');
+    }, 300);
   }
 }
 
@@ -444,6 +750,9 @@ async function loadNewsflash() {
         
         // Load newsflash content
         await loadNewsflash();
+        
+        // Load countdown timer
+await loadNextEvent();
 
         // Update profile status card
         await updateProfileStatus();
