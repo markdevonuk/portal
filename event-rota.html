@@ -664,7 +664,6 @@
       
       // Calculate totals for summary
       let totalShifts = 0;
-      let totalCrewSlots = 0;
       
       rotaData.days.forEach(day => {
         ['early', 'late', 'night'].forEach(shiftId => {
@@ -673,8 +672,7 @@
             const disabledKey = `${day.id}_${shiftId}`;
             const disabledList = rotaData.disabledPositions?.[disabledKey] || [];
             if (!disabledList.includes(pos.id)) {
-              totalShifts++;
-              totalCrewSlots += (pos.crewSlots || 1);
+              totalShifts += (pos.crewSlots || 1);
             }
           });
         });
@@ -688,9 +686,8 @@
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(60, 60, 60);
-      doc.text(`Total Shifts: ${totalShifts}`, margin + 10, yPos + 8);
-      doc.text(`Total Crew Required: ${totalCrewRequired}`, pageWidth / 2, yPos + 8, { align: 'center' });
-      doc.text(`Total Crew Slots: ${totalCrewSlots}`, pageWidth - margin - 10, yPos + 8, { align: 'right' });
+      doc.text(`Total Shifts: ${totalShifts}`, margin + 30, yPos + 8);
+      doc.text(`Total Crew Required: ${totalCrewRequired}`, pageWidth - margin - 30, yPos + 8, { align: 'right' });
       doc.setTextColor(0, 0, 0);
       yPos += 18;
       
