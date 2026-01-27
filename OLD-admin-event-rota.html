@@ -419,13 +419,6 @@
       font-size: 0.85rem;
       color: #6c757d;
     }
-    
-    /* Scrollable crew selects for many slots */
-    .crew-selects-scrollable {
-      max-height: 300px;
-      overflow-y: auto;
-      padding-right: 0.5rem;
-    }
   </style>
 </head>
 <body>
@@ -523,7 +516,7 @@
             </div>
           </div>
 
-          <!-- Positions Section -->
+          <!-- Positions Section - CHANGED: Removed Load Template and Clone from Event buttons -->
           <div class="col-lg-7 mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <h4><i class="bi bi-person-badge"></i> Positions</h4>
@@ -682,7 +675,6 @@
             </div>
             <div class="mb-3">
               <label for="positionCrewSlots" class="form-label">Crew Slots*</label>
-              <!-- FIXED: Correct value attributes for all options -->
               <select class="form-select" id="positionCrewSlots" required>
                 <option value="1">1 Crew Member</option>
                 <option value="2">2 Crew Members</option>
@@ -878,7 +870,7 @@
     </div>
   </div>
 
-  <!-- Load Template Warning Modal -->
+  <!-- ADDED: Load Template Warning Modal -->
   <div class="modal fade" id="loadTemplateWarningModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -1695,33 +1687,6 @@
       renderEditorContent();
     };
 
-    // FIXED: Helper function to generate crew slot HTML dynamically
-    function generateCrewSlotsHTML(pos, assignmentKey, assignment) {
-      const crewSlots = pos.crewSlots || 1;
-      let html = '';
-      
-      for (let i = 1; i <= crewSlots; i++) {
-        const crewKey = `crew${i}`;
-        const selectedCrewId = assignment[crewKey] || null;
-        
-        html += `
-          <div class="crew-select-row">
-            <span class="crew-label">Crew ${i}:</span>
-            <select class="form-select crew-select" onchange="updateAssignment('${assignmentKey}', '${crewKey}', this.value)">
-              <option value="">-- Select --</option>
-              ${selectedCrewList.map(crew => `
-                <option value="${crew.id}" ${selectedCrewId === crew.id ? 'selected' : ''}>
-                  ${crew.displayName}
-                </option>
-              `).join('')}
-            </select>
-          </div>
-        `;
-      }
-      
-      return html;
-    }
-
     function renderEditorContent() {
       const container = document.getElementById('editorContent');
       const sectionFilter = document.getElementById('sectionFilter').value;
@@ -1835,7 +1800,7 @@
           const isDisabled = disabledForDayShift.includes(pos.id);
           const defaultShiftTimes = pos.shifts[currentShift];
           const assignmentKey = `${currentEditorDay}_${pos.id}_${currentShift}`;
-          const assignment = rotaData.assignments[assignmentKey] || {};
+          const assignment = rotaData.assignments[assignmentKey] || { crew1: null, crew2: null };
           
           // Use assignment times if set, otherwise use position defaults
           const startTime = assignment.startTime || defaultShiftTimes.start;
@@ -1865,10 +1830,6 @@
             // Enabled position - full view
             const displayName = assignment.overrideName || pos.name;
             const hasOverride = assignment.overrideName || assignment.notes;
-            
-            // FIXED: Use dynamic crew slots generation
-            const crewSlotsHTML = generateCrewSlotsHTML(pos, assignmentKey, assignment);
-            const needsScroll = pos.crewSlots > 4;
             
             html += `
               <div class="col-md-6 mb-3">
@@ -1912,8 +1873,31 @@
                       <i class="bi bi-sticky"></i> ${assignment.notes}
                     </div>
                   ` : ''}
-                  <div class="crew-selects ${needsScroll ? 'crew-selects-scrollable' : ''}">
-                    ${crewSlotsHTML}
+                  <div class="crew-selects">
+                    <div class="crew-select-row">
+                      <span class="crew-label">Crew 1:</span>
+                      <select class="form-select crew-select" onchange="updateAssignment('${assignmentKey}', 'crew1', this.value)">
+                        <option value="">-- Select --</option>
+                        ${selectedCrewList.map(crew => `
+                          <option value="${crew.id}" ${assignment.crew1 === crew.id ? 'selected' : ''}>
+                            ${crew.displayName}
+                          </option>
+                        `).join('')}
+                      </select>
+                    </div>
+                    ${pos.crewSlots >= 2 ? `
+                      <div class="crew-select-row">
+                        <span class="crew-label">Crew 2:</span>
+                        <select class="form-select crew-select" onchange="updateAssignment('${assignmentKey}', 'crew2', this.value)">
+                          <option value="">-- Select --</option>
+                          ${selectedCrewList.map(crew => `
+                            <option value="${crew.id}" ${assignment.crew2 === crew.id ? 'selected' : ''}>
+                              ${crew.displayName}
+                            </option>
+                          `).join('')}
+                        </select>
+                      </div>
+                    ` : ''}
                   </div>
                 </div>
               </div>
@@ -1929,7 +1913,7 @@
 
     window.updateAssignment = async function(key, crewSlot, userId) {
       if (!rotaData.assignments[key]) {
-        rotaData.assignments[key] = {};
+        rotaData.assignments[key] = { crew1: null, crew2: null };
       }
 
       rotaData.assignments[key][crewSlot] = userId || null;
@@ -1939,7 +1923,7 @@
 
     window.updateAssignmentTime = async function(key, timeField, value, defaultValue) {
       if (!rotaData.assignments[key]) {
-        rotaData.assignments[key] = {};
+        rotaData.assignments[key] = { crew1: null, crew2: null };
       }
 
       // Only store if different from default, otherwise remove to keep data clean
@@ -1975,7 +1959,7 @@
       const notes = document.getElementById('overrideNotes').value.trim();
 
       if (!rotaData.assignments[assignmentKey]) {
-        rotaData.assignments[assignmentKey] = {};
+        rotaData.assignments[assignmentKey] = { crew1: null, crew2: null };
       }
 
       // Set or clear override name
@@ -2208,7 +2192,7 @@
           const targetKey = sourceKey.replace(sourcePrefix, targetDayId + '_');
           
           if (!rotaData.assignments[targetKey]) {
-            rotaData.assignments[targetKey] = {};
+            rotaData.assignments[targetKey] = { crew1: null, crew2: null };
           }
           
           // Clone time overrides
@@ -2369,14 +2353,14 @@
       }
     };
 
-    // Show warning before loading template
+    // ADDED: Show warning before loading template
     window.showLoadTemplateWarning = function(templateId) {
       document.getElementById('pendingTemplateId').value = templateId;
       const modal = new bootstrap.Modal(document.getElementById('loadTemplateWarningModal'));
       modal.show();
     };
 
-    // Confirm and actually load the template
+    // ADDED: Confirm and actually load the template
     window.confirmLoadTemplate = async function() {
       const templateId = document.getElementById('pendingTemplateId').value;
       
