@@ -303,13 +303,6 @@
       font-style: italic;
     }
     
-    /* Scrollable crew list for many members */
-    .position-card .crew-list.crew-list-scrollable {
-      max-height: 200px;
-      overflow-y: auto;
-      padding-right: 0.5rem;
-    }
-    
     /* Empty states */
     .empty-state {
       text-align: center;
@@ -555,16 +548,6 @@
       return urlParams.get('eventId');
     }
 
-    // FIXED: Helper function to check if current user is assigned to any crew slot
-    function isUserAssignedToPosition(assignment, crewSlots) {
-      for (let i = 1; i <= crewSlots; i++) {
-        if (assignment[`crew${i}`] === currentUser.uid) {
-          return true;
-        }
-      }
-      return false;
-    }
-
     // Download Rota as PDF
     window.downloadRotaPdf = function() {
       const { jsPDF } = window.jspdf;
@@ -770,7 +753,7 @@
               doc.text(posText, margin + 4, yPos);
               yPos += 4;
               
-              // Crew assignments - ALREADY LOOPS THROUGH ALL SLOTS
+              // Crew assignments
               const crewSlots = pos.crewSlots || 1;
               let crewNames = [];
               for (let i = 1; i <= crewSlots; i++) {
@@ -1028,9 +1011,8 @@
           const assignmentKey = `${currentDay}_${pos.id}_${shift.key}`;
           const assignment = rotaData.assignments?.[assignmentKey] || {};
           
-          // FIXED: Check all crew slots for current user assignment
-          const crewSlots = pos.crewSlots || 1;
-          if (isUserAssignedToPosition(assignment, crewSlots)) {
+          // Check if current user is assigned
+          if (assignment.crew1 === currentUser.uid || assignment.crew2 === currentUser.uid) {
             const displayName = assignment.overrideName || pos.name;
             const defaultTimes = pos.shifts[shift.key];
             const startTime = assignment.startTime || defaultTimes.start;
@@ -1245,21 +1227,6 @@
       container.innerHTML = html;
     }
 
-    // FIXED: Helper function to render all crew members dynamically
-    function renderAllCrewMembers(assignment, crewSlots) {
-      let html = '';
-      
-      for (let i = 1; i <= crewSlots; i++) {
-        const crewId = assignment[`crew${i}`];
-        const crew = crewId ? crewLookup[crewId] : null;
-        const isCurrentUser = crewId === currentUser.uid;
-        
-        html += renderCrewMember(crew, i, crewSlots, isCurrentUser);
-      }
-      
-      return html;
-    }
-
     // Render a single shift section
     function renderShiftSection(shiftKey, shiftName, shiftIcon, sectionFilter) {
       // Filter positions for this shift
@@ -1318,12 +1285,12 @@
           const startTime = assignment.startTime || defaultTimes.start;
           const endTime = assignment.endTime || defaultTimes.end;
 
-          // FIXED: Get crew slots count and check if current user is assigned
-          const crewSlots = pos.crewSlots || 1;
-          const isMyShift = isUserAssignedToPosition(assignment, crewSlots);
-          
-          // Determine if we need scrollable list (more than 4 crew)
-          const needsScroll = crewSlots > 4;
+          // Get crew members
+          const crew1 = assignment.crew1 ? crewLookup[assignment.crew1] : null;
+          const crew2 = assignment.crew2 ? crewLookup[assignment.crew2] : null;
+
+          // Check if current user is assigned to this position
+          const isMyShift = assignment.crew1 === currentUser.uid || assignment.crew2 === currentUser.uid;
 
           html += `
             <div class="col-md-6 mb-3">
@@ -1340,8 +1307,9 @@
                     <i class="bi bi-sticky"></i> ${assignment.notes}
                   </div>
                 ` : ''}
-                <ul class="crew-list ${needsScroll ? 'crew-list-scrollable' : ''}">
-                  ${renderAllCrewMembers(assignment, crewSlots)}
+                <ul class="crew-list">
+                  ${renderCrewMember(crew1, 1, pos.crewSlots, assignment.crew1 === currentUser.uid)}
+                  ${pos.crewSlots >= 2 ? renderCrewMember(crew2, 2, pos.crewSlots, assignment.crew2 === currentUser.uid) : ''}
                 </ul>
               </div>
             </div>
