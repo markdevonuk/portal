@@ -303,11 +303,18 @@
       font-style: italic;
     }
     
-    /* Scrollable crew list for many members */
-    .position-card .crew-list.crew-list-scrollable {
-      max-height: 200px;
-      overflow-y: auto;
-      padding-right: 0.5rem;
+    /* Large crew cards - full width with grid layout for better display */
+    .position-card.card-large-crew .crew-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.5rem;
+    }
+    .position-card.card-large-crew .crew-list li {
+      border-bottom: none;
+      background: rgba(0,0,0,0.03);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      margin: 0;
     }
     
     /* Empty states */
@@ -1322,12 +1329,13 @@
           const crewSlots = pos.crewSlots || 1;
           const isMyShift = isUserAssignedToPosition(assignment, crewSlots);
           
-          // Determine if we need scrollable list (more than 4 crew)
-          const needsScroll = crewSlots > 4;
+          // Dynamic card sizing: full width for 5+ crew, half width for fewer
+          const colClass = crewSlots > 4 ? 'col-12' : 'col-md-6';
+          const largeCrewClass = crewSlots > 4 ? 'card-large-crew' : '';
 
           html += `
-            <div class="col-md-6 mb-3">
-              <div class="position-card ${CATEGORY_CARD_CLASSES[category] || ''} ${isMyShift ? 'my-shift' : ''}">
+            <div class="${colClass} mb-3">
+              <div class="position-card ${CATEGORY_CARD_CLASSES[category] || ''} ${isMyShift ? 'my-shift' : ''} ${largeCrewClass}">
                 <div class="d-flex justify-content-between align-items-start">
                   <div class="position-name">${displayName}</div>
                   ${isMyShift ? '<span class="my-shift-indicator"><i class="bi bi-star-fill"></i> Your Shift</span>' : ''}
@@ -1340,7 +1348,7 @@
                     <i class="bi bi-sticky"></i> ${assignment.notes}
                   </div>
                 ` : ''}
-                <ul class="crew-list ${needsScroll ? 'crew-list-scrollable' : ''}">
+                <ul class="crew-list">
                   ${renderAllCrewMembers(assignment, crewSlots)}
                 </ul>
               </div>
