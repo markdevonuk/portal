@@ -660,7 +660,39 @@
       doc.setTextColor(100, 100, 100);
       doc.text(`Generated: ${new Date().toLocaleDateString('en-GB')} at ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`, pageWidth / 2, yPos, { align: 'center' });
       doc.setTextColor(0, 0, 0);
-      yPos += 15;
+      yPos += 10;
+      
+      // Calculate totals for summary
+      let totalShifts = 0;
+      let totalCrewSlots = 0;
+      
+      rotaData.days.forEach(day => {
+        ['early', 'late', 'night'].forEach(shiftId => {
+          rotaData.positions.forEach(pos => {
+            if (!pos.shifts || !pos.shifts[shiftId]) return;
+            const disabledKey = `${day.id}_${shiftId}`;
+            const disabledList = rotaData.disabledPositions?.[disabledKey] || [];
+            if (!disabledList.includes(pos.id)) {
+              totalShifts++;
+              totalCrewSlots += (pos.crewSlots || 1);
+            }
+          });
+        });
+      });
+      
+      const totalCrewRequired = Math.ceil(totalShifts / 2);
+      
+      // Summary statistics box
+      doc.setFillColor(240, 240, 240);
+      doc.roundedRect(margin, yPos, contentWidth, 12, 2, 2, 'F');
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(60, 60, 60);
+      doc.text(`Total Shifts: ${totalShifts}`, margin + 10, yPos + 8);
+      doc.text(`Total Crew Required: ${totalCrewRequired}`, pageWidth / 2, yPos + 8, { align: 'center' });
+      doc.text(`Total Crew Slots: ${totalCrewSlots}`, pageWidth - margin - 10, yPos + 8, { align: 'right' });
+      doc.setTextColor(0, 0, 0);
+      yPos += 18;
       
       // Process each day
       rotaData.days.forEach((day, dayIndex) => {
@@ -777,9 +809,11 @@
               doc.text(posText, margin + 4, yPos);
               yPos += 4;
               
-              // Crew assignments - ALREADY LOOPS THROUGH ALL SLOTS
+              // Crew assignments - improved formatting for many slots
               const crewSlots = pos.crewSlots || 1;
-              let crewNames = [];
+              let assignedCrew = [];
+              let unassignedCount = 0;
+              
               for (let i = 1; i <= crewSlots; i++) {
                 const crewId = assignment[`crew${i}`];
                 if (crewId && crewLookup[crewId]) {
@@ -788,18 +822,45 @@
                   if (crew.qualification) {
                     crewText += ` (${crew.qualification})`;
                   }
-                  crewNames.push(crewText);
+                  assignedCrew.push(crewText);
+                } else {
+                  unassignedCount++;
                 }
               }
-              
-              const crewLine = crewNames.length > 0 ? crewNames.join(', ') : 'Unassigned';
               
               doc.setFontSize(8);
               doc.setFont('helvetica', 'normal');
               doc.setTextColor(60, 60, 60);
-              doc.text('    ' + crewLine, margin + 4, yPos);
+              
+              if (assignedCrew.length === 0) {
+                // No one assigned
+                const unassignedText = crewSlots > 1 ? `Unassigned (${crewSlots} slots)` : 'Unassigned';
+                doc.text('    ' + unassignedText, margin + 4, yPos);
+                yPos += 4;
+              } else if (crewSlots <= 3) {
+                // Small crew - show on one line
+                let crewLine = assignedCrew.join(', ');
+                if (unassignedCount > 0) {
+                  crewLine += ` (+${unassignedCount} unassigned)`;
+                }
+                doc.text('    ' + crewLine, margin + 4, yPos);
+                yPos += 4;
+              } else {
+                // Large crew - show each on separate line
+                assignedCrew.forEach((crewName, idx) => {
+                  checkNewPage(4);
+                  doc.text(`    ${idx + 1}. ${crewName}`, margin + 4, yPos);
+                  yPos += 3.5;
+                });
+                if (unassignedCount > 0) {
+                  checkNewPage(4);
+                  doc.setTextColor(120, 120, 120);
+                  doc.text(`    + ${unassignedCount} unassigned slot${unassignedCount > 1 ? 's' : ''}`, margin + 4, yPos);
+                  yPos += 3.5;
+                }
+              }
+              
               doc.setTextColor(0, 0, 0);
-              yPos += 4;
               
               // Notes if any
               if (assignment.notes) {
