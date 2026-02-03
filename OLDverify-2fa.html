@@ -3,63 +3,78 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>2FA Verification - FMS Portal</title>
+  <title>Verify 2FA - FMS Prehospital Portal</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="styles.css" rel="stylesheet">
   <style>
-    .auth-card {
-      max-width: 450px;
-      margin: 50px auto;
-      border-radius: 15px;
-      overflow: hidden;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    body { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      min-height: 100vh; 
+      display:flex; 
+      align-items:center; 
+      padding:20px; 
     }
-    .auth-header {
-      background: linear-gradient(135deg, #00a896 0%, #028090 100%);
-      color: white;
-      padding: 30px;
-      text-align: center;
+    .auth-card { 
+      background:#fff; 
+      border-radius:20px; 
+      box-shadow:0 20px 60px rgba(0,0,0,.3); 
+      overflow:hidden; 
+      max-width:450px; 
+      margin:0 auto; 
     }
-    .auth-body {
-      padding: 30px;
-      background: white;
+    .auth-header { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      color:#fff; 
+      padding:30px; 
+      text-align:center; 
     }
-    .form-control-lg {
-      font-size: 1.5rem;
-      letter-spacing: 0.5em;
-      text-align: center;
+    .auth-body { padding:30px; }
+    .form-control:focus { 
+      border-color:#00a896; 
+      box-shadow:0 0 0 .2rem rgba(0,168,150,.25); 
     }
-    .btn-loading {
-      position: relative;
-      pointer-events: none;
+    .btn-primary { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      border:none; 
+      padding:12px; 
+      font-weight:600; 
     }
-    .btn-loading::after {
-      content: '';
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      top: 50%;
-      left: 50%;
-      margin-left: -10px;
-      margin-top: -10px;
-      border: 2px solid transparent;
-      border-top-color: currentColor;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+    .btn-primary:hover { 
+      transform:translateY(-2px); 
+      box-shadow:0 5px 15px rgba(0,168,150,.4); 
     }
-    .btn-loading > * {
-      visibility: hidden;
+    .alert { border-radius:10px; }
+    .btn-loading { 
+      position:relative; 
+      pointer-events:none; 
+      opacity:.7; 
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    .btn-loading::after { 
+      content:""; 
+      position:absolute; 
+      width:16px; 
+      height:16px; 
+      top:50%; 
+      left:50%; 
+      margin-left:-8px; 
+      margin-top:-8px; 
+      border:2px solid #fff; 
+      border-radius:50%; 
+      border-top-color:transparent; 
+      animation:spinner .6s linear infinite; 
     }
+    @keyframes spinner { to { transform: rotate(360deg); } }
+    
+    /* Help section styles */
     .help-toggle {
+      color: #6c757d;
+      text-decoration: none;
+      font-size: 0.9rem;
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: center;
+      gap: 5px;
       cursor: pointer;
-      color: #6c757d;
       margin-top: 20px;
       padding: 10px;
       border-radius: 8px;
@@ -209,15 +224,12 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
     import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-    import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
+    import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
     import { firebaseConfig } from './firebase-config.js';
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const functions = getFunctions(app);
-
-    // Get reference to our Cloud Function for server-side 2FA verification
-    const verify2FA = httpsCallable(functions, 'verify2FA');
+    const db = getFirestore(app);
 
     // Check if we have pending 2FA auth
     const needs2FA = sessionStorage.getItem('needs2FA');
@@ -267,7 +279,87 @@
       chevron.style.transform = helpContent.classList.contains('show') ? 'rotate(180deg)' : 'rotate(0deg)';
     });
 
-    // Verify 2FA Handler - NOW USES SERVER-SIDE VERIFICATION
+    // Base32 decode (RFC 4648)
+    function base32Decode(base32) {
+      const base32Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+      base32 = base32.toUpperCase().replace(/=+$/, '');
+      
+      let bits = '';
+      for (let i = 0; i < base32.length; i++) {
+        const val = base32Chars.indexOf(base32.charAt(i));
+        if (val === -1) throw new Error('Invalid base32 character');
+        bits += val.toString(2).padStart(5, '0');
+      }
+      
+      const bytes = [];
+      for (let i = 0; i + 8 <= bits.length; i += 8) {
+        bytes.push(parseInt(bits.substr(i, 8), 2));
+      }
+      
+      return new Uint8Array(bytes);
+    }
+
+    // Convert number to 8-byte array (big-endian)
+    function intToBytes(num) {
+      const bytes = new Uint8Array(8);
+      for (let i = 7; i >= 0; i--) {
+        bytes[i] = num & 0xff;
+        num = num >> 8;
+      }
+      return bytes;
+    }
+
+    // Verify TOTP with time window using Web Crypto API
+    async function verifyTOTP(secret, token) {
+      try {
+        console.log('Verifying TOTP:', { secret, token });
+        
+        // Check current time and ±1 time step (90 seconds window)
+        const epoch = Math.floor(Date.now() / 1000);
+        const currentTimeStep = Math.floor(epoch / 30);
+        
+        for (let i = -1; i <= 1; i++) {
+          const testCounter = currentTimeStep + i;
+          const timeBytes = intToBytes(testCounter);
+          
+          const key = base32Decode(secret);
+          const cryptoKey = await crypto.subtle.importKey(
+            'raw',
+            key,
+            { name: 'HMAC', hash: 'SHA-1' },
+            false,
+            ['sign']
+          );
+          
+          const signature = await crypto.subtle.sign('HMAC', cryptoKey, timeBytes);
+          const hmac = new Uint8Array(signature);
+          
+          const offset = hmac[hmac.length - 1] & 0x0f;
+          const binary = 
+            ((hmac[offset] & 0x7f) << 24) |
+            ((hmac[offset + 1] & 0xff) << 16) |
+            ((hmac[offset + 2] & 0xff) << 8) |
+            (hmac[offset + 3] & 0xff);
+          
+          const otp = (binary % 1000000).toString().padStart(6, '0');
+          
+          console.log(`Time step ${testCounter} (offset ${i}): generated=${otp}, expected=${token}`);
+          
+          if (otp === token) {
+            console.log('✓ Match found!');
+            return true;
+          }
+        }
+        
+        console.log('✗ No match found');
+        return false;
+      } catch (error) {
+        console.error('Verification error:', error);
+        return false;
+      }
+    }
+
+    // Verify 2FA Handler
     document.getElementById('verifyFormElement').addEventListener('submit', async (e) => {
       e.preventDefault();
       setButtonLoading('verifyBtn', true);
@@ -287,41 +379,43 @@
       }
 
       try {
-        // Call the Cloud Function for server-side verification
-        // The secret NEVER leaves the server - much more secure!
-        const result = await verify2FA({ code: code });
+        // Get user's 2FA secret from Firestore
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        
+        if (!userDoc.exists()) {
+          showAlert('User data not found', 'danger');
+          setButtonLoading('verifyBtn', false);
+          return;
+        }
 
-        if (result.data.success) {
+        const userData = userDoc.data();
+        const secret2FA = userData.secret2FA;
+
+        if (!secret2FA) {
+          showAlert('2FA not properly configured', 'danger');
+          setButtonLoading('verifyBtn', false);
+          return;
+        }
+
+        // Verify TOTP code
+        const isValid = await verifyTOTP(secret2FA, code);
+
+        if (isValid) {
           // Code is valid, clear session flags
           sessionStorage.removeItem('needs2FA');
           sessionStorage.removeItem('pendingAuthEmail');
           
           showAlert('Login successful! Redirecting...', 'success');
           setTimeout(() => window.location.href = 'dashboard.html', 1000);
+        } else {
+          showAlert('Invalid authentication code. Please try again.', 'danger');
+          setButtonLoading('verifyBtn', false);
+          document.getElementById('twoFactorCode').value = '';
+          document.getElementById('twoFactorCode').focus();
         }
       } catch (error) {
         setButtonLoading('verifyBtn', false);
-        
-        // Handle specific error messages from the Cloud Function
-        let errorMessage = 'Verification failed. Please try again.';
-        
-        if (error.code === 'functions/permission-denied') {
-          errorMessage = 'Invalid authentication code. Please try again.';
-        } else if (error.code === 'functions/unauthenticated') {
-          errorMessage = 'Session expired. Please login again.';
-          setTimeout(() => window.location.href = 'index.html', 2000);
-          return;
-        } else if (error.code === 'functions/not-found') {
-          errorMessage = 'User data not found. Please contact support.';
-        } else if (error.code === 'functions/failed-precondition') {
-          errorMessage = '2FA not properly configured. Please contact support.';
-        } else if (error.message) {
-          errorMessage = error.message;
-        }
-        
-        showAlert(errorMessage, 'danger');
-        document.getElementById('twoFactorCode').value = '';
-        document.getElementById('twoFactorCode').focus();
+        showAlert('Verification failed: ' + error.message, 'danger');
         console.error('Verification error:', error);
       }
     });
