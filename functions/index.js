@@ -291,3 +291,149 @@ exports.confirm2FAReset = functions.https.onCall(async (data, context) => {
     );
   }
 });
+
+/**
+ * Verify 2FA Code (Server-side)
+ * This function verifies TOTP codes securely on the server
+ * The secret never leaves the server
+ */
+exports.verify2FA = functions.https.onCall(async (data, context) => {
+  // Check if user is authenticated
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "You must be logged in to verify 2FA",
+    );
+  }
+
+  const { code } = data;
+  const userId = context.auth.uid;
+
+  // Validate code format
+  if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Please enter a valid 6-digit code",
+    );
+  }
+
+  try {
+    // Get user's 2FA secret from Firestore (server-side only)
+    const userDoc = await db.collection("users").doc(userId).get();
+
+    if (!userDoc.exists) {
+      throw new functions.https.HttpsError(
+        "not-found",
+        "User data not found",
+      );
+    }
+
+    const userData = userDoc.data();
+    const secret2FA = userData.secret2FA;
+
+    if (!secret2FA) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "2FA not properly configured",
+      );
+    }
+
+    // Verify TOTP code server-side
+    const isValid = verifyTOTPCode(secret2FA, code);
+
+    if (isValid) {
+      // Log successful verification (optional - for security auditing)
+      console.log(`2FA verified successfully for user: ${userId}`);
+      return { success: true };
+    } else {
+      // Log failed attempt (optional - for security auditing)
+      console.log(`2FA verification failed for user: ${userId}`);
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Invalid authentication code",
+      );
+    }
+  } catch (error) {
+    // Re-throw if it's already an HttpsError
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    console.error("2FA verification error:", error);
+    throw new functions.https.HttpsError(
+      "internal",
+      "Verification failed. Please try again.",
+    );
+  }
+});
+
+/**
+ * TOTP Verification Helper Functions
+ * These run server-side only - the secret never goes to the browser
+ */
+
+// Base32 decode (RFC 4648)
+function base32Decode(base32) {
+  const base32Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  base32 = base32.toUpperCase().replace(/=+$/, "");
+
+  let bits = "";
+  for (let i = 0; i < base32.length; i++) {
+    const val = base32Chars.indexOf(base32.charAt(i));
+    if (val === -1) throw new Error("Invalid base32 character");
+    bits += val.toString(2).padStart(5, "0");
+  }
+
+  const bytes = [];
+  for (let i = 0; i + 8 <= bits.length; i += 8) {
+    bytes.push(parseInt(bits.substr(i, 8), 2));
+  }
+
+  return Buffer.from(bytes);
+}
+
+// Generate TOTP code for a given time step
+function generateTOTP(secret, timeStep) {
+  const crypto = require("crypto");
+
+  // Convert time step to 8-byte buffer (big-endian)
+  const timeBuffer = Buffer.alloc(8);
+  timeBuffer.writeBigInt64BE(BigInt(timeStep));
+
+  // Decode the base32 secret
+  const key = base32Decode(secret);
+
+  // Create HMAC-SHA1
+  const hmac = crypto.createHmac("sha1", key);
+  hmac.update(timeBuffer);
+  const hash = hmac.digest();
+
+  // Dynamic truncation
+  const offset = hash[hash.length - 1] & 0x0f;
+  const binary =
+    ((hash[offset] & 0x7f) << 24) |
+    ((hash[offset + 1] & 0xff) << 16) |
+    ((hash[offset + 2] & 0xff) << 8) |
+    (hash[offset + 3] & 0xff);
+
+  // Generate 6-digit code
+  const otp = (binary % 1000000).toString().padStart(6, "0");
+  return otp;
+}
+
+// Verify TOTP with time window (±1 step = 90 seconds window)
+function verifyTOTPCode(secret, token) {
+  const epoch = Math.floor(Date.now() / 1000);
+  const currentTimeStep = Math.floor(epoch / 30);
+
+  // Check current time step and ±1 (allows for clock drift)
+  for (let i = -1; i <= 1; i++) {
+    const testStep = currentTimeStep + i;
+    const generatedCode = generateTOTP(secret, testStep);
+
+    if (generatedCode === token) {
+      return true;
+    }
+  }
+
+  return false;
+}
