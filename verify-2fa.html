@@ -3,63 +3,78 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>2FA Verification - FMS Portal</title>
+  <title>Verify 2FA - FMS Prehospital Portal</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="css/styles.css" rel="stylesheet">
   <style>
-    .auth-card {
-      max-width: 450px;
-      margin: 50px auto;
-      border-radius: 15px;
-      overflow: hidden;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    body { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      min-height: 100vh; 
+      display:flex; 
+      align-items:center; 
+      padding:20px; 
     }
-    .auth-header {
-      background: linear-gradient(135deg, #00a896 0%, #028090 100%);
-      color: white;
-      padding: 30px;
-      text-align: center;
+    .auth-card { 
+      background:#fff; 
+      border-radius:20px; 
+      box-shadow:0 20px 60px rgba(0,0,0,.3); 
+      overflow:hidden; 
+      max-width:450px; 
+      margin:0 auto; 
     }
-    .auth-body {
-      padding: 30px;
-      background: white;
+    .auth-header { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      color:#fff; 
+      padding:30px; 
+      text-align:center; 
     }
-    .form-control-lg {
-      font-size: 1.5rem;
-      letter-spacing: 0.5em;
-      text-align: center;
+    .auth-body { padding:30px; }
+    .form-control:focus { 
+      border-color:#00a896; 
+      box-shadow:0 0 0 .2rem rgba(0,168,150,.25); 
     }
-    .btn-loading {
-      position: relative;
-      pointer-events: none;
+    .btn-primary { 
+      background: linear-gradient(135deg,#00a896 0%,#028090 100%); 
+      border:none; 
+      padding:12px; 
+      font-weight:600; 
     }
-    .btn-loading::after {
-      content: '';
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      top: 50%;
-      left: 50%;
-      margin-left: -10px;
-      margin-top: -10px;
-      border: 2px solid transparent;
-      border-top-color: currentColor;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+    .btn-primary:hover { 
+      transform:translateY(-2px); 
+      box-shadow:0 5px 15px rgba(0,168,150,.4); 
     }
-    .btn-loading > * {
-      visibility: hidden;
+    .alert { border-radius:10px; }
+    .btn-loading { 
+      position:relative; 
+      pointer-events:none; 
+      opacity:.7; 
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    .btn-loading::after { 
+      content:""; 
+      position:absolute; 
+      width:16px; 
+      height:16px; 
+      top:50%; 
+      left:50%; 
+      margin-left:-8px; 
+      margin-top:-8px; 
+      border:2px solid #fff; 
+      border-radius:50%; 
+      border-top-color:transparent; 
+      animation:spinner .6s linear infinite; 
     }
+    @keyframes spinner { to { transform: rotate(360deg); } }
+    
+    /* Help section styles */
     .help-toggle {
+      color: #6c757d;
+      text-decoration: none;
+      font-size: 0.9rem;
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: center;
+      gap: 5px;
       cursor: pointer;
-      color: #6c757d;
       margin-top: 20px;
       padding: 10px;
       border-radius: 8px;
@@ -267,7 +282,7 @@
       chevron.style.transform = helpContent.classList.contains('show') ? 'rotate(180deg)' : 'rotate(0deg)';
     });
 
-    // Verify 2FA Handler - NOW USES SERVER-SIDE VERIFICATION
+    // Verify 2FA Handler - SECURE SERVER-SIDE VERIFICATION
     document.getElementById('verifyFormElement').addEventListener('submit', async (e) => {
       e.preventDefault();
       setButtonLoading('verifyBtn', true);
