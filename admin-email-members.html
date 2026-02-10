@@ -252,7 +252,7 @@ prehospital@festival-medical.org</div>
         <div class="modal-body">
           <p>You are about to send an email to <strong id="confirmMemberCount">0</strong> <span id="confirmRecipientType">members</span>.</p>
           <p>Subject: <strong id="confirmSubject"></strong></p>
-          <p class="text-muted small"><i class="bi bi-clock"></i> Estimated time: <span id="estimatedTime">0</span></p>
+
           <p class="mb-0">Are you sure you want to proceed?</p>
         </div>
         <div class="modal-footer">
@@ -404,17 +404,7 @@ prehospital@festival-medical.org</div>
       }
     }
 
-    // Calculate estimated time
-    function getEstimatedTime(count) {
-      const totalSeconds = Math.ceil((count * EMAIL_DELAY_MS) / 1000);
-      const minutes = Math.floor(totalSeconds / 60);
-      const seconds = totalSeconds % 60;
-      
-      if (minutes > 0) {
-        return `${minutes} minute${minutes !== 1 ? 's' : ''} ${seconds} second${seconds !== 1 ? 's' : ''}`;
-      }
-      return `${seconds} second${seconds !== 1 ? 's' : ''}`;
-    }
+  
 
     // Update progress bar
     function updateProgress(current, total, currentEmail) {
@@ -706,7 +696,7 @@ prehospital@festival-medical.org</div>
       document.getElementById('confirmMemberCount').textContent = recipients.length;
       document.getElementById('confirmRecipientType').textContent = recipientLabel;
       document.getElementById('confirmSubject').textContent = emailSubject.value.trim();
-      document.getElementById('estimatedTime').textContent = getEstimatedTime(recipients.length);
+      
       
       // Show confirmation modal
       confirmModal.show();
