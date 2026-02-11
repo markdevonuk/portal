@@ -180,7 +180,7 @@ exports.request2FAReset = functions.https.onCall(async (data, context) => {
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: linear-gradient(135deg, #00a896 0%, #028090 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-              <h1 style="color: white; margin: 0;">FMS Prehospital Portal</h1>
+              <h1 style="color: white; margin: 0;">FMS Portal</h1>
             </div>
             <div style="padding: 30px; background: #f8f9fa; border-radius: 0 0 10px 10px;">
               <h2 style="color: #333;">Reset Your Two-Factor Authentication</h2>
@@ -192,7 +192,7 @@ exports.request2FAReset = functions.https.onCall(async (data, context) => {
               <p style="color: #999; font-size: 14px;"><strong>This link will expire in 30 minutes.</strong></p>
               <p style="color: #999; font-size: 14px;">If you didn't request this reset, you can safely ignore this email.</p>
               <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
-              <p style="color: #999; font-size: 12px; text-align: center;">Festival Medical Services - FMS Prehospital Portal</p>
+              <p style="color: #999; font-size: 12px; text-align: center;">Festival Medical Services - FMS Portal</p>
             </div>
           </div>
         `,

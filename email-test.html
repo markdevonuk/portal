@@ -39,6 +39,10 @@
 <div class="container">
   <div class="row justify-content-center">
     <div class="col-md-8">
+
+      <!-- ============================================ -->
+      <!-- EXISTING SINGLE EMAIL TEST SECTION (UNCHANGED) -->
+      <!-- ============================================ -->
       <div class="test-card">
         <h2 class="mb-4"><i class="bi bi-envelope-check"></i> Firebase Email Test</h2>
         
@@ -91,6 +95,93 @@ prehospital@festival-medical.org</textarea>
           <p class="mb-0"><strong>Troubleshooting:</strong> Verify your SMTP settings in the Firebase Trigger Email extension configuration.</p>
         </div>
       </div>
+
+      <!-- ============================================ -->
+      <!-- NEW BULK EMAIL SECTION -->
+      <!-- ============================================ -->
+      <div class="test-card">
+        <h2 class="mb-4"><i class="bi bi-people"></i> Bulk Email Send</h2>
+        
+        <div id="bulkAlertContainer"></div>
+
+        <!-- Step 1: Upload or paste email addresses -->
+        <div class="mb-3">
+          <label class="form-label">Step 1: Load Email Addresses</label>
+          <div class="form-text mb-2">Upload a .csv or .txt file with one email address per line, or paste them directly into the box below.</div>
+          <input type="file" class="form-control mb-2" id="emailFileUpload" accept=".csv,.txt">
+        </div>
+
+        <div class="mb-3">
+          <label for="bulkEmailList" class="form-label">Email Addresses (one per line)</label>
+          <textarea class="form-control" id="bulkEmailList" rows="6" placeholder="email1@example.com&#10;email2@example.com&#10;email3@example.com"></textarea>
+          <div class="form-text">
+            <span id="emailCount">0</span> valid email address(es) loaded.
+            <a href="#" id="clearEmailsLink" class="ms-2">Clear all</a>
+          </div>
+        </div>
+
+        <hr>
+
+        <!-- Step 2: Compose the email -->
+        <div class="mb-3">
+          <label class="form-label">Step 2: Compose Your Email</label>
+        </div>
+
+        <div class="mb-3">
+          <label for="bulkEmailSubject" class="form-label">Email Subject</label>
+          <input type="text" class="form-control" id="bulkEmailSubject" value="FMS Portal - Test Email" required>
+        </div>
+        
+        <div class="mb-3">
+          <label for="bulkEmailContent" class="form-label">Email Content</label>
+          <textarea class="form-control" id="bulkEmailContent" rows="5" required>IMPORTANT: DO NOT REPLY TO THIS MESSAGE AS IT IS NOT A MONITORED EMAIL ADDRESS
+
+Dear Member,
+
+This is a test email from the FMS Portal system using the Firebase Trigger Email extension.
+
+Prehospital Team Leaders
+prehospital@festival-medical.org</textarea>
+        </div>
+
+        <hr>
+
+        <!-- Step 3: Send -->
+        <div class="mb-3">
+          <label class="form-label">Step 3: Send</label>
+        </div>
+
+        <div class="d-grid gap-2">
+          <button type="button" class="btn btn-primary" id="sendBulkEmailBtn" disabled>
+            <i class="bi bi-send"></i> Send to All (<span id="sendCount">0</span> recipients)
+          </button>
+        </div>
+
+        <!-- Progress bar (hidden until sending starts) -->
+        <div id="bulkProgressContainer" class="mt-3" style="display: none;">
+          <div class="d-flex justify-content-between mb-1">
+            <small>Sending emails...</small>
+            <small><span id="progressCount">0</span> / <span id="progressTotal">0</span></small>
+          </div>
+          <div class="progress" style="height: 20px;">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" id="bulkProgressBar" role="progressbar" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Results summary (hidden until sending completes) -->
+        <div id="bulkResultsContainer" class="mt-3" style="display: none;">
+          <div class="alert alert-info mb-0">
+            <h6><i class="bi bi-clipboard-data"></i> Send Results</h6>
+            <p class="mb-1"><i class="bi bi-check-circle text-success"></i> Successfully queued: <strong id="resultSuccess">0</strong></p>
+            <p class="mb-0"><i class="bi bi-x-circle text-danger"></i> Failed to queue: <strong id="resultFailed">0</strong></p>
+            <div id="failedEmailsList" class="mt-2" style="display: none;">
+              <small class="text-muted">Failed addresses:</small>
+              <pre class="bg-light p-2 rounded mt-1 mb-0" id="failedEmailsDetail" style="max-height: 150px; overflow-y: auto; font-size: 0.85rem;"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -113,6 +204,10 @@ prehospital@festival-medical.org</textarea>
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
+
+  // ============================================
+  // EXISTING SINGLE EMAIL FUNCTIONALITY (UNCHANGED)
+  // ============================================
 
   // Helper functions
   function showAlert(message, type) {
@@ -160,7 +255,7 @@ prehospital@festival-medical.org</textarea>
     }
   });
 
-  // Form submission handler
+  // Form submission handler (single email)
   document.getElementById('emailTestForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -209,6 +304,190 @@ prehospital@festival-medical.org</textarea>
       setButtonLoading(false);
     }
   });
+
+  // ============================================
+  // NEW BULK EMAIL FUNCTIONALITY
+  // ============================================
+
+  // Simple email validation regex
+  function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  // Parse the textarea and return an array of valid, unique email addresses
+  function getEmailsFromTextarea() {
+    const raw = document.getElementById('bulkEmailList').value;
+    // Split by newline, comma, or semicolon to be flexible
+    const parts = raw.split(/[\n,;]+/);
+    const emails = [];
+    const seen = new Set();
+
+    for (const part of parts) {
+      const trimmed = part.trim().toLowerCase();
+      if (trimmed && isValidEmail(trimmed) && !seen.has(trimmed)) {
+        seen.add(trimmed);
+        emails.push(trimmed);
+      }
+    }
+    return emails;
+  }
+
+  // Update the email count display and send button
+  function updateEmailCount() {
+    const emails = getEmailsFromTextarea();
+    document.getElementById('emailCount').textContent = emails.length;
+    document.getElementById('sendCount').textContent = emails.length;
+    
+    const btn = document.getElementById('sendBulkEmailBtn');
+    btn.disabled = emails.length === 0;
+  }
+
+  // Show an alert in the bulk section
+  function showBulkAlert(message, type) {
+    const html = `
+      <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>`;
+    document.getElementById('bulkAlertContainer').innerHTML = html;
+  }
+
+  // --- File upload handler ---
+  document.getElementById('emailFileUpload').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      const text = event.target.result;
+      // Append to existing content (or replace — here we replace for clarity)
+      document.getElementById('bulkEmailList').value = text;
+      updateEmailCount();
+      showBulkAlert(`File loaded: ${file.name}`, 'success');
+    };
+    reader.onerror = function() {
+      showBulkAlert('Error reading file. Please try again.', 'danger');
+    };
+    reader.readAsText(file);
+  });
+
+  // --- Update count when user types in the textarea ---
+  document.getElementById('bulkEmailList').addEventListener('input', updateEmailCount);
+
+  // --- Clear all emails ---
+  document.getElementById('clearEmailsLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('bulkEmailList').value = '';
+    document.getElementById('emailFileUpload').value = '';
+    updateEmailCount();
+    // Hide results and progress
+    document.getElementById('bulkProgressContainer').style.display = 'none';
+    document.getElementById('bulkResultsContainer').style.display = 'none';
+  });
+
+  // --- Bulk send handler ---
+  document.getElementById('sendBulkEmailBtn').addEventListener('click', async () => {
+    const emails = getEmailsFromTextarea();
+    const subject = document.getElementById('bulkEmailSubject').value.trim();
+    const content = document.getElementById('bulkEmailContent').value.trim();
+
+    // Validate
+    if (emails.length === 0) {
+      showBulkAlert('No valid email addresses found. Please add some first.', 'warning');
+      return;
+    }
+    if (!subject) {
+      showBulkAlert('Please enter an email subject.', 'warning');
+      return;
+    }
+    if (!content) {
+      showBulkAlert('Please enter email content.', 'warning');
+      return;
+    }
+
+    // Confirm before sending
+    const confirmed = confirm(`You are about to send an email to ${emails.length} recipient(s).\n\nSubject: ${subject}\n\nAre you sure you want to proceed?`);
+    if (!confirmed) return;
+
+    // Disable the send button
+    const btn = document.getElementById('sendBulkEmailBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...';
+
+    // Show progress bar
+    const progressContainer = document.getElementById('bulkProgressContainer');
+    const progressBar = document.getElementById('bulkProgressBar');
+    const progressCount = document.getElementById('progressCount');
+    const progressTotal = document.getElementById('progressTotal');
+    progressContainer.style.display = 'block';
+    progressTotal.textContent = emails.length;
+    progressCount.textContent = '0';
+    progressBar.style.width = '0%';
+
+    // Hide old results
+    document.getElementById('bulkResultsContainer').style.display = 'none';
+
+    let successCount = 0;
+    let failedCount = 0;
+    const failedEmails = [];
+
+    // Send one email at a time (creates one Firestore doc per recipient)
+    for (let i = 0; i < emails.length; i++) {
+      try {
+        await addDoc(collection(db, 'mail'), {
+          to: emails[i],
+          message: {
+            subject: subject,
+            text: content,
+            html: content.replace(/\n/g, '<br>')
+          },
+          timestamp: serverTimestamp()
+        });
+        successCount++;
+      } catch (error) {
+        console.error(`Failed to queue email for ${emails[i]}:`, error);
+        failedCount++;
+        failedEmails.push(emails[i] + ' — ' + (error.message || 'Unknown error'));
+      }
+
+      // Update progress
+      const completed = i + 1;
+      const percent = Math.round((completed / emails.length) * 100);
+      progressBar.style.width = percent + '%';
+      progressCount.textContent = completed;
+    }
+
+    // Sending complete — update UI
+    progressBar.classList.remove('progress-bar-animated');
+
+    if (failedCount === 0) {
+      progressBar.classList.remove('bg-warning');
+      progressBar.classList.add('bg-success');
+      showBulkAlert(`All ${successCount} email(s) queued successfully!`, 'success');
+    } else {
+      progressBar.classList.add('bg-warning');
+      showBulkAlert(`Sending complete: ${successCount} succeeded, ${failedCount} failed.`, 'warning');
+    }
+
+    // Show results summary
+    document.getElementById('resultSuccess').textContent = successCount;
+    document.getElementById('resultFailed').textContent = failedCount;
+    document.getElementById('bulkResultsContainer').style.display = 'block';
+
+    if (failedEmails.length > 0) {
+      document.getElementById('failedEmailsList').style.display = 'block';
+      document.getElementById('failedEmailsDetail').textContent = failedEmails.join('\n');
+    } else {
+      document.getElementById('failedEmailsList').style.display = 'none';
+    }
+
+    // Re-enable button
+    btn.disabled = false;
+    btn.innerHTML = `<i class="bi bi-send"></i> Send to All (<span id="sendCount">${emails.length}</span> recipients)`;
+  });
+
+  // Initialise count on page load
+  updateEmailCount();
 </script>
 
 </body>
