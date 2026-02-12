@@ -729,6 +729,7 @@ prehospital@festival-medical.org</textarea>
     let currentEvents = [];
     let currentEventId = null;
     let currentEventVolunteers = [];
+    let currentVolunteerFilter = { filter: 'all', teamId: null };
     let availableTeams = []; // Store loaded teams
     let allUsers = []; // Store all users for leader search
     let selectedLeaders = []; // Store selected leaders for current event
@@ -926,6 +927,9 @@ function attachFilterListeners() {
       document.querySelectorAll('.volunteer-item').forEach(volItem => {
         const isSelected = volItem.dataset.selected === 'true';
         const volunteerTeams = volItem.dataset.teams || '';
+        
+        // Remember the active filter so it survives list reloads
+      currentVolunteerFilter = { filter: filter, teamId: teamId || null };
         
         switch (filter) {
           case 'all':
@@ -1868,8 +1872,7 @@ volunteerItem.dataset.selected = volunteer.selected ? 'true' : 'false';
       }
     }
 
-    // Toggle volunteer selection
-    async function toggleVolunteerSelection(volunteerId, selected) {
+async function toggleVolunteerSelection(volunteerId, selected) {
       try {
         await updateDoc(doc(db, 'eventVolunteers', volunteerId), {
           selected: selected,
@@ -1879,7 +1882,31 @@ volunteerItem.dataset.selected = volunteer.selected ? 'true' : 'false';
         // Reload volunteers
         await loadEventVolunteers(currentEventId);
         
+        // Re-apply the active filter after reload
+        if (currentVolunteerFilter.filter && currentVolunteerFilter.filter !== 'all') {
+          document.querySelectorAll('.volunteer-item').forEach(volItem => {
+            const isSelected = volItem.dataset.selected === 'true';
+            const volunteerTeams = volItem.dataset.teams || '';
+            
+            switch (currentVolunteerFilter.filter) {
+              case 'selected':
+                volItem.classList.toggle('hidden', !isSelected);
+                break;
+              case 'pending':
+                volItem.classList.toggle('hidden', isSelected);
+                break;
+              case 'team':
+                const teamsArray = volunteerTeams.split(',');
+                volItem.classList.toggle('hidden', !teamsArray.includes(currentVolunteerFilter.teamId));
+                break;
+            }
+          });
+        }
+        
       } catch (error) {
+
+
+
         console.error('Error updating volunteer selection:', error);
         showAlert('Error updating selection: ' + error.message, 'danger');
       }
