@@ -691,8 +691,13 @@
       doc.setTextColor(0, 0, 0);
       yPos += 18;
       
+     // Sort days by date before processing
+      const sortedDays = [...rotaData.days].sort((a, b) => {
+        return parseUKDate(a.date) - parseUKDate(b.date);
+      });
+
       // Process each day
-      rotaData.days.forEach((day, dayIndex) => {
+      sortedDays.forEach((day, dayIndex) => {
         // New page for each day (except first)
         if (dayIndex > 0) {
           doc.addPage();
