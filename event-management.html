@@ -467,6 +467,16 @@
               <textarea class="form-control" id="eventDescription" rows="3"></textarea>
             </div>
             
+            <div class="mb-3">
+              <label for="eventAvgShifts" class="form-label">Average Shifts Per Person</label>
+              <select class="form-select" id="eventAvgShifts">
+                <option value="1">1 (single day / most crew do one shift)</option>
+                <option value="1.5">1.5 (mix of one and two shifts)</option>
+                <option value="2" selected>2 (multi-day / most crew do two shifts)</option>
+              </select>
+              <div class="form-text">Used to estimate the number of crew required. Default is 2 for multi-day events.</div>
+            </div>
+            
             <!-- Required Teams Section -->
             <div class="mb-3">
               <label class="form-label"><i class="bi bi-people-fill"></i> Required Teams</label>
@@ -1081,7 +1091,7 @@ function attachFilterListeners() {
     }
 
     // Calculate total crew slots needed from rota data
-    function calculateRequiredVolunteers(rotaData) {
+    function calculateRequiredVolunteers(rotaData, avgShiftsPerPerson = 2) {
       if (!rotaData || !rotaData.days || !rotaData.positions) {
         return null; // No rota exists
       }
@@ -1110,8 +1120,8 @@ function attachFilterListeners() {
         });
       });
       
-      // Each volunteer does 2 shifts on average
-      return Math.ceil(totalSlots / 2);
+     // Divide by average shifts per person (configurable per event)
+      return Math.ceil(totalSlots / avgShiftsPerPerson);
     }
 
     // Set selected leaders from event data
@@ -1221,7 +1231,7 @@ function attachFilterListeners() {
           let rotaStatus = null;
           if (rotaSnapshot.exists()) {
             const rotaData = rotaSnapshot.data();
-            requiredVolunteers = calculateRequiredVolunteers(rotaData);
+            requiredVolunteers = calculateRequiredVolunteers(rotaData, eventInfo.data.avgShiftsPerPerson || 2);
             // Check if rota has content (days and positions)
             if (rotaData.days && rotaData.days.length > 0 && rotaData.positions && rotaData.positions.length > 0) {
               rotaExists = true;
@@ -1446,6 +1456,7 @@ function attachFilterListeners() {
       document.getElementById('eventLocation').value = event.location || '';
       document.getElementById('eventWebsite').value = event.website || '';
       document.getElementById('eventDescription').value = event.description || '';
+      document.getElementById('eventAvgShifts').value = event.avgShiftsPerPerson || 2;
       
       // Set dates
       document.getElementById('eventStartDate').value = formatDateForInput(event.startDate);
@@ -1526,6 +1537,7 @@ function attachFilterListeners() {
           endDate: Timestamp.fromDate(endDate),
           requiredTeams: selectedTeamIds, // Add selected teams
           assignedLeaders: selectedLeaders.map(l => l.id), // Add assigned leaders
+          avgShiftsPerPerson: parseFloat(document.getElementById('eventAvgShifts').value) || 2,
           updatedAt: serverTimestamp()
         };
         
