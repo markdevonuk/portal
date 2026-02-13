@@ -746,18 +746,6 @@
         
         profileHtml += `</div>`; // Close Event Participation section
         
-        // Internal Note (read-only display)
-        if (user.adminNote) {
-          profileHtml += `
-            <div class="profile-section">
-              <h5><i class="bi bi-journal-text"></i> Internal Note</h5>
-              <div style="background-color: #fff3cd; border-left: 3px solid #ffc107; border-radius: 4px; padding: 10px 12px; color: #664d03;">
-                ${user.adminNote}
-              </div>
-            </div>
-          `;
-        }
-        
         // Display the profile
         profileContainer.innerHTML = profileHtml;
         
