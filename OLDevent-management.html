@@ -146,15 +146,6 @@
       font-size: 0.9rem;
       margin-top: 5px;
     }
-    .internal-note {
-      font-size: 0.85rem;
-      margin-top: 5px;
-      padding: 4px 8px;
-      background-color: #fff3cd;
-      border-left: 3px solid #ffc107;
-      border-radius: 4px;
-      color: #664d03;
-    }
     /* Style for volunteer count pills */
 .volunteer-badge, .selected-badge {
   display: inline-block;
@@ -1777,7 +1768,6 @@ await loadEventVolunteers(eventId);
             grade: grade,
             teams: userTeams,
             notes: volunteerData.notes || '',
-            adminNote: userData.adminNote || '',
             selected: volunteerData.selected || false,
             volunteeredAt: volunteerData.volunteeredAt,
             selectedAt: volunteerData.selectedAt
@@ -1834,7 +1824,6 @@ volunteerItem.dataset.selected = volunteer.selected ? 'true' : 'false';
                     <i class="bi bi-envelope"></i> ${volunteer.email || 'No email'}
                   </div>
                   ${volunteer.notes ? `<div class="volunteer-notes">"${volunteer.notes}"</div>` : ''}
-                  ${volunteer.adminNote ? `<div class="internal-note"><i class="bi bi-journal-text"></i> <strong>Internal Note:</strong> ${volunteer.adminNote}</div>` : ''}
                 </div>
                 <div class="col-md-4">
                   <div>
@@ -1992,7 +1981,6 @@ async function toggleVolunteerSelection(volunteerId, selected) {
                   <i class="bi bi-envelope"></i> ${volunteer.email || 'No email'}
                 </div>
                 ${volunteer.notes ? `<div class="volunteer-notes mt-2">"${volunteer.notes}"</div>` : ''}
-                ${volunteer.adminNote ? `<div class="internal-note mt-2"><i class="bi bi-journal-text"></i> <strong>Internal Note:</strong> ${volunteer.adminNote}</div>` : ''}
               </label>
             </div>
           `;
@@ -2119,7 +2107,7 @@ async function toggleVolunteerSelection(volunteerId, selected) {
         
         // Create CSV content
         let csvContent = 'data:text/csv;charset=utf-8,';
-        csvContent += 'Name,Email,Grade,Selected,Notes,Internal Note\n';
+        csvContent += 'Name,Email,Grade,Selected,Notes\n';
         
         sortedVolunteers.forEach(volunteer => {
           const csvRow = [
@@ -2127,8 +2115,7 @@ async function toggleVolunteerSelection(volunteerId, selected) {
             `"${volunteer.email || ''}"`,
             `"${volunteer.grade || 'Unknown'}"`,
             volunteer.selected ? 'Yes' : 'No',
-            `"${volunteer.notes || ''}"`,
-            `"${volunteer.adminNote || ''}"`
+            `"${volunteer.notes || ''}"`
           ];
           
           csvContent += csvRow.join(',') + '\n';
