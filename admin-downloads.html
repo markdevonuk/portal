@@ -153,6 +153,27 @@
           </div>
         </div>
 
+        <div class="col-md-8 mx-auto mb-4">
+          <div class="download-card">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <i class="bi bi-truck download-icon"></i>
+                <h4>Pyramid Dispatch Export</h4>
+                <p class="text-muted">Export approved members for import into Pyramid Dispatch</p>
+              </div>
+            </div>
+            <p><small>Includes User ID, First Name, Surname, Grade and Email for approved members only</small></p>
+            <div class="file-info">
+              <i class="bi bi-file-earmark-spreadsheet file-icon"></i>
+              <span>CSV Format</span>
+              <div class="ms-auto" id="pyramidExportStatus"></div>
+            </div>
+            <button class="btn btn-primary mt-3 w-100" id="exportPyramidBtn">
+              <i class="bi bi-download"></i> Generate &amp; Download
+            </button>
+          </div>
+        </div>
+
         <div class="col-12">
           <div class="alert alert-info">
             <i class="bi bi-info-circle"></i> 
@@ -186,6 +207,8 @@
     // DOM Elements
     const exportMemberDataBtn = document.getElementById('exportMemberDataBtn');
     const memberExportStatus = document.getElementById('memberExportStatus');
+    const exportPyramidBtn = document.getElementById('exportPyramidBtn');
+    const pyramidExportStatus = document.getElementById('pyramidExportStatus');
     const logoutLink = document.getElementById('logoutLink');
 
     // Helper Functions
@@ -402,7 +425,89 @@
 
 
 
+    // Export Pyramid Dispatch Data (approved members only)
+    async function exportPyramidData() {
+      setButtonLoading('exportPyramidBtn', true);
+      pyramidExportStatus.innerHTML = '<span class="text-primary"><i class="bi bi-hourglass"></i> Generating...</span>';
+      
+      try {
+        // Get all users
+        const usersSnapshot = await getDocs(collection(db, 'users'));
+        const users = {};
+        usersSnapshot.forEach(doc => {
+          users[doc.id] = doc.data();
+        });
+        
+        // Get all profiles
+        const profilesSnapshot = await getDocs(collection(db, 'profiles'));
+        
+        // Build export data - approved members only
+        const exportData = [];
+        
+        profilesSnapshot.forEach(doc => {
+          const userId = doc.id;
+          const profile = doc.data();
+          const user = users[userId] || {};
+          const adminUse = profile.adminUse || {};
+          
+          // Only include approved members
+          if (adminUse.status !== 'approved') {
+            return;
+          }
+          
+          const medicalQuals = profile.medicalQualifications || {};
+          
+          exportData.push({
+            userId: userId,
+            firstName: user.firstName || '',
+            surname: user.surname || '',
+            grade: medicalQuals.qualification || '',
+            email: user.email || ''
+          });
+        });
+        
+        // Sort alphabetically by surname then first name
+        exportData.sort((a, b) => {
+          const surnameCompare = a.surname.localeCompare(b.surname);
+          if (surnameCompare !== 0) return surnameCompare;
+          return a.firstName.localeCompare(b.firstName);
+        });
+        
+        // Generate CSV
+        const headers = ['UsertableID', 'FirstName', 'Surname', 'Grade', 'Email'];
+        const keys = ['userId', 'firstName', 'surname', 'grade', 'email'];
+        
+        let csv = headers.map(csvSafe).join(',') + '\n';
+        exportData.forEach(row => {
+          const values = keys.map(key => csvSafe(row[key]));
+          csv += values.join(',') + '\n';
+        });
+        
+        // Create and trigger download
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `pyramid-dispatch-members-${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        pyramidExportStatus.innerHTML = '<span class="text-success"><i class="bi bi-check-circle"></i> Generated successfully</span>';
+        showAlert(`Pyramid Dispatch export completed. ${exportData.length} approved members exported.`, 'success');
+      } catch (error) {
+        console.error('Error exporting Pyramid Dispatch data:', error);
+        pyramidExportStatus.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-triangle"></i> Failed</span>';
+        showAlert('Error exporting data: ' + error.message, 'danger');
+      } finally {
+        setButtonLoading('exportPyramidBtn', false);
+      }
+    }
+
     // Event Listeners
+    exportPyramidBtn.addEventListener('click', exportPyramidData);
     exportMemberDataBtn.addEventListener('click', exportMemberData);
     
     // Logout handler
