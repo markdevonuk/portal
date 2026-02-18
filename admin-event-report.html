@@ -196,9 +196,9 @@
         </select>
       </div>
       <div>
-        <label class="form-label mb-1 small fw-bold">Filter by Grade</label>
-        <select class="form-select form-select-sm" id="gradeFilter" style="min-width: 180px;">
-          <option value="">All Grades</option>
+        <label class="form-label mb-1 small fw-bold">Filter by Team</label>
+        <select class="form-select form-select-sm" id="teamFilter" style="min-width: 180px;">
+          <option value="">All Teams</option>
         </select>
       </div>
       <div>
@@ -208,7 +208,7 @@
       <div>
         <label class="form-label mb-1 small fw-bold">&nbsp;</label>
         <button class="btn btn-outline-warning btn-sm d-block" id="neverSelectedBtn">
-          <i class="bi bi-exclamation-triangle"></i> Volunteered But Not Selected
+          <i class="bi bi-exclamation-triangle"></i> Volunteered But Never Selected
         </button>
       </div>
     </div>
@@ -291,6 +291,7 @@
     let filteredData = [];   // After filters applied
     let neverSelectedActive = false; // Toggle for never-selected filter
     let currentYearEventsList = []; // Events in current year for dropdown
+    let allTeamsData = {};  // Team ID -> team name lookup
 
     // =====================
     // DOM ELEMENTS
@@ -300,7 +301,7 @@
     const reportTableBody = document.getElementById('reportTableBody');
     const noResults = document.getElementById('noResults');
     const eventFilter = document.getElementById('eventFilter');
-    const gradeFilter = document.getElementById('gradeFilter');
+    const teamFilter = document.getElementById('teamFilter');
     const nameSearch = document.getElementById('nameSearch');
     const refreshBtn = document.getElementById('refreshBtn');
     const exportCsvBtn = document.getElementById('exportCsvBtn');
@@ -358,6 +359,15 @@
         });
 
         // -------------------------------------------
+        // Step 1b: Load all teams
+        // -------------------------------------------
+        const teamsSnapshot = await getDocs(collection(db, 'teams'));
+        allTeamsData = {};
+        teamsSnapshot.forEach(docSnap => {
+          allTeamsData[docSnap.id] = docSnap.data().name || 'Unknown Team';
+        });
+
+        // -------------------------------------------
         // Step 2: Load all profiles, keep only approved
         // -------------------------------------------
         const profilesSnapshot = await getDocs(collection(db, 'profiles'));
@@ -374,7 +384,8 @@
               userId: userId,
               firstName: user.firstName || profile.personalDetails?.firstName || '',
               surname: user.surname || profile.personalDetails?.surname || '',
-              grade: profile.medicalQualifications?.qualification || 'N/A'
+              grade: profile.medicalQualifications?.qualification || 'N/A',
+              teamIds: user.teams || []
             });
           }
         });
@@ -439,7 +450,6 @@
         // -------------------------------------------
         let totalVolunteered = 0;
         let totalSelected = 0;
-        const gradesSet = new Set();
 
         allReportData = approvedMembers.map(member => {
           const memberEvents = volunteerMap[member.userId] || [];
@@ -464,14 +474,11 @@
           totalVolunteered += volunteeredNotSelected.length;
           totalSelected += selected.length;
 
-          if (member.grade && member.grade !== 'N/A') {
-            gradesSet.add(member.grade);
-          }
-
           return {
             firstName: member.firstName,
             surname: member.surname,
             grade: member.grade,
+            teamIds: member.teamIds,
             volunteeredNotSelected: volunteeredNotSelected,
             selected: selected,
             allEventIds: allMemberEventIds
@@ -520,11 +527,12 @@
         // -------------------------------------------
         // Step 8: Populate filter dropdowns
         // -------------------------------------------
-        // Grade dropdown
-        const sortedGrades = Array.from(gradesSet).sort();
-        gradeFilter.innerHTML = '<option value="">All Grades</option>';
-        sortedGrades.forEach(grade => {
-          gradeFilter.innerHTML += `<option value="${grade}">${grade}</option>`;
+        // Team dropdown (sorted alphabetically by name)
+        const sortedTeams = Object.entries(allTeamsData)
+          .sort((a, b) => a[1].localeCompare(b[1]));
+        teamFilter.innerHTML = '<option value="">All Teams</option>';
+        sortedTeams.forEach(([teamId, teamName]) => {
+          teamFilter.innerHTML += `<option value="${teamId}">${teamName}</option>`;
         });
 
         // Event dropdown (sorted by date already)
@@ -554,15 +562,15 @@
     // =====================
     function applyFiltersAndRender() {
       const eventValue = eventFilter.value;
-      const gradeValue = gradeFilter.value;
+      const teamValue = teamFilter.value;
       const searchValue = nameSearch.value.trim().toLowerCase();
 
       filteredData = allReportData.filter(member => {
         // Event filter: member must have volunteered or been selected for this event
         if (eventValue && !member.allEventIds.includes(eventValue)) return false;
 
-        // Grade filter
-        if (gradeValue && member.grade !== gradeValue) return false;
+        // Team filter: member must belong to the selected team
+        if (teamValue && !member.teamIds.includes(teamValue)) return false;
 
         // Name search
         if (searchValue) {
@@ -685,7 +693,7 @@
     // EVENT LISTENERS
     // =====================
     eventFilter.addEventListener('change', applyFiltersAndRender);
-    gradeFilter.addEventListener('change', applyFiltersAndRender);
+    teamFilter.addEventListener('change', applyFiltersAndRender);
     nameSearch.addEventListener('input', applyFiltersAndRender);
     refreshBtn.addEventListener('click', loadReport);
     exportCsvBtn.addEventListener('click', exportCsv);
