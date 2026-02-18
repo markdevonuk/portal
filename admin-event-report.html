@@ -199,6 +199,12 @@
         <label class="form-label mb-1 small fw-bold">Search by Name</label>
         <input type="text" class="form-control form-control-sm" id="nameSearch" placeholder="Type to search..." style="min-width: 200px;">
       </div>
+      <div>
+        <label class="form-label mb-1 small fw-bold">&nbsp;</label>
+        <button class="btn btn-outline-warning btn-sm d-block" id="neverSelectedBtn">
+          <i class="bi bi-exclamation-triangle"></i> Volunteered But Never Selected
+        </button>
+      </div>
     </div>
     <div class="d-flex gap-2 flex-wrap">
       <button class="btn btn-outline-primary btn-sm" id="refreshBtn">
@@ -231,9 +237,7 @@
         <thead>
           <tr>
             <th>#</th>
-            <th>First Name</th>
-            <th>Surname</th>
-            <th>Grade</th>
+            <th>Member</th>
             <th>Volunteered (Not Selected)</th>
             <th>Selected</th>
           </tr>
@@ -279,6 +283,7 @@
     // =====================
     let allReportData = [];  // Full dataset
     let filteredData = [];   // After filters applied
+    let neverSelectedActive = false; // Toggle for never-selected filter
 
     // =====================
     // DOM ELEMENTS
@@ -291,6 +296,7 @@
     const nameSearch = document.getElementById('nameSearch');
     const refreshBtn = document.getElementById('refreshBtn');
     const exportCsvBtn = document.getElementById('exportCsvBtn');
+    const neverSelectedBtn = document.getElementById('neverSelectedBtn');
     const logoutLink = document.getElementById('logoutLink');
 
     // =====================
@@ -532,6 +538,11 @@
           if (!fullName.includes(searchValue)) return false;
         }
 
+        // Never selected filter: must have volunteered for at least one event but selected for none
+        if (neverSelectedActive) {
+          if (member.volunteeredNotSelected.length === 0 || member.selected.length > 0) return false;
+        }
+
         return true;
       });
 
@@ -571,9 +582,10 @@
 
         row.innerHTML = `
           <td>${index + 1}</td>
-          <td>${member.firstName || ''}</td>
-          <td>${member.surname || ''}</td>
-          <td><span class="badge bg-secondary">${member.grade}</span></td>
+          <td>
+            <strong>${member.firstName || ''} ${member.surname || ''}</strong>
+            <br><span class="badge bg-secondary">${member.grade}</span>
+          </td>
           <td>${volunteeredHtml}</td>
           <td>${selectedHtml}</td>
         `;
@@ -644,6 +656,18 @@
     nameSearch.addEventListener('input', applyFiltersAndRender);
     refreshBtn.addEventListener('click', loadReport);
     exportCsvBtn.addEventListener('click', exportCsv);
+    
+    neverSelectedBtn.addEventListener('click', () => {
+      neverSelectedActive = !neverSelectedActive;
+      if (neverSelectedActive) {
+        neverSelectedBtn.classList.remove('btn-outline-warning');
+        neverSelectedBtn.classList.add('btn-warning');
+      } else {
+        neverSelectedBtn.classList.remove('btn-warning');
+        neverSelectedBtn.classList.add('btn-outline-warning');
+      }
+      applyFiltersAndRender();
+    });
 
     logoutLink.addEventListener('click', async (e) => {
       e.preventDefault();
