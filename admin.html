@@ -250,9 +250,9 @@
         <p class="mb-0">Manage system settings and user permissions</p>
       </div>
       
-      <!-- Row 1: Manage Profiles and Applicants -->
+            <!-- Row 1: People & Profiles (Super Admin) -->
       <div class="row">
-        <div class="col-md-6 mb-4">
+        <div class="col-md-4 mb-4">
           <a href="admin-profiles.html" class="admin-card-link super-admin-only">
             <div class="admin-card text-center">
               <i class="bi bi-person-vcard-fill admin-icon"></i>
@@ -263,7 +263,7 @@
             </div>
           </a>
         </div>
-        <div class="col-md-6 mb-4">
+        <div class="col-md-4 mb-4">
           <a href="admin-applicants.html" class="admin-card-link super-admin-only">
             <div class="admin-card text-center">
               <i class="bi bi-person-plus-fill admin-icon"></i>
@@ -274,11 +274,7 @@
             </div>
           </a>
         </div>
-      </div>
-      
-      <!-- Row 2: Team Management -->
-      <div class="row">
-        <div class="col-md-6 mb-4">
+        <div class="col-md-4 mb-4">
           <a href="team-management.html" class="admin-card-link super-admin-only">
             <div class="admin-card text-center">
               <i class="bi bi-people-fill admin-icon"></i>
@@ -286,25 +282,24 @@
               <span class="super-admin-pill"><i class="bi bi-lock-fill"></i> Super Admin Only</span>
               <p class="text-muted mb-0">Manage teams</p>
               <small class="text-muted">Create, edit, and delete clinical/operational teams</small>
-           </div>
-          </a>
-        </div>
-        <div class="col-md-6 mb-4">
-          <a href="team-assignment.html" class="admin-card-link">
-            <div class="admin-card text-center">
-              <i class="bi bi-person-plus-fill admin-icon"></i>
-              <h3>Team Assignment</h3>
-              
-              <p class="text-muted mb-0">Assign teams to members</p>
-              <small class="text-muted">Manage which members belong to which teams</small>
             </div>
           </a>
         </div>
       </div>
 
-      <!-- Row 3: Events and Member Search -->
+      <!-- Row 2: Teams & Events -->
       <div class="row">
-        <div class="col-md-6 mb-4">
+        <div class="col-md-4 mb-4">
+          <a href="team-assignment.html" class="admin-card-link">
+            <div class="admin-card text-center">
+              <i class="bi bi-person-plus-fill admin-icon"></i>
+              <h3>Team Assignment</h3>
+              <p class="text-muted mb-0">Assign teams to members</p>
+              <small class="text-muted">Manage which members belong to which teams</small>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-4 mb-4">
           <a href="event-management.html" class="admin-card-link">
             <div class="admin-card text-center">
               <i class="bi bi-calendar-event-fill admin-icon"></i>
@@ -314,7 +309,21 @@
             </div>
           </a>
         </div>
-        <div class="col-md-6 mb-4">
+        <div class="col-md-4 mb-4">
+          <a href="admin-member-events-report.html" class="admin-card-link">
+            <div class="admin-card text-center">
+              <i class="bi bi-clipboard-data admin-icon"></i>
+              <h3>Member Events Report</h3>
+              <p class="text-muted mb-0">View member event activity</p>
+              <small class="text-muted">See who has volunteered and been selected this year</small>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Row 3: Member Tools -->
+      <div class="row">
+        <div class="col-md-4 mb-4">
           <a href="search-members.html" class="admin-card-link">
             <div class="admin-card text-center">
               <i class="bi bi-search admin-icon"></i>
@@ -324,11 +333,7 @@
             </div>
           </a>
         </div>
-      </div>
-      
-     <!-- Row: Member Hours -->
-      <div class="row">
-        <div class="col-md-6 mb-4">
+        <div class="col-md-4 mb-4">
           <a href="admin-member-hours.html" class="admin-card-link">
             <div class="admin-card text-center">
               <i class="bi bi-clock-history admin-icon"></i>
@@ -338,20 +343,21 @@
             </div>
           </a>
         </div>
-        <div class="col-md-6 mb-4">
-          <div class="admin-card text-center newsflash-admin-card super-admin-only" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#newsflashModal">
-            <i class="bi bi-megaphone-fill admin-icon"></i>
-            <h3>Manage Newsflash</h3>
-            <span class="super-admin-pill"><i class="bi bi-lock-fill"></i> Super Admin Only</span>
-            <p class="mb-0">Edit dashboard announcement</p>
-            <small>Update the newsflash message shown to all members</small>
-          </div>
+        <div class="col-md-4 mb-4">
+          <a href="admin-downloads.html" class="admin-card-link">
+            <div class="admin-card text-center">
+              <i class="bi bi-cloud-download admin-icon"></i>
+              <h3>Downloads</h3>
+              <p class="text-muted mb-0">Export portal data</p>
+              <small class="text-muted">Generate reports and data exports</small>
+            </div>
+          </a>
         </div>
       </div>
 
-      <!-- Row 4: Allowed Emails and Admin Users -->
+      <!-- Row 4: System & Access (Super Admin) -->
       <div class="row">
-        <div class="col-md-6 mb-4">
+        <div class="col-md-4 mb-4">
           <a href="admin-allowed-emails.html" class="admin-card-link super-admin-only">
             <div class="admin-card text-center">
               <i class="bi bi-envelope-check-fill admin-icon"></i>
@@ -362,8 +368,7 @@
             </div>
           </a>
         </div>
-        
-        <div class="col-md-6 mb-4">
+        <div class="col-md-4 mb-4">
           <a href="admin-user-management.html" class="admin-card-link super-admin-only">
             <div class="admin-card text-center">
               <i class="bi bi-people-fill admin-icon"></i>
@@ -374,32 +379,31 @@
             </div>
           </a>
         </div>
+        <div class="col-md-4 mb-4">
+          <div class="admin-card text-center newsflash-admin-card super-admin-only" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#newsflashModal">
+            <i class="bi bi-megaphone-fill admin-icon"></i>
+            <h3>Manage Newsflash</h3>
+            <span class="super-admin-pill"><i class="bi bi-lock-fill"></i> Super Admin Only</span>
+            <p class="mb-0">Edit dashboard announcement</p>
+            <small>Update the newsflash message shown to all members</small>
+          </div>
+        </div>
       </div>
 
-      <!-- Row 5: Downloads and Email Members -->
-<div class="row">
-  <div class="col-md-6 mb-4">
-    <a href="admin-downloads.html" class="admin-card-link">
-      <div class="admin-card text-center">
-        <i class="bi bi-cloud-download admin-icon"></i>
-        <h3>Downloads</h3>
-        <p class="text-muted mb-0">Export portal data</p>
-        <small class="text-muted">Generate reports and data exports</small>
+      <!-- Row 5: Communications (Super Admin) -->
+      <div class="row">
+        <div class="col-md-4 mb-4">
+          <a href="admin-email-members.html" class="admin-card-link super-admin-only">
+            <div class="admin-card text-center">
+              <i class="bi bi-envelope-paper admin-icon"></i>
+              <h3>Email All Members</h3>
+              <span class="super-admin-pill"><i class="bi bi-lock-fill"></i> Super Admin Only</span>
+              <p class="text-muted mb-0">Send bulk emails to members</p>
+              <small class="text-muted">Contact all approved members at once</small>
+            </div>
+          </a>
+        </div>
       </div>
-    </a>
-  </div>
-  <div class="col-md-6 mb-4">
-    <a href="admin-email-members.html" class="admin-card-link super-admin-only">
-      <div class="admin-card text-center">
-        <i class="bi bi-envelope-paper admin-icon"></i>
-        <h3>Email All Members</h3>
-        <span class="super-admin-pill"><i class="bi bi-lock-fill"></i> Super Admin Only</span>
-        <p class="text-muted mb-0">Send bulk emails to members</p>
-        <small class="text-muted">Contact all approved members at once</small>
-      </div>
-    </a>
-  </div>
-</div>
 
       <!-- Quick Stats -->
       <div class="row">
