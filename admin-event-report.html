@@ -190,6 +190,12 @@
   <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
     <div class="filter-controls">
       <div>
+        <label class="form-label mb-1 small fw-bold">Filter by Event</label>
+        <select class="form-select form-select-sm" id="eventFilter" style="min-width: 220px;">
+          <option value="">All Events</option>
+        </select>
+      </div>
+      <div>
         <label class="form-label mb-1 small fw-bold">Filter by Grade</label>
         <select class="form-select form-select-sm" id="gradeFilter" style="min-width: 180px;">
           <option value="">All Grades</option>
@@ -202,7 +208,7 @@
       <div>
         <label class="form-label mb-1 small fw-bold">&nbsp;</label>
         <button class="btn btn-outline-warning btn-sm d-block" id="neverSelectedBtn">
-          <i class="bi bi-exclamation-triangle"></i> Volunteered But Not Selected
+          <i class="bi bi-exclamation-triangle"></i> Volunteered But Never Selected
         </button>
       </div>
     </div>
@@ -284,6 +290,7 @@
     let allReportData = [];  // Full dataset
     let filteredData = [];   // After filters applied
     let neverSelectedActive = false; // Toggle for never-selected filter
+    let currentYearEventsList = []; // Events in current year for dropdown
 
     // =====================
     // DOM ELEMENTS
@@ -292,6 +299,7 @@
     const reportContent = document.getElementById('reportContent');
     const reportTableBody = document.getElementById('reportTableBody');
     const noResults = document.getElementById('noResults');
+    const eventFilter = document.getElementById('eventFilter');
     const gradeFilter = document.getElementById('gradeFilter');
     const nameSearch = document.getElementById('nameSearch');
     const refreshBtn = document.getElementById('refreshBtn');
@@ -450,6 +458,9 @@
             .filter(e => e.selected)
             .map(e => e.eventName);
 
+          // Store all event IDs this member is associated with (for event filter)
+          const allMemberEventIds = currentYearEvents.map(e => e.eventId);
+
           totalVolunteered += volunteeredNotSelected.length;
           totalSelected += selected.length;
 
@@ -462,9 +473,34 @@
             surname: member.surname,
             grade: member.grade,
             volunteeredNotSelected: volunteeredNotSelected,
-            selected: selected
+            selected: selected,
+            allEventIds: allMemberEventIds
           };
         });
+
+        // -------------------------------------------
+        // Step 6b: Build current year events list for dropdown (sorted by date)
+        // -------------------------------------------
+        currentYearEventsList = [];
+        Object.values(eventsData).forEach(event => {
+          let eventStart = null;
+          if (event.startDate?.toDate) {
+            eventStart = event.startDate.toDate();
+          } else if (event.startDate?.seconds) {
+            eventStart = new Date(event.startDate.seconds * 1000);
+          } else if (event.startDate) {
+            eventStart = new Date(event.startDate);
+          }
+          if (eventStart && eventStart.getFullYear() === currentYear) {
+            currentYearEventsList.push({
+              id: event.id,
+              name: event.name || 'Unknown Event',
+              startDate: eventStart
+            });
+          }
+        });
+        // Sort by date (earliest first)
+        currentYearEventsList.sort((a, b) => a.startDate - b.startDate);
 
         // Sort alphabetically by surname, then first name
         allReportData.sort((a, b) => {
@@ -477,33 +513,25 @@
         // Step 7: Update stats
         // -------------------------------------------
         document.getElementById('totalMembers').textContent = approvedMembers.length;
-        
-        // Count events in the current year
-        let eventsThisYear = 0;
-        Object.values(eventsData).forEach(event => {
-          let eventStart = null;
-          if (event.startDate?.toDate) {
-            eventStart = event.startDate.toDate();
-          } else if (event.startDate?.seconds) {
-            eventStart = new Date(event.startDate.seconds * 1000);
-          } else if (event.startDate) {
-            eventStart = new Date(event.startDate);
-          }
-          if (eventStart && eventStart.getFullYear() === currentYear) {
-            eventsThisYear++;
-          }
-        });
-        document.getElementById('totalEvents').textContent = eventsThisYear;
+        document.getElementById('totalEvents').textContent = currentYearEventsList.length;
         document.getElementById('totalVolunteered').textContent = totalVolunteered;
         document.getElementById('totalSelected').textContent = totalSelected;
 
         // -------------------------------------------
-        // Step 8: Populate grade filter dropdown
+        // Step 8: Populate filter dropdowns
         // -------------------------------------------
+        // Grade dropdown
         const sortedGrades = Array.from(gradesSet).sort();
         gradeFilter.innerHTML = '<option value="">All Grades</option>';
         sortedGrades.forEach(grade => {
           gradeFilter.innerHTML += `<option value="${grade}">${grade}</option>`;
+        });
+
+        // Event dropdown (sorted by date already)
+        eventFilter.innerHTML = '<option value="">All Events</option>';
+        currentYearEventsList.forEach(event => {
+          const dateStr = event.startDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+          eventFilter.innerHTML += `<option value="${event.id}">${event.name} (${dateStr})</option>`;
         });
 
         // -------------------------------------------
@@ -525,10 +553,14 @@
     // FILTER & RENDER
     // =====================
     function applyFiltersAndRender() {
+      const eventValue = eventFilter.value;
       const gradeValue = gradeFilter.value;
       const searchValue = nameSearch.value.trim().toLowerCase();
 
       filteredData = allReportData.filter(member => {
+        // Event filter: member must have volunteered or been selected for this event
+        if (eventValue && !member.allEventIds.includes(eventValue)) return false;
+
         // Grade filter
         if (gradeValue && member.grade !== gradeValue) return false;
 
@@ -652,6 +684,7 @@
     // =====================
     // EVENT LISTENERS
     // =====================
+    eventFilter.addEventListener('change', applyFiltersAndRender);
     gradeFilter.addEventListener('change', applyFiltersAndRender);
     nameSearch.addEventListener('input', applyFiltersAndRender);
     refreshBtn.addEventListener('click', loadReport);
