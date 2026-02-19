@@ -859,8 +859,12 @@
 
         const expiring = [];
 
+        console.log('CERT DEBUG: Total profiles found:', profilesSnapshot.size);
         profilesSnapshot.forEach(d => {
           const profile = d.data();
+          const status = profile.adminUse?.status;
+          console.log('CERT DEBUG: Profile', d.id, '| status:', status, '| certExpiry:', profile.certExpiry);
+
           // Only check approved members
           if (profile.adminUse?.status !== 'approved') return;
 
@@ -872,13 +876,21 @@
           let expiryDate;
           if (raw.toDate) {
             expiryDate = raw.toDate();
+            console.log('CERT DEBUG: Parsed as Timestamp:', expiryDate);
           } else {
             const cleaned = typeof raw === 'string' ? raw.replace(' at ', ' ') : raw;
             expiryDate = new Date(cleaned);
+            console.log('CERT DEBUG: Parsed as string. Raw:', raw, '| Cleaned:', cleaned, '| Result:', expiryDate);
           }
 
-          if (isNaN(expiryDate.getTime())) return;
-          if (expiryDate > in60Days || expiryDate < now) return; // only future within 60 days
+          if (isNaN(expiryDate.getTime())) {
+            console.log('CERT DEBUG: Invalid date - skipping');
+            return;
+          }
+          if (expiryDate > in60Days || expiryDate < now) {
+            console.log('CERT DEBUG: Outside 60-day window. Expiry:', expiryDate, '| Now:', now, '| In60Days:', in60Days);
+            return;
+          }
 
           const user = usersMap[d.id] || {};
           const firstName = profile.personalDetails?.firstName || user.firstName || '';
