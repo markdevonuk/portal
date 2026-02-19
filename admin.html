@@ -240,6 +240,25 @@
       color: #028090;
       font-weight: 600;
     }
+    .cert-reminder-btn {
+      background: linear-gradient(135deg, #00a896 0%, #028090 100%);
+      color: #fff;
+      border: none;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+      letter-spacing: 0.03em;
+    }
+    .cert-reminder-btn:hover {
+      opacity: 0.85;
+      color: #fff;
+    }
+    .cert-reminder-btn:disabled {
+      opacity: 0.6;
+    }
+    .cert-reminder-btn.btn-sent {
+      background: linear-gradient(135deg, #028090 0%, #025f6b 100%);
+    }
   </style>
 </head>
 <body>
@@ -291,14 +310,15 @@
       <!-- Certificate Expiry Alert - only shown if members have certs expiring within 60 days -->
       <div id="certExpiryAlert" style="display:none;" class="cert-expiry-alert">
         <div class="alert-title"><i class="bi bi-exclamation-triangle-fill"></i> Certificate Expiry Warning</div>
-        <p class="text-muted small mb-2">The following members have certificates expiring within the next 60 days:</p>
+        <p class="text-muted small mb-2">The following members have certificates that have expired or are expiring within the next 60 days:</p>
         <div class="table-responsive">
           <table class="table table-sm cert-expiry-table mb-0">
             <thead>
               <tr>
                 <th>Member</th>
                 <th>Expires</th>
-                <th>Days Remaining</th>
+                <th>Status</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody id="certExpiryTableBody">
@@ -659,7 +679,7 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
     import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-    import { getFirestore, doc, getDoc, setDoc, collection, getDocs, query, where, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, addDoc, collection, getDocs, query, where, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
     import { firebaseConfig } from './firebase-config.js';
 
     const app = initializeApp(firebaseConfig);
@@ -681,6 +701,7 @@
     
     // Store data for modal lookups
     let allApprovedProfiles = [];
+    let expiringMembers = []; // for cert reminder lookups
     let allUsers = {};
     let allEvents = {};
     let allVolunteers = [];
@@ -861,7 +882,8 @@
         const in60Days = new Date();
         in60Days.setDate(in60Days.getDate() + 60);
 
-        const expiring = [];
+        expiringMembers = [];
+        const expiring = expiringMembers;
 
         profilesSnapshot.forEach(d => {
           const profile = d.data();
@@ -883,12 +905,9 @@
             expiryDate = new Date(cleaned);
             }
 
-          if (isNaN(expiryDate.getTime())) {
-              return;
-          }
-          if (expiryDate > in60Days || expiryDate < now) {
-              return;
-          }
+          if (isNaN(expiryDate.getTime())) return;
+          if (expiryDate > in60Days) return; // only within 60 days window or already expired
+          const isExpired = expiryDate < now;
 
           const user = usersMap[d.id] || {};
           const firstName = profile.personalDetails?.firstName || user.firstName || '';
@@ -898,7 +917,9 @@
           const daysLeft = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
 
           const grade = profile.medicalQualifications?.qualification || '';
-          expiring.push({ fullName, grade, expiryDate, daysLeft });
+          const memberEmail = (usersMap[d.id] || {}).email || '';
+          const reminderCount = profile.adminUse?.certReminderCount || 0;
+          expiring.push({ fullName, firstName, surname, grade, expiryDate, daysLeft, isExpired, email: memberEmail, userId: d.id, reminderCount });
         });
 
         if (expiring.length === 0) return;
@@ -909,12 +930,15 @@
         const tbody = document.getElementById('certExpiryTableBody');
         tbody.innerHTML = expiring.map(m => {
           const dateStr = m.expiryDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-          const urgencyClass = m.daysLeft <= 14 ? 'cert-expiry-urgent' : 'cert-expiry-warning';
+          const cellClass = m.isExpired ? 'cert-expiry-urgent' : (m.daysLeft <= 14 ? 'cert-expiry-urgent' : 'cert-expiry-warning');
+          const statusText = m.isExpired ? '<strong>EXPIRED</strong>' : `${m.daysLeft} day${m.daysLeft !== 1 ? 's' : ''}`;
+          const btnLabel = m.reminderCount === 0 ? 'SEND REMINDER' : `SEND ${ordinal(m.reminderCount + 1)} REMINDER`;
           return `
-            <tr>
+            <tr id="cert-row-${m.userId}">
               <td>${m.fullName}<br><span class="cert-expiry-grade">${m.grade}</span></td>
-              <td class="${urgencyClass}">${dateStr}</td>
-              <td class="${urgencyClass}">${m.daysLeft} day${m.daysLeft !== 1 ? 's' : ''}</td>
+              <td class="${cellClass}">${dateStr}</td>
+              <td class="${cellClass}">${statusText}</td>
+              <td><button class="btn btn-sm cert-reminder-btn" id="btn-${m.userId}" onclick="sendCertReminder('${m.userId}')">${btnLabel}</button></td>
             </tr>`;
         }).join('');
 
@@ -924,7 +948,74 @@
         console.error('Error loading cert expiry alerts:', error);
       }
     }
-    
+
+    // Helper: ordinal suffix (1st, 2nd, 3rd, 4th...)
+    function ordinal(n) {
+      const s = ['th','st','nd','rd'];
+      const v = n % 100;
+      return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    }
+
+    // Send a certificate renewal reminder email to a member
+    window.sendCertReminder = async function(userId) {
+      const member = expiringMembers.find(m => m.userId === userId);
+      if (!member || !member.email) {
+        alert('Could not find member email address.');
+        return;
+      }
+
+      const btn = document.getElementById(`btn-${userId}`);
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+
+      try {
+        const dateStr = member.expiryDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+
+        const emailBody = `Dear ${member.firstName},\n\nYour ${member.grade}, in the name of ${member.firstName} ${member.surname}, expires on ${dateStr}, and this needs to be updated and uploaded to the FMS portal at https://portal.fmsprehospital.co.uk as soon as possible.\n\nIf you are unable to renew this, any places you have been offered at any event have to be withdrawn as we can only allow members with current certification to attend.\n\nPlease let us know if you are having any problems with renewing.\n\nMany thanks\nPrehospital Team Leaders\nprehospital@festival-medical.org`;
+
+        // Send to the member
+        await addDoc(collection(db, 'mail'), {
+          to: member.email,
+          replyTo: 'prehospital@festival-medical.org',
+          message: {
+            subject: 'Certificate Renewal Reminder - FMS Prehospital',
+            text: emailBody,
+            html: emailBody.replace(/\n/g, '<br>')
+          }
+        });
+
+        // Send copy to prehospital team
+        const copyBody = `[COPY - Reminder sent to ${member.fullName} (${member.email})]\n\n${emailBody}`;
+        await addDoc(collection(db, 'mail'), {
+          to: 'prehospital@festival-medical.org',
+          message: {
+            subject: `[COPY] Certificate Reminder - ${member.fullName}`,
+            text: copyBody,
+            html: copyBody.replace(/\n/g, '<br>')
+          }
+        });
+
+        // Record the reminder count in Firestore
+        const newCount = member.reminderCount + 1;
+        await updateDoc(doc(db, 'profiles', userId), {
+          'adminUse.certReminderCount': newCount,
+          'adminUse.certReminderLastSent': serverTimestamp()
+        });
+
+        // Update local data and button label
+        member.reminderCount = newCount;
+        btn.disabled = false;
+        btn.textContent = `SEND ${ordinal(newCount + 1)} REMINDER`;
+        btn.classList.add('btn-sent');
+
+      } catch (error) {
+        console.error('Error sending cert reminder:', error);
+        btn.disabled = false;
+        btn.textContent = 'ERROR - Try Again';
+        btn.classList.remove('btn-sent');
+        btn.style.background = '#dc3545';
+      }
+    };
 
     // Load quick stats
     async function loadQuickStats() {
