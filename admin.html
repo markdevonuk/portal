@@ -864,6 +864,7 @@
           const profile = d.data();
           const status = profile.adminUse?.status;
           console.log('CERT DEBUG: Profile', d.id, '| status:', status, '| certExpiry:', profile.certExpiry);
+          console.log('CERT DEBUG: All fields in this profile:', Object.keys(profile));
 
           // Only check approved members
           if (profile.adminUse?.status !== 'approved') return;
