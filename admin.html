@@ -240,6 +240,16 @@
       color: #028090;
       font-weight: 600;
     }
+    .cert-event-badge {
+      display: inline-block;
+      background: #d1e7dd;
+      color: #155724;
+      font-size: 0.72rem;
+      padding: 2px 7px;
+      border-radius: 10px;
+      margin-top: 4px;
+      margin-right: 2px;
+    }
     .cert-reminder-btn {
       background: linear-gradient(135deg, #00a896 0%, #028090 100%);
       color: #fff;
@@ -919,7 +929,14 @@
           const grade = profile.medicalQualifications?.qualification || '';
           const memberEmail = (usersMap[d.id] || {}).email || '';
           const reminderCount = profile.adminUse?.certReminderCount || 0;
-          expiring.push({ fullName, firstName, surname, grade, expiryDate, daysLeft, isExpired, email: memberEmail, userId: d.id, reminderCount });
+
+          // Get events this member has been selected for (using already-loaded data)
+          const selectedEvents = allVolunteers
+            .filter(v => v.userId === d.id && v.selected === true)
+            .map(v => allEvents[v.eventId]?.name)
+            .filter(Boolean);
+
+          expiring.push({ fullName, firstName, surname, grade, selectedEvents, expiryDate, daysLeft, isExpired, email: memberEmail, userId: d.id, reminderCount });
         });
 
         if (expiring.length === 0) return;
@@ -935,7 +952,13 @@
           const btnLabel = m.reminderCount === 0 ? 'SEND REMINDER' : `SEND ${ordinal(m.reminderCount + 1)} REMINDER`;
           return `
             <tr id="cert-row-${m.userId}">
-              <td>${m.fullName}<br><span class="cert-expiry-grade">${m.grade}</span></td>
+              <td>
+                ${m.fullName}<br>
+                <span class="cert-expiry-grade">${m.grade}</span>
+                ${m.selectedEvents && m.selectedEvents.length > 0
+                  ? '<br>' + m.selectedEvents.map(e => `<span class="cert-event-badge"><i class="bi bi-calendar-check-fill"></i> ${e}</span>`).join(' ')
+                  : ''}
+              </td>
               <td class="${cellClass}">${dateStr}</td>
               <td class="${cellClass}">${statusText}</td>
               <td><button class="btn btn-sm cert-reminder-btn" id="btn-${m.userId}" onclick="sendCertReminder('${m.userId}')">${btnLabel}</button></td>
@@ -1234,8 +1257,7 @@
           adminContent.classList.remove('hidden');
           unauthorizedMsg.classList.add('hidden');
           loadQuickStats();
-          loadQualificationStats();
-          loadCertExpiryAlerts();
+          loadQualificationStats().then(() => loadCertExpiryAlerts());
           
           // Check for super admin access
           const userData = userDoc.data();
