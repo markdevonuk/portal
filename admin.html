@@ -206,14 +206,14 @@
     /* Certificate expiry alert */
     .cert-expiry-alert {
       border-radius: 12px;
-      border-left: 5px solid #fd7e14;
-      background: #fff8f0;
+      border-left: 5px solid #00a896;
+      background: #f0faf9;
       padding: 20px 25px;
       margin-bottom: 20px;
     }
     .cert-expiry-alert .alert-title {
       font-weight: 700;
-      color: #b94a00;
+      color: #028090;
       font-size: 1rem;
       margin-bottom: 12px;
     }
@@ -222,18 +222,22 @@
       text-transform: uppercase;
       letter-spacing: 0.04em;
       color: #6c757d;
-      border-bottom: 2px solid #ffd8b1;
+      border-bottom: 2px solid #b2e4df;
     }
     .cert-expiry-table td {
       font-size: 0.9rem;
       vertical-align: middle;
+    }
+    .cert-expiry-grade {
+      font-size: 0.8rem;
+      color: #6c757d;
     }
     .cert-expiry-urgent {
       color: #dc3545;
       font-weight: 600;
     }
     .cert-expiry-warning {
-      color: #fd7e14;
+      color: #028090;
       font-weight: 600;
     }
   </style>
@@ -893,7 +897,8 @@
 
           const daysLeft = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
 
-          expiring.push({ fullName, expiryDate, daysLeft });
+          const grade = profile.medicalQualifications?.qualification || '';
+          expiring.push({ fullName, grade, expiryDate, daysLeft });
         });
 
         if (expiring.length === 0) return;
@@ -907,7 +912,7 @@
           const urgencyClass = m.daysLeft <= 14 ? 'cert-expiry-urgent' : 'cert-expiry-warning';
           return `
             <tr>
-              <td>${m.fullName}</td>
+              <td>${m.fullName}<br><span class="cert-expiry-grade">${m.grade}</span></td>
               <td class="${urgencyClass}">${dateStr}</td>
               <td class="${urgencyClass}">${m.daysLeft} day${m.daysLeft !== 1 ? 's' : ''}</td>
             </tr>`;
