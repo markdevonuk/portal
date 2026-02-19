@@ -868,11 +868,13 @@
           if (!raw) return;
 
           // Handle Firestore Timestamp or date string
+          // e.g. "16 February 2028 at 00:00:00 UTC" - remove the " at " so JS can parse it
           let expiryDate;
           if (raw.toDate) {
             expiryDate = raw.toDate();
           } else {
-            expiryDate = new Date(raw);
+            const cleaned = typeof raw === 'string' ? raw.replace(' at ', ' ') : raw;
+            expiryDate = new Date(cleaned);
           }
 
           if (isNaN(expiryDate.getTime())) return;
