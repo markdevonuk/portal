@@ -202,40 +202,6 @@
       color: #6c757d;
       font-style: italic;
     }
-
-    /* Certificate expiry alert */
-    .cert-expiry-alert {
-      border-radius: 12px;
-      border-left: 5px solid #fd7e14;
-      background: #fff8f0;
-      padding: 20px 25px;
-      margin-bottom: 20px;
-    }
-    .cert-expiry-alert .alert-title {
-      font-weight: 700;
-      color: #b94a00;
-      font-size: 1rem;
-      margin-bottom: 12px;
-    }
-    .cert-expiry-table th {
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: #6c757d;
-      border-bottom: 2px solid #ffd8b1;
-    }
-    .cert-expiry-table td {
-      font-size: 0.9rem;
-      vertical-align: middle;
-    }
-    .cert-expiry-urgent {
-      color: #dc3545;
-      font-weight: 600;
-    }
-    .cert-expiry-warning {
-      color: #fd7e14;
-      font-weight: 600;
-    }
   </style>
 </head>
 <body>
@@ -282,25 +248,6 @@
       <div class="admin-header">
         <h1 class="mb-2"><i class="bi bi-shield-lock-fill"></i> Admin Dashboard</h1>
         <p class="mb-0">Manage system settings and user permissions</p>
-      </div>
-
-      <!-- Certificate Expiry Alert - only shown if members have certs expiring within 60 days -->
-      <div id="certExpiryAlert" style="display:none;" class="cert-expiry-alert">
-        <div class="alert-title"><i class="bi bi-exclamation-triangle-fill"></i> Certificate Expiry Warning</div>
-        <p class="text-muted small mb-2">The following members have certificates expiring within the next 60 days:</p>
-        <div class="table-responsive">
-          <table class="table table-sm cert-expiry-table mb-0">
-            <thead>
-              <tr>
-                <th>Member</th>
-                <th>Expires</th>
-                <th>Days Remaining</th>
-              </tr>
-            </thead>
-            <tbody id="certExpiryTableBody">
-            </tbody>
-          </table>
-        </div>
       </div>
       
       <!-- Row Title: People & Profiles -->
@@ -844,73 +791,8 @@
         }, 3000);
       }
     }
-
-    // Load certificate expiry alerts (members expiring within 60 days)
-    async function loadCertExpiryAlerts() {
-      try {
-        const profilesSnapshot = await getDocs(collection(db, 'profiles'));
-        const usersSnapshot = await getDocs(collection(db, 'users'));
-        const usersMap = {};
-        usersSnapshot.forEach(d => { usersMap[d.id] = d.data(); });
-
-        const now = new Date();
-        const in60Days = new Date();
-        in60Days.setDate(in60Days.getDate() + 60);
-
-        const expiring = [];
-
-        profilesSnapshot.forEach(d => {
-          const profile = d.data();
-          // Only check approved members
-          if (profile.adminUse?.status !== 'approved') return;
-
-          const raw = profile.certExpiry;
-          if (!raw) return;
-
-          // Handle Firestore Timestamp or date string
-          let expiryDate;
-          if (raw.toDate) {
-            expiryDate = raw.toDate();
-          } else {
-            expiryDate = new Date(raw);
-          }
-
-          if (isNaN(expiryDate.getTime())) return;
-          if (expiryDate > in60Days || expiryDate < now) return; // only future within 60 days
-
-          const user = usersMap[d.id] || {};
-          const firstName = profile.personalDetails?.firstName || user.firstName || '';
-          const surname = profile.personalDetails?.surname || user.surname || '';
-          const fullName = `${firstName} ${surname}`.trim() || user.email || 'Unknown';
-
-          const daysLeft = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
-
-          expiring.push({ fullName, expiryDate, daysLeft });
-        });
-
-        if (expiring.length === 0) return;
-
-        // Sort by soonest expiry first
-        expiring.sort((a, b) => a.expiryDate - b.expiryDate);
-
-        const tbody = document.getElementById('certExpiryTableBody');
-        tbody.innerHTML = expiring.map(m => {
-          const dateStr = m.expiryDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-          const urgencyClass = m.daysLeft <= 14 ? 'cert-expiry-urgent' : 'cert-expiry-warning';
-          return `
-            <tr>
-              <td>${m.fullName}</td>
-              <td class="${urgencyClass}">${dateStr}</td>
-              <td class="${urgencyClass}">${m.daysLeft} day${m.daysLeft !== 1 ? 's' : ''}</td>
-            </tr>`;
-        }).join('');
-
-        document.getElementById('certExpiryAlert').style.display = 'block';
-
-      } catch (error) {
-        console.error('Error loading cert expiry alerts:', error);
-      }
-    }
+    
+    
     
 
     // Load quick stats
@@ -1131,7 +1013,6 @@
           unauthorizedMsg.classList.add('hidden');
           loadQuickStats();
           loadQualificationStats();
-          loadCertExpiryAlerts();
           
           // Check for super admin access
           const userData = userDoc.data();
