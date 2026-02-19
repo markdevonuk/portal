@@ -328,7 +328,7 @@
                 <th>Member</th>
                 <th>Expires</th>
                 <th>Status</th>
-                <th>Action</th>
+                <th id="certActionHeader"></th>
               </tr>
             </thead>
             <tbody id="certExpiryTableBody">
@@ -712,6 +712,7 @@
     // Store data for modal lookups
     let allApprovedProfiles = [];
     let expiringMembers = []; // for cert reminder lookups
+    let isSuperAdmin = false;
     let allUsers = {};
     let allEvents = {};
     let allVolunteers = [];
@@ -961,7 +962,7 @@
               </td>
               <td class="${cellClass}">${dateStr}</td>
               <td class="${cellClass}">${statusText}</td>
-              <td><button class="btn btn-sm cert-reminder-btn" id="btn-${m.userId}" onclick="sendCertReminder('${m.userId}')">${btnLabel}</button></td>
+              ${isSuperAdmin ? `<td><button class="btn btn-sm cert-reminder-btn" id="btn-${m.userId}" onclick="sendCertReminder('${m.userId}')">${btnLabel}</button></td>` : ''}
             </tr>`;
         }).join('');
 
@@ -1264,7 +1265,10 @@
           const superAdminCards = document.querySelectorAll('.super-admin-only');
           
           if (userData.isSuperAdmin === true) {
-            // Super admin - unlock all cards
+            // Super admin - unlock all cards and enable cert reminder buttons
+            isSuperAdmin = true;
+            const certHeader = document.getElementById('certActionHeader');
+            if (certHeader) certHeader.textContent = 'Action';
             superAdminCards.forEach(card => {
               card.classList.remove('locked');
             });
