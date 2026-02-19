@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Member Events Report - FMS Prehospital Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background: #f0f2f5; }
+    .navbar { background: linear-gradient(135deg, #00a896 0%, #028090 100%); }
+    .navbar-brand { font-weight: 700; }
+    .page-header {
+      background: linear-gradient(135deg, #00a896 0%, #028090 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 15px;
+      margin-bottom: 25px;
+      margin-top: 25px;
+    }
+    .admin-card {
+      background: #fff;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+      margin-bottom: 25px;
+    }
+    .btn-loading { position: relative; pointer-events: none; opacity: .7; }
+    .btn-loading::after { 
+      content:""; position:absolute; width:16px; height:16px; top:50%; left:50%; 
+      margin:-8px 0 0 -8px; border:2px solid #fff; border-radius:50%; 
+      border-top-color:transparent; animation:spinner .6s linear infinite; 
+    }
+    @keyframes spinner { to { transform: rotate(360deg); } }
+
+```
+/* Report table styles */
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.report-table thead th {
+  background: #f8f9fa;
+  font-weight: 600;
+  padding: 12px;
+  border: 1px solid #dee2e6;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.report-table tbody td {
+  padding: 10px 12px;
+  border: 1px solid #dee2e6;
+  vertical-align: top;
+}
+.report-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+/* Event badges */
+.event-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  margin: 2px 4px 2px 0;
+  white-space: nowrap;
+}
+.event-badge.volunteered {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffc107;
+}
+.event-badge.selected {
+  background: #d1e7dd;
+  color: #0f5132;
+  border: 1px solid #198754;
+}
+.no-events {
+  color: #6c757d;
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+/* Stats row */
+.stat-box {
+  text-align: center;
+  padding: 15px;
+}
+.stat-box h2 {
+  margin-bottom: 5px;
+}
+
+/* Filter controls */
+.filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+}
+
+/* Print styles */
+@media print {
+  .navbar, .no-print, .page-header { display: none !important; }
+  .admin-card { box-shadow: none; padding: 0; }
+  body { background: #fff; }
+  .report-table { font-size: 0.75rem; }
+  .event-badge { border: 1px solid #ccc; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .report-table { font-size: 0.8rem; }
+  .report-table thead th, .report-table tbody td { padding: 8px; }
+}
+```
+
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+      <a class="navbar-brand" href="dashboard.html">
+        <i class="bi bi-heart-pulse"></i> FMS Portal
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="admin.html">
+              <i class="bi bi-arrow-left"></i> Admin Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="dashboard.html">
+              <i class="bi bi-house-fill"></i> Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="logoutLink">
+              <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1 class="mb-2"><i class="bi bi-clipboard-data"></i> Member Events Report</h1>
+      <p class="mb-0">View approved members and their event volunteering/selection status for the current year</p>
+    </div>
+
+```
+<!-- Alert Container -->
+<div id="alertContainer"></div>
+
+<!-- Stats Card -->
+<div class="admin-card">
+  <div class="row">
+    <div class="col-md-3 stat-box">
+      <h2 class="text-primary" id="totalMembers">-</h2>
+      <p class="text-muted mb-0">Approved Members</p>
+    </div>
+    <div class="col-md-3 stat-box">
+      <h2 class="text-info" id="totalEvents">-</h2>
+      <p class="text-muted mb-0">Events This Year</p>
+    </div>
+    <div class="col-md-3 stat-box">
+      <h2 class="text-warning" id="totalVolunteered">-</h2>
+      <p class="text-muted mb-0">Total Volunteered</p>
+    </div>
+    <div class="col-md-3 stat-box">
+      <h2 class="text-success" id="totalSelected">-</h2>
+      <p class="text-muted mb-0">Total Selected</p>
+    </div>
+  </div>
+</div>
+
+<!-- Filters & Actions -->
+<div class="admin-card no-print">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div class="filter-controls">
+      <div>
+        <label class="form-label mb-1 small fw-bold">Filter by Event</label>
+        <select class="form-select form-select-sm" id="eventFilter" style="min-width: 220px;">
+          <option value="">All Events</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label mb-1 small fw-bold">Filter by Team</label>
+        <select class="form-select form-select-sm" id="teamFilter" style="min-width: 180px;">
+          <option value="">All Teams</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label mb-1 small fw-bold">Search by Name</label>
+        <input type="text" class="form-control form-control-sm" id="nameSearch" placeholder="Type to search..." style="min-width: 200px;">
+      </div>
+      <div>
+        <label class="form-label mb-1 small fw-bold">&nbsp;</label>
+        <button class="btn btn-outline-warning btn-sm d-block" id="neverSelectedBtn">
+          <i class="bi bi-exclamation-triangle"></i> Volunteered But Never Selected
+        </button>
+      </div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <button class="btn btn-outline-primary btn-sm" id="refreshBtn">
+        <i class="bi bi-arrow-clockwise"></i> Refresh
+      </button>
+      <button class="btn btn-outline-success btn-sm" id="exportCsvBtn">
+        <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
+      </button>
+      <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+        <i class="bi bi-printer"></i> Print
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Report Table -->
+<div class="admin-card">
+  <!-- Loading spinner -->
+  <div id="loadingSpinner" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-3 text-muted">Loading member events report...</p>
+  </div>
+
+  <!-- Report content (hidden until loaded) -->
+  <div id="reportContent" style="display: none;">
+    <div class="table-responsive">
+      <table class="report-table" id="reportTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Member</th>
+            <th>Volunteered (Not Selected)</th>
+            <th>Selected</th>
+          </tr>
+        </thead>
+        <tbody id="reportTableBody">
+        </tbody>
+      </table>
+    </div>
+
+    <!-- No results message -->
+    <div id="noResults" class="text-center py-4" style="display: none;">
+      <i class="bi bi-search" style="font-size: 2rem; color: #ccc;"></i>
+      <p class="text-muted mt-2">No members match your filters.</p>
+    </div>
+  </div>
+</div>
+```
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { 
+      getFirestore, 
+      collection, 
+      doc, 
+      getDoc,
+      getDocs,
+      query,
+      where 
+    } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { firebaseConfig } from './firebase-config.js';
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // =====================
+    // STATE
+    // =====================
+    let allReportData = [];  // Full dataset
+    let filteredData = [];   // After filters applied
+    let neverSelectedActive = false; // Toggle for never-selected filter
+    let currentYearEventsList = []; // Events in current year for dropdown
+    let allTeamsData = {};  // Team ID -> team name lookup
+
+    // =====================
+    // DOM ELEMENTS
+    // =====================
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const reportContent = document.getElementById('reportContent');
+    const reportTableBody = document.getElementById('reportTableBody');
+    const noResults = document.getElementById('noResults');
+    const eventFilter = document.getElementById('eventFilter');
+    const teamFilter = document.getElementById('teamFilter');
+    const nameSearch = document.getElementById('nameSearch');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
+    const neverSelectedBtn = document.getElementById('neverSelectedBtn');
+    const logoutLink = document.getElementById('logoutLink');
+
+    // =====================
+    // HELPERS
+    // =====================
+    function showAlert(message, type) {
+      const html = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>`;
+      document.getElementById('alertContainer').innerHTML = html;
+      if (type === 'success') {
+        setTimeout(() => {
+          const alert = document.querySelector('.alert');
+          if (alert) {
+            alert.classList.remove('show');
+            setTimeout(() => alert.remove(), 150);
+          }
+        }, 5000);
+      }
+    }
+
+    function setButtonLoading(id, loading) {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      if (loading) {
+        btn.classList.add('btn-loading');
+        btn.disabled = true;
+      } else {
+        btn.classList.remove('btn-loading');
+        btn.disabled = false;
+      }
+    }
+
+    // =====================
+    // MAIN REPORT LOADER
+    // =====================
+    async function loadReport() {
+      loadingSpinner.style.display = 'block';
+      reportContent.style.display = 'none';
+
+      try {
+        // -------------------------------------------
+        // Step 1: Load all users
+        // -------------------------------------------
+        const usersSnapshot = await getDocs(collection(db, 'users'));
+        const usersData = {};
+        usersSnapshot.forEach(docSnap => {
+          usersData[docSnap.id] = docSnap.data();
+        });
+
+        // -------------------------------------------
+        // Step 1b: Load all teams
+        // -------------------------------------------
+        const teamsSnapshot = await getDocs(collection(db, 'teams'));
+        allTeamsData = {};
+        teamsSnapshot.forEach(docSnap => {
+          allTeamsData[docSnap.id] = docSnap.data().name || 'Unknown Team';
+        });
+
+        // -------------------------------------------
+        // Step 2: Load all profiles, keep only approved
+        // -------------------------------------------
+        const profilesSnapshot = await getDocs(collection(db, 'profiles'));
+        const approvedMembers = [];
+        
+        profilesSnapshot.forEach(docSnap => {
+          const profile = docSnap.data();
+          const userId = docSnap.id;
+          const status = profile.adminUse?.status || 'pending';
+
+          if (status === 'approved' && usersData[userId]) {
+            const user = usersData[userId];
+            approvedMembers.push({
+              userId: userId,
+              firstName: user.firstName || profile.personalDetails?.firstName || '',
+              surname: user.surname || profile.personalDetails?.surname || '',
+              grade: profile.medicalQualifications?.qualification || 'N/A',
+              teamIds: user.teams || []
+            });
+          }
+        });
+
+        // -------------------------------------------
+        // Step 3: Load all events
+        // -------------------------------------------
+        const eventsSnapshot = await getDocs(collection(db, 'events'));
+        const eventsData = {};
+        eventsSnapshot.forEach(docSnap => {
+          eventsData[docSnap.id] = {
+            id: docSnap.id,
+            ...docSnap.data()
+          };
+        });
+
+        // -------------------------------------------
+        // Step 4: Load all eventVolunteers
+        // -------------------------------------------
+        const volunteersSnapshot = await getDocs(collection(db, 'eventVolunteers'));
+        
+        // Build a map: userId -> array of { eventId, selected, eventName, startDate }
+        const volunteerMap = {};
+        
+        volunteersSnapshot.forEach(docSnap => {
+          const vol = docSnap.data();
+          const userId = vol.userId;
+          const eventId = vol.eventId;
+          const event = eventsData[eventId];
+
+          if (!event) return; // Skip if event doesn't exist
+
+          // Get event start date for year filtering
+          let eventStartDate = null;
+          if (event.startDate?.toDate) {
+            eventStartDate = event.startDate.toDate();
+          } else if (event.startDate?.seconds) {
+            eventStartDate = new Date(event.startDate.seconds * 1000);
+          } else if (event.startDate) {
+            eventStartDate = new Date(event.startDate);
+          }
+
+          if (!volunteerMap[userId]) {
+            volunteerMap[userId] = [];
+          }
+
+          volunteerMap[userId].push({
+            eventId: eventId,
+            eventName: event.name || 'Unknown Event',
+            selected: vol.selected === true,
+            startDate: eventStartDate
+          });
+        });
+
+        // -------------------------------------------
+        // Step 5: Filter to current calendar year only
+        // -------------------------------------------
+        const currentYear = new Date().getFullYear();
+
+        // -------------------------------------------
+        // Step 6: Build final report data
+        // -------------------------------------------
+        let totalVolunteered = 0;
+        let totalSelected = 0;
+
+        allReportData = approvedMembers.map(member => {
+          const memberEvents = volunteerMap[member.userId] || [];
+
+          // Filter to current year events only
+          const currentYearEvents = memberEvents.filter(e => {
+            if (!e.startDate) return false;
+            return e.startDate.getFullYear() === currentYear;
+          });
+
+          const volunteeredNotSelected = currentYearEvents
+            .filter(e => !e.selected)
+            .map(e => e.eventName);
+
+          const selected = currentYearEvents
+            .filter(e => e.selected)
+            .map(e => e.eventName);
+
+          // Store all event IDs this member is associated with (for event filter)
+          const allMemberEventIds = currentYearEvents.map(e => e.eventId);
+
+          totalVolunteered += volunteeredNotSelected.length;
+          totalSelected += selected.length;
+
+          return {
+            firstName: member.firstName,
+            surname: member.surname,
+            grade: member.grade,
+            teamIds: member.teamIds,
+            volunteeredNotSelected: volunteeredNotSelected,
+            selected: selected,
+            allEventIds: allMemberEventIds
+          };
+        });
+
+        // -------------------------------------------
+        // Step 6b: Build current year events list for dropdown (sorted by date)
+        // -------------------------------------------
+        currentYearEventsList = [];
+        Object.values(eventsData).forEach(event => {
+          let eventStart = null;
+          if (event.startDate?.toDate) {
+            eventStart = event.startDate.toDate();
+          } else if (event.startDate?.seconds) {
+            eventStart = new Date(event.startDate.seconds * 1000);
+          } else if (event.startDate) {
+            eventStart = new Date(event.startDate);
+          }
+          if (eventStart && eventStart.getFullYear() === currentYear) {
+            currentYearEventsList.push({
+              id: event.id,
+              name: event.name || 'Unknown Event',
+              startDate: eventStart
+            });
+          }
+        });
+        // Sort by date (earliest first)
+        currentYearEventsList.sort((a, b) => a.startDate - b.startDate);
+
+        // Sort alphabetically by surname, then first name
+        allReportData.sort((a, b) => {
+          const surnameCompare = (a.surname || '').localeCompare(b.surname || '');
+          if (surnameCompare !== 0) return surnameCompare;
+          return (a.firstName || '').localeCompare(b.firstName || '');
+        });
+
+        // -------------------------------------------
+        // Step 7: Update stats
+        // -------------------------------------------
+        document.getElementById('totalMembers').textContent = approvedMembers.length;
+        document.getElementById('totalEvents').textContent = currentYearEventsList.length;
+        document.getElementById('totalVolunteered').textContent = totalVolunteered;
+        document.getElementById('totalSelected').textContent = totalSelected;
+
+        // -------------------------------------------
+        // Step 8: Populate filter dropdowns
+        // -------------------------------------------
+        // Team dropdown (sorted alphabetically by name)
+        const sortedTeams = Object.entries(allTeamsData)
+          .sort((a, b) => a[1].localeCompare(b[1]));
+        teamFilter.innerHTML = '<option value="">All Teams</option>';
+        sortedTeams.forEach(([teamId, teamName]) => {
+          teamFilter.innerHTML += `<option value="${teamId}">${teamName}</option>`;
+        });
+
+        // Event dropdown (sorted by date already)
+        eventFilter.innerHTML = '<option value="">All Events</option>';
+        currentYearEventsList.forEach(event => {
+          const dateStr = event.startDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+          eventFilter.innerHTML += `<option value="${event.id}">${event.name} (${dateStr})</option>`;
+        });
+
+        // -------------------------------------------
+        // Step 9: Render the table
+        // -------------------------------------------
+        applyFiltersAndRender();
+
+        loadingSpinner.style.display = 'none';
+        reportContent.style.display = 'block';
+
+      } catch (error) {
+        console.error('Error loading report:', error);
+        loadingSpinner.style.display = 'none';
+        showAlert('Error loading report: ' + error.message, 'danger');
+      }
+    }
+
+    // =====================
+    // FILTER & RENDER
+    // =====================
+    function applyFiltersAndRender() {
+      const eventValue = eventFilter.value;
+      const teamValue = teamFilter.value;
+      const searchValue = nameSearch.value.trim().toLowerCase();
+
+      filteredData = allReportData.filter(member => {
+        // Event filter: member must have volunteered or been selected for this event
+        if (eventValue && !member.allEventIds.includes(eventValue)) return false;
+
+        // Team filter: member must belong to the selected team
+        if (teamValue && !member.teamIds.includes(teamValue)) return false;
+
+        // Name search
+        if (searchValue) {
+          const fullName = `${member.firstName} ${member.surname}`.toLowerCase();
+          if (!fullName.includes(searchValue)) return false;
+        }
+
+        // Never selected filter: must have volunteered for at least one event but selected for none
+        if (neverSelectedActive) {
+          if (member.volunteeredNotSelected.length === 0 || member.selected.length > 0) return false;
+        }
+
+        return true;
+      });
+
+      renderTable(filteredData);
+    }
+
+    function renderTable(data) {
+      reportTableBody.innerHTML = '';
+
+      if (data.length === 0) {
+        document.getElementById('reportTable').style.display = 'none';
+        noResults.style.display = 'block';
+        return;
+      }
+
+      document.getElementById('reportTable').style.display = 'table';
+      noResults.style.display = 'none';
+
+      data.forEach((member, index) => {
+        const row = document.createElement('tr');
+
+        // Build volunteered (not selected) badges
+        let volunteeredHtml = '<span class="no-events">None</span>';
+        if (member.volunteeredNotSelected.length > 0) {
+          volunteeredHtml = member.volunteeredNotSelected.map(name => 
+            `<span class="event-badge volunteered"><i class="bi bi-hourglass-split"></i> ${name}</span>`
+          ).join('');
+        }
+
+        // Build selected badges
+        let selectedHtml = '<span class="no-events">None</span>';
+        if (member.selected.length > 0) {
+          selectedHtml = member.selected.map(name => 
+            `<span class="event-badge selected"><i class="bi bi-check-circle-fill"></i> ${name}</span>`
+          ).join('');
+        }
+
+        row.innerHTML = `
+          <td>${index + 1}</td>
+          <td>
+            <strong>${member.firstName || ''} ${member.surname || ''}</strong>
+            <br><span class="badge bg-secondary">${member.grade}</span>
+          </td>
+          <td>${volunteeredHtml}</td>
+          <td>${selectedHtml}</td>
+        `;
+
+        reportTableBody.appendChild(row);
+      });
+    }
+
+    // =====================
+    // CSV EXPORT
+    // =====================
+    function exportCsv() {
+      if (filteredData.length === 0) {
+        showAlert('No data to export. Adjust your filters and try again.', 'warning');
+        return;
+      }
+
+      const currentYear = new Date().getFullYear();
+
+      // CSV header
+      let csv = 'First Name,Surname,Grade,Volunteered (Not Selected),Selected\n';
+
+      filteredData.forEach(member => {
+        const volunteeredList = member.volunteeredNotSelected.length > 0 
+          ? member.volunteeredNotSelected.join('; ') 
+          : 'None';
+        const selectedList = member.selected.length > 0 
+          ? member.selected.join('; ') 
+          : 'None';
+
+        csv += [
+          csvSafe(member.firstName),
+          csvSafe(member.surname),
+          csvSafe(member.grade),
+          csvSafe(volunteeredList),
+          csvSafe(selectedList)
+        ].join(',') + '\n';
+      });
+
+      // Create and trigger download
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `fms-member-events-report-${currentYear}.csv`);
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showAlert('CSV exported successfully.', 'success');
+    }
+
+    function csvSafe(value) {
+      if (value === null || value === undefined) return '';
+      value = String(value);
+      if (value.includes('"') || value.includes(',') || value.includes('\n') || value.includes(';')) {
+        return `"${value.replace(/"/g, '""')}"`;
+      }
+      return value;
+    }
+
+    // =====================
+    // EVENT LISTENERS
+    // =====================
+    eventFilter.addEventListener('change', applyFiltersAndRender);
+    teamFilter.addEventListener('change', applyFiltersAndRender);
+    nameSearch.addEventListener('input', applyFiltersAndRender);
+    refreshBtn.addEventListener('click', loadReport);
+    exportCsvBtn.addEventListener('click', exportCsv);
+    
+    neverSelectedBtn.addEventListener('click', () => {
+      neverSelectedActive = !neverSelectedActive;
+      if (neverSelectedActive) {
+        neverSelectedBtn.classList.remove('btn-outline-warning');
+        neverSelectedBtn.classList.add('btn-warning');
+      } else {
+        neverSelectedBtn.classList.remove('btn-warning');
+        neverSelectedBtn.classList.add('btn-outline-warning');
+      }
+      applyFiltersAndRender();
+    });
+
+    logoutLink.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        await signOut(auth);
+        window.location.href = 'index.html';
+      } catch (error) {
+        alert('Logout failed: ' + error.message);
+      }
+    });
+
+    // =====================
+    // AUTH CHECK & INIT
+    // =====================
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (!userDoc.exists() || userDoc.data().isAdmin !== true) {
+          window.location.href = 'dashboard.html';
+          return;
+        }
+
+        // User is admin — load the report
+        loadReport();
+
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        window.location.href = 'dashboard.html';
+      }
+    });
+  </script>
+
+</body>
+</html>
